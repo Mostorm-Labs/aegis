@@ -1,8 +1,19 @@
 # Aegis Project State Manifest + Authority Dependency Graph v0.1
 
-**Status:** Current Design Authority v0.1 — implementation in progress.
+**Status:** Superseded / Historical by `Aegis Project State Manifest + Authority Dependency Graph v0.2`.
 
-This document defines the machine-readable project-control state used by Aegis. It is the repository companion to the approved 07 design authority.
+This document preserves the original v0.1 machine-readable project-control contract and the history accepted through PR #4. PR #4 was integrated into `main` at `555bac21d485fc4530680c61719fc36831021b0d`.
+
+## Supersession
+
+Current replacement: `docs/project-state-manifest-v0.2.md`.
+
+Reason: 08 Self-Hosting confirmed two authority defects that v0.1 could not represent safely:
+
+- **F08-01 — SPEC_DEFECT + MISSING_CONTRACT:** current `BLOCKED_*` Gate verdicts did not propagate into derived project blockers/routing, allowing a false-clean state.
+- **F08-02 — MISSING_CONTRACT:** repository integration lifecycle was absent, so P34 PASS could not be distinguished from implementation integrated into the current repository baseline.
+
+v0.2 preserves the v0.1 schema files as history, adds blocked-Gate propagation and a separate integration lifecycle, and supersedes this document as Current Authority. Do not delete or rewrite this historical contract.
 
 ## Canonical layout
 
@@ -57,10 +68,10 @@ Read authored manifests
 
 If manifest metadata conflicts with actual Current Authority, route to P21/P22. Do not let `.aegis/` silently win the conflict.
 
-## Implementation references
+## Historical implementation references
 
 - Design spec: `docs/superpowers/specs/2026-08-26-project-state-manifest-design.md`
 - Plan: `docs/superpowers/plans/2026-08-26-project-state-manifest.md`
 - Schemas: `schemas/project-state/v0.1/`
-- Runtime tooling: `tools/aegis_state/`
-- Tests: `tests/project_state/`
+- Runtime tooling lineage: `tools/aegis_state/`
+- Tests lineage: `tests/project_state/`
