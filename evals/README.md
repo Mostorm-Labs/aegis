@@ -1,6 +1,6 @@
 # Aegis Evals
 
-This directory contains the machine-readable corpus for the Aegis Evaluation & Dogfooding Framework v0.1.
+This directory contains the machine-readable corpus and provider-neutral evaluation tooling for Aegis.
 
 ## Protected seed corpus
 
@@ -17,47 +17,68 @@ Current first dogfood regression:
 
 - `cases/dogfood.json`: `defect-007` — protects extensible corpus growth.
 
-## What corpus CI proves
+## Corpus integrity
 
-The validator proves corpus integrity only: JSON shape, required fields, stable/unique IDs, enum values, category-specific expectations, and continued presence of all 30 protected seed IDs.
-
-It explicitly allows additional dogfood/incident cases.
-
-It does **not** prove Aegis behavioral quality. Behavioral execution, normalization, deterministic scoring, and semantic evidence are separate layers.
-
-## Case lifecycle
-
-1. Add or update a case only when Current Aegis Authority supports the expected result.
-2. For a real Aegis failure, add the failing scenario before changing the skill whenever practical.
-3. Mark real failures with `origin: dogfood` or `origin: incident`.
-4. Never delete a failing case only to make a change pass.
-5. Never delete a protected seed case to keep a fixed total.
-6. If authority changes, revise/supersede affected expectations with explicit rationale.
-7. Preserve behavior assertions rather than exact prose whenever possible.
-
-## Validate locally
+Validate locally:
 
 ```bash
 python3 evals/scripts/validate_corpus.py
 ```
 
-A successful run reports the full current count plus protected-seed integrity and exits with code 0.
+The validator proves JSON/case-contract integrity and continued presence of all protected seed IDs. It allows additional dogfood/incident cases.
 
-## Normalized execution contract
+## Evaluation tooling v0.1
 
-Execution adapters must retain raw Aegis output and normalize it to fields including:
+The provider-neutral pipeline is:
 
-- `case_id`
-- `status`
-- `earliest_untrusted_layer`
-- `start_stage`
-- `route`
-- `authority_classification`
-- `defect_classification`
-- `gate_verdict`
-- `findings`
-- `evidence_requirements`
+```text
+Case -> Execution Adapter -> Raw Output -> Normalizer -> Deterministic Scorer -> Evidence Report
+```
+
+Run unit tests:
+
+```bash
+python3 -m unittest discover -s evals/tests -v
+```
+
+Replay recorded outputs:
+
+```bash
+python3 evals/scripts/run_eval.py \
+  --adapter recorded \
+  --results path/to/results.json \
+  --output artifacts/aegis-eval
+```
+
+Use an external model/skill driver:
+
+```bash
+python3 evals/scripts/run_eval.py \
+  --adapter command \
+  --command "python3 path/to/provider_driver.py" \
+  --output artifacts/aegis-eval
+```
+
+The command reads one full case JSON from stdin and writes direct JSON or one fenced JSON result to stdout.
+
+## Evidence boundary
+
+The runner preserves:
+
+```text
+raw/<case-id>.txt
+normalized/<case-id>.json
+case-scores.json
+summary.json
+report.md
+```
 
 Canonical statuses follow `skills/aegis/SKILL.md`; compatibility aliases such as `READY_TO_ROUTE` normalize to canonical `READY` before scoring.
 
-See `docs/evaluation-and-dogfooding-v0.1.md` for the verification authority.
+A deterministic score does **not** grade semantic `required_findings / forbidden_findings`. Until a separately auditable semantic evidence contract exists, the full Behavioral Gate remains `BLOCKED_EVIDENCE` even when deterministic checks pass.
+
+See:
+
+- `docs/evaluation-and-dogfooding-v0.1.md` — Current Verification Authority
+- `docs/model-execution-and-scoring-v0.1.md` — proposed evaluation tooling design
+- `evals/schema/result.schema.json` — normalized result contract
