@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-SCHEMA_VERSION = "0.2"
+SCHEMA_VERSION = "0.3"
 AUTHORITY_STATUSES = {"Proposed", "Current", "Superseded", "Historical"}
 GATE_VERDICTS = {
     "PASS", "PASS_WITH_FINDINGS", "BLOCKED_IMPLEMENTATION",
@@ -155,6 +155,11 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
     auth_by_id = {item.get("id"): item for item in authorities if isinstance(item.get("id"), str)}
     gate_by_id = {item.get("id"): item for item in gates if isinstance(item.get("id"), str)}
     evidence_by_id = {item.get("id"): item for item in evidence if isinstance(item.get("id"), str)}
+    completed_history_gate_ids = {
+        item.get("gate_id")
+        for item in integrations
+        if item.get("status") in {"integrated", "closed_unmerged"}
+    }
 
     current_by_scope_kind: dict[tuple[str, str], list[str]] = {}
     for item in authorities:
@@ -229,14 +234,20 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
         if gate.get("verdict") in PASS_VERDICTS and not evidence_ids:
             errors.append(f"PASS gate {gid} requires evidence")
         if strict_gate_validity and gate.get("validity") == "current" and gate.get("verdict") in PASS_VERDICTS:
-            for aid in authority_ids:
-                authority = auth_by_id.get(aid)
-                if authority and authority.get("status") != "Current":
-                    errors.append(f"current PASS gate {gid} depends on non-current authority {aid}")
-            for eid in evidence_ids:
-                ev = evidence_by_id.get(eid)
-                if ev and ev.get("status") != "available":
-                    errors.append(f"current PASS gate {gid} uses unavailable evidence {eid}")
+            authority_statuses = [auth_by_id.get(aid, {}).get("status") for aid in authority_ids]
+            all_current = bool(authority_statuses) and all(status in {"Current", "Proposed"} for status in authority_statuses)
+            all_historical = bool(authority_statuses) and all(status in {"Superseded", "Historical"} for status in authority_statuses)
+            historical_provenance = gid in completed_history_gate_ids and all_historical
+            if not all_current and not historical_provenance:
+                for aid in authority_ids:
+                    authority = auth_by_id.get(aid)
+                    if authority and authority.get("status") not in {"Current", "Proposed"}:
+                        errors.append(f"current PASS gate {gid} depends on non-current authority {aid}")
+            if all_current:
+                for eid in evidence_ids:
+                    ev = evidence_by_id.get(eid)
+                    if ev and ev.get("status") != "available":
+                        errors.append(f"current PASS gate {gid} uses unavailable evidence {eid}")
 
     for review in reviews:
         rid = review.get("id")
@@ -280,7 +291,14 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
             errors.append(f"integration {iid}: integrated_revision is required when status=integrated")
         if status != "integrated" and revision is not None:
             errors.append(f"integration {iid}: integrated_revision is only allowed when status=integrated")
-        if strict_gate_validity and status in {"awaiting_integration", "integrated"} and gate:
+        if strict_gate_validity and status == "integrated" and gate:
+            if gate.get("verdict") not in PASS_VERDICTS:
+                errors.append(f"integration {iid}: requires historical PASS/PASS_WITH_FINDINGS gate {gate_id}")
+            for eid in evidence_ids:
+                ev = evidence_by_id.get(eid)
+                if ev and ev.get("status") != "available":
+                    errors.append(f"integration {iid}: uses unavailable evidence {eid}")
+        if strict_gate_validity and status == "awaiting_integration" and gate:
             if gate.get("verdict") not in PASS_VERDICTS:
                 errors.append(f"integration {iid}: requires PASS/PASS_WITH_FINDINGS gate {gate_id}")
             if gate.get("validity") != "current":
@@ -294,9 +312,13 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
         from .compute import compute_state
 
         derived = compute_state(manifests)
-        noncurrent_gate_ids = set(derived.get("stale_gates", [])) | set(derived.get("needs_review_gates", []))
+        noncurrent_gate_ids = (
+            set(derived.get("stale_gates", []))
+            | set(derived.get("needs_review_gates", []))
+            | set(derived.get("historical_gates", []))
+        )
         for integration in integrations:
-            if integration.get("status") not in {"awaiting_integration", "integrated"}:
+            if integration.get("status") != "awaiting_integration":
                 continue
             gate_id = integration.get("gate_id")
             if gate_id in noncurrent_gate_ids:
