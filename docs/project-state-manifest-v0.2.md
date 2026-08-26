@@ -11,7 +11,18 @@ v0.2 is driven only by two confirmed self-hosting findings from 08:
 - **F08-01 — SPEC_DEFECT + MISSING_CONTRACT:** a current `BLOCKED_*` Gate can exist while generated state reports no blocker, no earliest untrusted layer, and no next stage.
 - **F08-02 — MISSING_CONTRACT:** P34 PASS cannot currently be distinguished from repository integration; open/unmerged PRs can only be stored as opaque evidence.
 
-v0.1 remains historical/current accepted design until v0.2 completes P34. Do not silently mutate the meaning of v0.1 schemas.
+v0.1 is the current integrated project-state baseline until v0.2 completes P34, supersession, and the formal 08 rerun. Do not silently mutate the meaning of v0.1 schemas.
+
+## Repository integration reality
+
+As of the v0.2 P34 rerun:
+
+- PR #4 (07 v0.1) is **integrated** into `main` at merge revision `555bac21d485fc4530680c61719fc36831021b0d`.
+- PR #6 (07 v0.2) is the proposed replacement and targets `main` directly.
+- PR #3 provider tooling remains open/unmerged and is still `awaiting_integration` if represented in a v0.2 project manifest.
+- Historical cancelled/queued PR #6 workflow attempts are environment history only; only a fresh final-head `main`-based PR-context run is eligible P34 repository evidence.
+
+This is the concrete F08-02 distinction: Authority acceptance, Gate verdict, and repository integration are separate state dimensions.
 
 ## Scope
 
@@ -52,9 +63,10 @@ Minimal record:
   "kind": "pull_request",
   "ref": "https://github.com/Mostorm-Labs/aegis/pull/4",
   "gate_id": "gate-project-state-pr4",
-  "status": "awaiting_integration",
+  "status": "integrated",
   "target_ref": "main",
-  "evidence_ids": ["ev-pr4-open"]
+  "evidence_ids": ["ev-pr4-merged"],
+  "integrated_revision": "555bac21d485fc4530680c61719fc36831021b0d"
 }
 ```
 
@@ -116,7 +128,7 @@ A v0.2 project has five authored control manifests plus generated state:
 .aegis/state.json   # generated
 ```
 
-The implementation may migrate the repository examples/self-host fixtures to 0.2, but v0.1 files remain preserved as history.
+The implementation may migrate repository examples/self-host fixtures to 0.2, but v0.1 files remain preserved as superseded history after acceptance.
 
 ## Required regression evidence
 
@@ -140,7 +152,9 @@ At minimum prove:
 v0.2 does not supersede v0.1 merely because unit tests pass. Acceptance requires:
 
 - v0.2 schema/validator/state tests PASS;
-- PR-context CI PASS;
+- a fresh final-head PR-context CI run against `main` PASS;
 - Aegis Skill project-state reference updated and repackaged;
-- 08 self-hosting rerun shows the real `BLOCKED_ENVIRONMENT` Gate in derived state;
-- PR #3/#4 integration records remain `awaiting_integration` until repository reality changes.
+- formal 08 self-hosting rerun shows the real `BLOCKED_ENVIRONMENT` Gate in derived state;
+- PR #4 is represented as `integrated` at `555bac21d485fc4530680c61719fc36831021b0d`;
+- PR #3 remains `awaiting_integration` until repository reality changes;
+- PR #6 itself remains `awaiting_integration` until the replacement is merged into `main`.
