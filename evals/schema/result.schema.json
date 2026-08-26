@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mostorm-labs.github.io/aegis/evals/schema/result.schema.json",
+  "title": "Aegis Normalized Evaluation Result v0.1",
+  "type": "object",
+  "required": [
+    "case_id",
+    "status",
+    "earliest_untrusted_layer",
+    "start_stage",
+    "route",
+    "authority_classification",
+    "defect_classification",
+    "gate_verdict",
+    "findings",
+    "evidence_requirements"
+  ],
+  "properties": {
+    "case_id": {"type": "string"},
+    "status": {"type": "string"},
+    "earliest_untrusted_layer": {"type": ["string", "null"]},
+    "start_stage": {"type": ["string", "null"]},
+    "route": {"type": "array", "items": {"type": "string"}},
+    "authority_classification": {"type": "array", "items": {"type": "string"}},
+    "defect_classification": {"type": ["string", "null"]},
+    "gate_verdict": {"type": ["string", "null"]},
+    "findings": {"type": "array", "items": {"type": "string"}},
+    "evidence_requirements": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}
