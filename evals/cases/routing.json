@@ -10,7 +10,7 @@
       "context": ["No validated problem statement exists.", "No product requirements or architecture exist."]
     },
     "expected": {
-      "status": "READY_TO_ROUTE",
+      "status": "READY",
       "earliest_untrusted_layer": "problem",
       "start_stage": "P00",
       "required_stages": ["P00"],
@@ -34,7 +34,7 @@
       "context": ["User pain and success criteria are validated.", "Functional and non-functional requirements are not frozen."]
     },
     "expected": {
-      "status": "READY_TO_ROUTE",
+      "status": "READY",
       "earliest_untrusted_layer": "requirement",
       "start_stage": "P02",
       "required_stages": ["P02"],
@@ -58,7 +58,7 @@
       "context": ["Current product exists.", "It is not yet known which semantic or architecture authorities the feature changes."]
     },
     "expected": {
-      "status": "READY_TO_ROUTE",
+      "status": "READY",
       "earliest_untrusted_layer": "authority",
       "start_stage": "P21",
       "required_stages": ["P21"],
@@ -106,7 +106,7 @@
       "context": ["Authority review is READY.", "Verification design defines required evidence."]
     },
     "expected": {
-      "status": "READY_TO_ROUTE",
+      "status": "READY",
       "earliest_untrusted_layer": "implementation",
       "start_stage": "P30",
       "required_stages": ["P30", "P31"],
@@ -130,7 +130,7 @@
       "context": ["An implementation task was already in progress.", "Uncommitted valid changes may exist."]
     },
     "expected": {
-      "status": "READY_TO_ROUTE",
+      "status": "READY",
       "earliest_untrusted_layer": "implementation",
       "start_stage": "P33",
       "required_stages": ["P33"],
@@ -154,7 +154,7 @@
       "context": ["The discrepancy is observed in implementation.", "The responsible layer is not yet known."]
     },
     "expected": {
-      "status": "READY_TO_ROUTE",
+      "status": "READY",
       "earliest_untrusted_layer": "implementation",
       "start_stage": "P35",
       "required_stages": ["P35"],
@@ -178,7 +178,7 @@
       "context": ["Correctness authority is current and passing.", "Performance SLO is known."]
     },
     "expected": {
-      "status": "READY_TO_ROUTE",
+      "status": "READY",
       "earliest_untrusted_layer": "engineering",
       "start_stage": "P18",
       "required_stages": ["P18", "P20"],
@@ -202,7 +202,7 @@
       "context": ["Implementation gates report PASS.", "Release migration, rollback, observability, and platform evidence still need review."]
     },
     "expected": {
-      "status": "READY_TO_ROUTE",
+      "status": "READY",
       "earliest_untrusted_layer": "release",
       "start_stage": "P24",
       "required_stages": ["P24"],
@@ -226,7 +226,7 @@
       "context": ["Existing semantic and operation authorities are current.", "The requested change is intentionally breaking."]
     },
     "expected": {
-      "status": "READY_TO_ROUTE",
+      "status": "READY",
       "earliest_untrusted_layer": "authority",
       "start_stage": "P21",
       "required_stages": ["P21", "P12", "P13", "P20", "P23"],
