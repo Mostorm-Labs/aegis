@@ -1,6 +1,8 @@
 # Aegis Model Execution Adapter + Normalized Result Extractor + Deterministic Scorer v0.1
 
-Status: Proposed Evaluation Tooling
+Status: Current Evaluation Tooling
+
+Accepted by P34 Gate Review in PR #2 and merged to `main` at `0d810e20d268199a31fd70514efc5a3316c71785`.
 
 ## 1. Purpose
 
@@ -168,7 +170,17 @@ The provider driver reads one complete case JSON from stdin and writes one resul
 
 ## 11. Verification
 
-The implementation has deterministic unit coverage for:
+Accepted GitHub Actions evidence from PR #2:
+
+```text
+PASS: 31 cases validated (authority=8, defect=7, gate=6, routing=10; seed=30, extensible=true)
+Ran 13 tests in 0.038s
+OK
+```
+
+The 13th test loads the real current corpus and verifies the deterministic scorer can score oracle-normalized expected fields at 100% with zero critical errors. This proves scorer/corpus contract compatibility, not Aegis model quality.
+
+Coverage includes:
 
 - direct and fenced JSON extraction;
 - canonical status alias normalization;
@@ -180,24 +192,27 @@ The implementation has deterministic unit coverage for:
 - recorded-adapter evidence artifact generation;
 - missing recorded result failure;
 - command-adapter stdin/stdout contract;
-- refusal to promote Behavioral Gate using only a semantic PASS flag.
+- refusal to promote Behavioral Gate using only a semantic PASS flag;
+- full current corpus scorer contract compatibility.
 
-CI must run corpus validation and the full unit-test suite from repository root.
+CI runs corpus validation and the full unit-test suite from repository root.
 
 ## 12. Baseline boundary
 
 This closure creates the machinery to generate a behavioral baseline. It does not fabricate one.
 
-Until a reproducible provider-specific Aegis driver is available and actually executed over the corpus:
+Current status:
 
 ```text
-Model Execution Adapter Contract = IMPLEMENTED
-Normalizer                       = IMPLEMENTED
-Deterministic Scorer             = IMPLEMENTED
-Pipeline Unit Evidence           = available after CI
+Model Execution Adapter Contract = CURRENT / PASS
+Normalizer                       = CURRENT / PASS
+Deterministic Scorer             = CURRENT / PASS
+Pipeline Unit Evidence           = PASS
 Real Aegis v0.1 Baseline         = BLOCKED_EVIDENCE
 Semantic Behavioral Evidence     = BLOCKED_EVIDENCE
 ```
+
+Until a reproducible provider-specific Aegis driver is available and actually executed over the corpus, no Aegis behavioral score is authoritative.
 
 ## 13. Next closure
 
