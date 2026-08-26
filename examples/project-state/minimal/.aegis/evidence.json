@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1",
+  "schema_version": "0.2",
   "evidence": [
     {
       "id": "ev-g1",
@@ -7,6 +7,13 @@
       "ref": "ci://example/g1",
       "status": "available",
       "subject_ids": ["G1"]
+    },
+    {
+      "id": "ev-int-g1",
+      "type": "integration_state",
+      "ref": "pr://example/1/open",
+      "status": "available",
+      "subject_ids": ["int-g1"]
     }
   ]
 }
