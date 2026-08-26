@@ -58,6 +58,29 @@ def _layer_rank(layer: str) -> int:
         return _LAYER_ORDER.index("authority")
 
 
+def _gate_authority_membership(gate: dict, auth_by_id: dict[str, dict]) -> str:
+    statuses: list[str] = []
+    for aid in gate.get("authority_ids", []):
+        authority = auth_by_id.get(aid)
+        if not authority:
+            return "unknown"
+        status = authority.get("status")
+        if not isinstance(status, str):
+            return "unknown"
+        statuses.append(status)
+    if not statuses:
+        return "unknown"
+    has_current = any(status in {"Current", "Proposed"} for status in statuses)
+    has_history = any(status in {"Superseded", "Historical"} for status in statuses)
+    if has_current and has_history:
+        return "mixed"
+    if has_history and not has_current:
+        return "historical"
+    if has_current and not has_history:
+        return "current"
+    return "unknown"
+
+
 def manifest_digest(manifests: ManifestSet) -> str:
     canonical = {
         "project": manifests.project,
@@ -157,20 +180,38 @@ def compute_state(manifests: ManifestSet) -> dict:
 
     stale_gates: list[str] = []
     needs_review_gates: list[str] = []
+    historical_gates: list[str] = []
+    authority_review_gates: set[str] = set()
+    completed_history_gate_ids = {
+        str(item.get("gate_id"))
+        for item in integrations
+        if item.get("status") in {"integrated", "closed_unmerged"}
+    }
     blocking_gates: list[str] = []
     gate_effective: dict[str, Validity] = {}
+    gate_membership: dict[str, str] = {}
     findings: list[str] = []
     route_candidates: list[tuple[str, str | None, str | None]] = []
 
     for gate in gates:
         gid = str(gate.get("id"))
+        membership = _gate_authority_membership(gate, auth_by_id)
+        gate_membership[gid] = membership
+        if membership == "historical" and gid in completed_history_gate_ids:
+            gate_effective[gid] = "stale"
+            historical_gates.append(gid)
+            continue
+        if membership in {"mixed", "unknown"}:
+            gate_effective[gid] = "needs_review"
+            needs_review_gates.append(gid)
+            authority_review_gates.add(gid)
+            findings.append(f"gate {gid} needs Authority review because its validity-bearing Authority set is mixed or unresolved")
+            route_candidates.append(("authority", "P21", None))
+            continue
+
         impacts: list[Validity] = []
         for aid in gate.get("authority_ids", []):
-            authority = auth_by_id.get(aid)
-            if not authority or authority.get("status") in {"Superseded", "Historical"}:
-                impacts.append("stale")
-            else:
-                impacts.append(authority_validity(aid))
+            impacts.append(authority_validity(aid))
         for eid in gate.get("evidence_ids", []):
             if ev_by_id.get(eid, {}).get("status") != "available":
                 impacts.append("stale")
@@ -202,19 +243,38 @@ def compute_state(manifests: ManifestSet) -> dict:
         findings.append(f"gate {gid} is stale under current authority/evidence")
         route_candidates.append(("verification", "P34", None))
     for gid in needs_review_gates:
+        if gid in authority_review_gates:
+            continue
         findings.append(f"gate {gid} needs review under current authority/evidence")
         route_candidates.append(("verification", "P34", None))
 
     awaiting_integrations: list[str] = []
+    integration_applicability: list[dict[str, str]] = []
     for integration in integrations:
         iid = str(integration.get("id"))
-        if integration.get("status") != "awaiting_integration":
+        status = str(integration.get("status"))
+        gate_id = str(integration.get("gate_id"))
+        membership = gate_membership.get(gate_id, "unknown")
+        effective = gate_effective.get(gate_id, "stale")
+        if status in {"integrated", "closed_unmerged"} and membership == "historical":
+            applicability = "historical"
+        elif membership in {"mixed", "unknown"}:
+            applicability = "needs_review"
+        elif effective == "stale":
+            applicability = "stale"
+        elif effective == "needs_review":
+            applicability = "needs_review"
+        else:
+            applicability = "current"
+        integration_applicability.append({"integration_id": iid, "applicability": applicability})
+
+        if status != "awaiting_integration":
             continue
         awaiting_integrations.append(iid)
         target = str(integration.get("target_ref"))
         findings.append(f"integration {iid} is awaiting integration into {target} after Gate PASS")
         gate = gate_by_id.get(integration.get("gate_id"))
-        if gate and gate.get("verdict") in PASS_VERDICTS and gate.get("validity") == "current" and gate_effective.get(str(gate.get("id"))) == "current":
+        if gate and gate.get("verdict") in PASS_VERDICTS and gate.get("validity") == "current" and effective == "current":
             route_candidates.append(("implementation", None, "superpowers:finishing-a-development-branch"))
 
     if route_candidates:
@@ -227,7 +287,7 @@ def compute_state(manifests: ManifestSet) -> dict:
 
     project = manifests.project.get("project") or {}
     return {
-        "schema_version": "0.2",
+        "schema_version": "0.3",
         "generator_version": GENERATOR_VERSION,
         "manifest_digest": manifest_digest(manifests),
         "active_stage": project.get("lifecycle_hint"),
@@ -237,8 +297,10 @@ def compute_state(manifests: ManifestSet) -> dict:
         "needs_review_authorities": sorted(needs_review_authorities),
         "stale_gates": sorted(stale_gates),
         "needs_review_gates": sorted(needs_review_gates),
+        "historical_gates": sorted(historical_gates),
         "blocking_gates": sorted(blocking_gates),
         "awaiting_integrations": sorted(awaiting_integrations),
+        "integration_applicability": sorted(integration_applicability, key=lambda item: item["integration_id"]),
         "recommended_next_stage": recommended,
         "recommended_handoff": handoff,
     }
