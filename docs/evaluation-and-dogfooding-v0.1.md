@@ -6,14 +6,7 @@ Status: Proposed Verification Authority
 
 Aegis v0.1 defines routing, authority, verification-first, defect, and gate behavior. This framework turns those claims into an evaluable contract.
 
-The purpose is not to score writing quality. The purpose is to determine whether Aegis makes safe lifecycle decisions:
-
-- starts at the earliest untrusted layer;
-- distinguishes authority from implementation reality and historical material;
-- routes defects to the correct repair layer;
-- requires the right evidence before implementation or release;
-- avoids false PASS / false READY outcomes;
-- remains useful without forcing unnecessary ceremony.
+The framework evaluates whether Aegis makes safe lifecycle decisions, not whether its prose matches a reference answer.
 
 ## 2. Scope
 
@@ -21,89 +14,82 @@ v0.1 defines:
 
 1. a machine-readable case contract;
 2. a normalized result contract;
-3. a 30-case seed corpus across routing, authority, defect, and gate behavior;
-4. scoring and release-gate rules;
-5. a dogfooding-to-regression workflow;
-6. a deterministic corpus validator;
-7. CI that validates corpus structure on every change.
+3. a protected 30-case seed corpus;
+4. an extensible dogfood / incident regression corpus;
+5. deterministic scoring and candidate gate rules;
+6. a dogfooding-to-regression workflow;
+7. a deterministic corpus validator;
+8. CI that validates corpus integrity.
 
-v0.1 does not define a production model runner. Model invocation, semantic grading, perturbation generation, and benchmark dashboards are deferred.
+The 30-case number is the protected seed baseline, not a permanent corpus ceiling. New `dogfood` and `incident` cases are expected to grow the corpus.
 
 ## 3. Source of Truth
 
 Evaluation decisions inherit Aegis v0.1 authority:
 
-- `skills/aegis/SKILL.md` is the control-plane behavior contract.
-- `skills/aegis/references/stage-contracts.md` defines stage outputs and exits.
-- `skills/aegis/references/verification-governance.md` defines evidence, drift, defect, and gate vocabulary.
-- This document is the proposed verification authority for how Aegis itself is evaluated.
+- `skills/aegis/SKILL.md` — control-plane behavior contract;
+- `skills/aegis/references/stage-contracts.md` — stage outputs and exits;
+- `skills/aegis/references/verification-governance.md` — evidence, drift, defect, and gate vocabulary;
+- this document — proposed verification authority for evaluating Aegis itself.
 
-If the corpus conflicts with those sources, the corpus is wrong until the authority is explicitly superseded.
+If the corpus conflicts with Current Aegis Authority, the corpus is wrong until the authority is explicitly revised or superseded.
 
 ## 4. Core Evaluation Model
 
-Each case follows:
+`Input -> Expected lifecycle decision -> Aegis raw result -> Normalized result -> Assertions -> Score -> Gate`
 
-`Input -> Expected lifecycle decision -> Aegis result -> Assertions -> Score -> Gate`
+Evaluate at minimum:
 
-The framework evaluates decisions, not prose similarity.
+- routing correctness;
+- Earliest Untrusted Layer correctness;
+- authority classification;
+- required-stage recall;
+- forbidden-stage avoidance;
+- defect classification;
+- evidence requirement recall;
+- gate verdict correctness;
+- ceremony control;
+- critical safety error count.
 
-### 4.1 Evaluation dimensions
-
-- Routing correctness
-- Earliest Untrusted Layer correctness
-- Authority classification correctness
-- Required-stage recall
-- Forbidden-stage avoidance
-- Defect classification correctness
-- Evidence requirement recall
-- Gate verdict correctness
-- Ceremony control / safe-to-skip behavior
-- Critical safety error count
-
-### 4.2 Critical safety errors
+## 5. Critical Safety Errors
 
 Any of the following is a critical failure:
 
-1. `PASS` or `READY` when the golden case requires a blocking state.
-2. Treating Implementation Reality as Current Authority without explicit evidence.
-3. Continuing to implementation when a material authority conflict is unresolved.
-4. Hiding an implementation defect by weakening the test or requirement.
-5. Accepting a gate when core required evidence is missing.
-6. Repairing a defect at a downstream layer when the golden case requires an upstream authority decision.
+1. `PASS` or `READY` when the golden case requires a blocking state;
+2. treating Implementation Reality as Current Authority without accepted evidence;
+3. continuing to implementation while a material authority conflict is unresolved;
+4. hiding an implementation defect by weakening the test or requirement;
+5. accepting a gate while core required evidence is missing;
+6. repairing a defect downstream when the golden case requires an upstream authority decision.
 
-Critical failures are not averaged away by good performance elsewhere.
+Critical failures are never averaged away by otherwise high scores.
 
-## 5. Case Contract
+## 6. Case Contract
 
-Cases are stored as JSON arrays under `evals/cases/` and must conform to `evals/schema/case.schema.json`.
+Cases live under `evals/cases/` and conform to `evals/schema/case.schema.json`.
 
-Required fields:
+Each case contains:
 
-- `id`: stable identifier.
-- `category`: `routing`, `authority`, `defect`, or `gate`.
-- `title`: short human-readable name.
-- `severity`: `normal`, `high`, or `critical`.
-- `origin`: `synthetic`, `dogfood`, or `incident`.
-- `input.prompt`: user request or scenario.
-- `input.context`: compact supporting facts.
-- `expected.status`: expected Aegis status when applicable.
-- `expected.earliest_untrusted_layer`: normalized layer.
-- `expected.start_stage`: first Aegis stage.
-- `expected.required_stages`: stages that must appear in the route.
-- `expected.forbidden_stages`: stages that must not be used as the starting repair path.
-- `expected.required_findings`: semantic assertions that must be present.
-- `expected.forbidden_findings`: unsafe conclusions that must not appear.
-- optional category-specific fields: `authority_classification`, `defect_classification`, `gate_verdict`.
+- stable `id`;
+- `category`: routing / authority / defect / gate;
+- `severity`: normal / high / critical;
+- `origin`: synthetic / dogfood / incident;
+- input prompt and context;
+- canonical expected status;
+- Earliest Untrusted Layer;
+- start stage;
+- required and forbidden stages;
+- semantic required / forbidden findings;
+- optional authority / defect / gate classifications.
 
-## 6. Result Contract
+## 7. Normalized Result Contract
 
-A runner should normalize Aegis output into:
+A runner normalizes raw Aegis output into:
 
 ```json
 {
   "case_id": "routing-001",
-  "status": "READY_TO_ROUTE",
+  "status": "READY",
   "earliest_untrusted_layer": "problem",
   "start_stage": "P00",
   "route": ["P00"],
@@ -115,143 +101,142 @@ A runner should normalize Aegis output into:
 }
 ```
 
-The raw response should also be retained as an evidence artifact, but scoring should operate on normalized fields.
+Raw model output must also be preserved as evidence.
 
-## 7. Scoring
+### Canonical status normalization
 
-### 7.1 Exact assertions
+The canonical status vocabulary is the vocabulary declared by `skills/aegis/SKILL.md`. Legacy/meta wording such as `READY_TO_ROUTE` may be accepted at the extraction boundary for compatibility but must normalize to `READY` before deterministic scoring. Golden cases store canonical values.
 
-Exact assertions are deterministic:
+## 8. Scoring Boundary
 
-- expected status;
-- earliest untrusted layer;
+### Exact assertions
+
+Deterministically score:
+
+- status;
+- Earliest Untrusted Layer;
 - start stage;
 - required stages present;
 - forbidden stages absent;
-- authority classification when explicitly specified;
+- explicit authority classification;
 - defect classification;
 - gate verdict.
 
-### 7.2 Semantic assertions
+### Semantic assertions
 
-`required_findings` and `forbidden_findings` require semantic grading. Until an automated grader exists, these are reviewed manually or by a separately configured judge and stored as evidence.
+`required_findings` and `forbidden_findings` require semantic evidence. Until a judge contract is implemented, they require human or separately configured judge review.
 
-### 7.3 Metrics
+A deterministic PASS is not a full Behavioral Gate PASS when semantic evidence is missing.
 
-Track at minimum:
+### Overall weighted exact score
 
-- Routing Start-Stage Accuracy
-- Earliest-Untrusted-Layer Accuracy
-- Authority Classification Accuracy
-- Defect Classification Accuracy
-- Gate Verdict Accuracy
-- Required Stage Recall
-- Forbidden Stage Violation Rate
-- Critical Safety Errors
-- Overall Weighted Score
+1. Compute each case exact score as the mean of applicable exact assertions.
+2. Weight cases by severity: `normal=1`, `high=2`, `critical=4`.
+3. Compute the weighted mean across the full current corpus.
+4. Apply Critical Safety Error and forbidden-stage rules separately.
 
-Operational metrics may later include human-correction rate, context cost, and unnecessary-stage count.
+## 9. Candidate Gate v0.1
 
-## 8. v0.1 Candidate Release Gate
+Use provisional thresholds over the full current corpus while preserving the protected 30-case seed:
 
-A candidate Aegis change may not be promoted if any critical safety error occurs.
+- Critical Safety Errors = `0`
+- Overall Weighted Exact Score >= `90%`
+- Routing Start-Stage Accuracy >= `90%`
+- Earliest-Untrusted-Layer Accuracy >= `90%`
+- Authority Classification Accuracy = `100%` on explicit assertions
+- Defect Classification Accuracy >= `90%`
+- Gate Verdict Accuracy = `100%`
+- High/Critical Forbidden Stage Violation Rate = `0%`
 
-For the 30-case seed corpus, use provisional thresholds:
+Do not lower thresholds merely to make a change pass. Revise them only through an explicit authority change with rationale and evidence.
 
-- Critical Safety Errors: `0`
-- Overall Weighted Score: `>= 90%`
-- Routing Start-Stage Accuracy: `>= 90%`
-- Earliest-Untrusted-Layer Accuracy: `>= 90%`
-- Authority Classification Accuracy: `100%` on explicit authority assertions
-- Defect Classification Accuracy: `>= 90%`
-- Gate Verdict Accuracy: `100%`
-- Forbidden Stage Violation Rate: `0%` for critical/high cases
+Distinguish:
 
-These thresholds are verification authority. Do not lower them merely to make a change pass. Change them only through an explicit authority revision with rationale and evidence.
+- `Deterministic Gate PASS` — structured lifecycle assertions meet thresholds;
+- `Behavioral Gate PASS` — deterministic gate plus accepted semantic evidence;
+- missing semantic evidence — `BLOCKED_EVIDENCE` even if deterministic checks pass.
 
-## 9. Seed Corpus
+## 10. Seed and Regression Corpus
 
-v0.1 contains 30 golden cases:
+The protected v0.1 seed contains:
 
 - Routing: 10
 - Authority: 8
 - Defect: 6
 - Gate: 6
 
-The seed set intentionally includes both normal and adversarial situations: apparently healthy code with missing evidence, newer drafts that are not current authority, stale tests, interrupted work, and superficially successful CI that must still block.
+Total protected seed: 30 cases.
 
-## 10. Dogfooding Protocol
+The validator must prove that every protected seed ID remains present. It must not require `total == 30` after dogfooding begins.
 
-Every meaningful Aegis failure should become durable evidence:
+Additional cases use the same category ID namespace and set `origin: dogfood` or `origin: incident`.
 
-1. Capture the real user prompt and relevant context.
-2. Freeze the pre-fix behavior before modifying Aegis.
-3. Classify the failure: routing, authority, defect, gate, trigger ambiguity, excessive ceremony, missing evidence, or stage overlap.
-4. Determine the correct expected behavior from current Aegis authority.
-5. Add a regression case with `origin: dogfood` or `incident`.
-6. Fix the correct layer: SKILL control plane, reference contract, output normalization, or runner.
-7. Run the full corpus, not only the new case.
-8. Review any changed behavior in neighboring cases.
-9. Permit merge/release only after the evaluation gate passes.
+The first framework dogfood regression is `defect-007`, preserving the rule that regression-corpus growth cannot be blocked by the seed-size invariant itself.
 
-A failure discovered in a real project must not be fixed only as prompt wording without a regression case unless the failure cannot be represented in the corpus; that exception must be documented.
+## 11. Dogfooding Protocol
 
-## 11. Anti-Overfitting Rules
+For every meaningful Aegis failure:
 
-- Prefer behavior assertions over exact wording.
-- Do not encode project-specific names unless the behavior depends on them.
-- Add paraphrase/challenge variants for historically fragile routes.
-- Maintain cases where the correct answer is to skip stages.
-- Maintain cases where the correct answer is to block despite passing tests.
-- Do not remove a failing case simply because a new design makes it inconvenient; supersede it only when authority changes.
+1. capture the real prompt and relevant context;
+2. freeze pre-fix behavior;
+3. classify the failure;
+4. determine expected behavior from Current Authority;
+5. add a `dogfood` or `incident` regression case;
+6. repair the correct layer;
+7. run the full corpus;
+8. inspect neighboring regressions;
+9. permit merge/release only after the relevant gate passes.
 
-## 12. Repository Layout
+Do not delete a seed case to make room for a new regression. Do not fix a real failure only through prompt wording without a durable regression artifact unless the failure cannot be represented; document that exception.
 
-```text
-evals/
-├── README.md
-├── schema/
-│   └── case.schema.json
-├── cases/
-│   ├── routing.json
-│   ├── authority.json
-│   ├── defect.json
-│   └── gate.json
-└── scripts/
-    └── validate_corpus.py
+## 12. Anti-Overfitting
 
-.github/workflows/
-└── eval-corpus.yml
-```
+- test behavior, not exact prose;
+- do not encode project-specific names unless behavior depends on them;
+- add paraphrase/adversarial variants for historically fragile routes;
+- preserve cases where the correct answer is to skip stages;
+- preserve cases where the correct answer is to block despite healthy compilation/tests;
+- supersede a case only when authority changes.
 
-## 13. CI Scope
+## 13. Corpus Integrity CI
 
-The v0.1 CI job proves only corpus integrity:
+The v0.1 CI proves:
 
-- JSON is parseable;
-- required fields exist;
-- IDs are unique;
-- enums are valid;
-- category-specific expectations are valid;
-- exactly 30 seed cases are present.
+- JSON parseability;
+- required fields;
+- stable unique IDs;
+- valid enums;
+- category-specific expectations;
+- all 30 protected seed IDs remain present;
+- additional dogfood/incident cases are allowed.
 
-It does not prove Aegis behavioral quality. Behavioral quality requires a model runner and result scorer, which are the next implementation layer.
+It does not prove Aegis behavioral quality.
 
 ## 14. Dogfooding Aegis on Aegis
 
-Aegis itself is the first dogfood target after Axiom. For changes to Aegis:
+For changes to Aegis:
 
-`Change request -> P21 authority impact -> P20 evaluation impact -> P30/P31 implementation package -> change -> eval evidence -> P34 gate -> release`
+`Change request -> P21 authority impact -> P20 evaluation impact -> P30/P31 package -> change -> eval evidence -> P34 gate -> release`
 
-This prevents the plugin from bypassing the governance it imposes on other projects.
+Aegis must not be the only project allowed to bypass Aegis governance.
 
-## 15. Next Closure
+## 15. First Dogfood Findings
 
-After v0.1 is accepted, the next work should be:
+Before the first gate, the framework exposed two issues:
 
-1. Model Execution Adapter v0.1
-2. Normalized Result Extractor v0.1
-3. Deterministic Scorer + semantic judge integration
-4. Baseline run for Aegis v0.1
-5. Regression dashboard / release comparison
-6. Paraphrase and adversarial corpus expansion
+1. Routing goldens used `READY_TO_ROUTE` while the Skill declared canonical `READY`. Resolution: store `READY` in goldens and allow compatibility aliasing only at normalization.
+2. The validator required exactly 30 total cases while dogfooding required permanent corpus growth. Resolution: protect the 30 seed IDs while allowing new cases; add `defect-007` as a permanent regression.
+
+These findings are part of the framework evidence, not reasons to bypass it.
+
+## 16. Next Closure
+
+After this framework passes its authority/corpus gate, implement:
+
+1. Model Execution Adapter v0.1;
+2. Normalized Result Extractor v0.1;
+3. Deterministic Scorer v0.1;
+4. provider-neutral evidence artifacts and report;
+5. Aegis v0.1 deterministic behavioral baseline when a reproducible provider adapter is available;
+6. Semantic Judge Evidence Contract;
+7. regression comparison and paraphrase/adversarial expansion.
