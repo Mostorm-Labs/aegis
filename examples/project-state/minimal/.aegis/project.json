@@ -1,0 +1,10 @@
+{
+  "schema_version": "0.1",
+  "project": {
+    "id": "aegis-state-example",
+    "name": "Aegis State Example",
+    "profile": "standard",
+    "required_layers": ["authority", "verification"],
+    "lifecycle_hint": "implementation"
+  }
+}
