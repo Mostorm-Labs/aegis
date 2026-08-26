@@ -256,7 +256,9 @@ def compute_state(manifests: ManifestSet) -> dict:
         gate_id = str(integration.get("gate_id"))
         membership = gate_membership.get(gate_id, "unknown")
         effective = gate_effective.get(gate_id, "stale")
-        if status in {"integrated", "closed_unmerged"} and membership == "historical":
+        if status == "closed_unmerged":
+            applicability = "historical"
+        elif status == "integrated" and membership == "historical":
             applicability = "historical"
         elif membership in {"mixed", "unknown"}:
             applicability = "needs_review"
