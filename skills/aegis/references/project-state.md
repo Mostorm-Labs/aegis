@@ -163,7 +163,9 @@ Never rewrite a real historical merge as `closed_unmerged` merely because its Au
 
 ### `closed_unmerged`
 
-This records that the candidate did not enter the target baseline. It is completed history and does not create an integration handoff.
+This records that the candidate did not enter the target baseline. It is a completed repository lifecycle occurrence: no current integration action remains, so its Integration applicability is always `historical`. It never enters `awaiting_integrations[]` and never creates a finishing-development-branch handoff.
+
+This does not make the supporting Gate historical by itself. Gate history/actionability is still derived independently from the Gate's Authority set.
 
 ## Derived Integration applicability
 
@@ -180,10 +182,11 @@ historical
 
 Rules:
 
-- all Gate Authorities current + effective-current Gate/evidence → `current`;
-- mixed Current + Historical Authority or unresolved membership → `needs_review`;
-- still-current Authority with stale/invalid Gate/evidence → `stale`;
-- completed occurrence with all validity-bearing Gate Authorities Superseded/Historical → `historical`.
+- `closed_unmerged` → `historical` because the candidate lifecycle is complete and no integration action remains;
+- `integrated` + all Gate Authorities current + effective-current Gate/evidence → `current`;
+- `integrated` + mixed Current/Historical Authority or unresolved membership → `needs_review`;
+- `integrated` + still-current Authority with stale/invalid Gate/evidence → `stale`;
+- `integrated` + all validity-bearing Gate Authorities Superseded/Historical → `historical`.
 
 Generated projection is deterministic and ordered by Integration ID:
 
@@ -234,6 +237,7 @@ Examples:
 - historical Gate retained only for completed provenance → no route solely from that history.
 - current stale Gate/evidence → `verification / P34`.
 - no earlier blocker + current awaiting integration → finishing-development-branch handoff.
+- `closed_unmerged` → historical Integration projection, never an integration handoff.
 - manifest/source Authority conflict → `P21`/`P22`.
 
 The manifest tells Aegis where to look and what project-control state is recorded; it never outranks contradictory Current Authority or repository evidence.
