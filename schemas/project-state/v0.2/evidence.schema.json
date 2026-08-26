@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mostorm-labs.github.io/aegis/schemas/project-state/v0.2/evidence.schema.json",
+  "title": "Aegis Evidence Registry v0.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "evidence"],
+  "properties": {
+    "schema_version": {"const": "0.2"},
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "ref", "status"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "type": {"type": "string", "minLength": 1},
+          "ref": {"type": "string", "minLength": 1},
+          "status": {"enum": ["available", "missing", "invalid", "superseded"]},
+          "subject_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+        }
+      }
+    }
+  }
+}
