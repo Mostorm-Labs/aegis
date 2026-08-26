@@ -1,8 +1,8 @@
 # Aegis Project State Manifest + Authority Dependency Graph v0.2
 
-Status: **Proposed Replacement Authority v0.2**
+Status: **Current Replacement Authority v0.2 — P34 PASS_WITH_FINDINGS; integrated in `main`.**
 
-This document is the repository companion to Notion `07 v0.2 Aegis Project State Authority Repair — Gate Propagation + Integration Lifecycle Closure`.
+This document is the repository companion to Notion `07 v0.2 Aegis Project State Authority Repair — Gate Propagation + Integration Lifecycle Closure` and supersedes `docs/project-state-manifest-v0.1.md`.
 
 ## Authority basis
 
@@ -11,19 +11,18 @@ v0.2 is driven only by two confirmed self-hosting findings from 08:
 - **F08-01 — SPEC_DEFECT + MISSING_CONTRACT:** a current `BLOCKED_*` Gate can exist while generated state reports no blocker, no earliest untrusted layer, and no next stage.
 - **F08-02 — MISSING_CONTRACT:** P34 PASS cannot currently be distinguished from repository integration; open/unmerged PRs can only be stored as opaque evidence.
 
-v0.1 is the current integrated project-state baseline until v0.2 completes P34, supersession, and the formal 08 rerun. Do not silently mutate the meaning of v0.1 schemas.
+07 v0.1 remains preserved as Superseded/Historical authority. v0.2 was accepted at P34 with an explicit GitHub check-suite environment finding and integrated through PR #7 at merge revision `8ca7b49d40a17e8cb7ffba86632da3aeae5e911c`.
 
 ## Repository integration reality
 
-As of the v0.2 P34 rerun:
+At v0.2 integration:
 
-- PR #3 (06-02 provider tooling) is **integrated** into `main` at merge revision `d55686123bd22254c196f8232c8b115f469bde1e`; the live provider baseline remains separately `BLOCKED_ENVIRONMENT` because no OpenAI API credential is available.
-- PR #4 (07 v0.1) is **integrated** into `main` at merge revision `555bac21d485fc4530680c61719fc36831021b0d`.
-- PR #6 is **closed/unmerged** as a historical P34/check-suite container after cancelled/startup-failure/queued zombie workflow records; it is environment history, not current acceptance evidence.
-- PR #7 is the clean 07 v0.2 P34 replacement container targeting `main` directly.
-- Only a fresh final-head `main`-based PR-context run on PR #7 is eligible P34 repository evidence.
+- PR #3 (06-02 provider tooling) is **integrated** into `main` at `d55686123bd22254c196f8232c8b115f469bde1e`; the live provider baseline remains separately `BLOCKED_ENVIRONMENT` because no OpenAI API credential is available.
+- PR #4 (07 v0.1) is **integrated** into `main` at `555bac21d485fc4530680c61719fc36831021b0d`.
+- PR #6 is **closed/unmerged** historical `ENVIRONMENT_DEFECT` / check-suite evidence.
+- PR #7 (07 v0.2) is **integrated** into `main` at `8ca7b49d40a17e8cb7ffba86632da3aeae5e911c`.
 
-This is the concrete F08-02 distinction: Authority acceptance, Gate verdict, and repository integration are separate state dimensions. Provider tooling integration and live-provider behavioral evidence are also separate facts.
+Authority acceptance, Gate verdict/validity, repository integration, and external behavioral evidence are separate state dimensions.
 
 ## Scope
 
@@ -56,18 +55,18 @@ Generated state adds `blocking_gates[]` and includes stable blocker findings.
 
 v0.2 adds authored `.aegis/integrations.json`.
 
-Minimal record:
+Minimal integrated record:
 
 ```json
 {
-  "id": "int-pr4",
+  "id": "int-pr7",
   "kind": "pull_request",
-  "ref": "https://github.com/Mostorm-Labs/aegis/pull/4",
-  "gate_id": "gate-project-state-pr4",
+  "ref": "https://github.com/Mostorm-Labs/aegis/pull/7",
+  "gate_id": "gate-project-state-v02-pr7",
   "status": "integrated",
   "target_ref": "main",
-  "evidence_ids": ["ev-pr4-merged"],
-  "integrated_revision": "555bac21d485fc4530680c61719fc36831021b0d"
+  "evidence_ids": ["ev-pr7-merged"],
+  "integrated_revision": "8ca7b49d40a17e8cb7ffba86632da3aeae5e911c"
 }
 ```
 
@@ -116,7 +115,7 @@ If a verification blocker such as `BLOCKED_ENVIRONMENT` and an awaiting integrat
 
 ## Versioning
 
-Do not overwrite `schemas/project-state/v0.1/`. Add `schemas/project-state/v0.2/`.
+Do not overwrite `schemas/project-state/v0.1/`. v0.2 uses `schemas/project-state/v0.2/`; v0.1 remains preserved as history.
 
 A v0.2 project has five authored control manifests plus generated state:
 
@@ -129,34 +128,30 @@ A v0.2 project has five authored control manifests plus generated state:
 .aegis/state.json   # generated
 ```
 
-The implementation may migrate repository examples/self-host fixtures to 0.2, but v0.1 files remain preserved as superseded history after acceptance.
+## Accepted P34 evidence
 
-## Required regression evidence
+The initial PR #6 accumulated cancelled/startup-failure workflow records, later followed by valid main-based PR-context runs. Accepted core merge-ref evidence is run `33021019280`, job `98351117474`, which checked out `refs/pull/6/merge` and produced:
 
-At minimum prove:
+```text
+schema parse = PASS
+VALID
+STATE_OK
+Ran 34 tests in 0.327s
+OK
+```
 
-1. current `BLOCKED_ENVIRONMENT` -> `blocking_gates` + `verification/P34`;
-2. current `BLOCKED_AUTHORITY` -> `authority/P21`;
-3. current `BLOCKED_IMPLEMENTATION` -> `implementation/P35`;
-4. current `BLOCKED_EVIDENCE` -> `verification/P34`;
-5. current `PASS_WITH_FINDINGS` does not block;
-6. stale blocked Gate is not an active verdict blocker;
-7. awaiting integration requires current-valid pass Gate;
-8. integrated requires `integrated_revision` and available evidence;
-9. awaiting integration routes to implementation handoff when it is the earliest open item;
-10. integrated items do not remain awaiting;
-11. earlier blocked Gate wins primary route over awaiting integration;
-12. manifest digest includes integration state.
+The replacement line was then clean-rebased onto current `main`; ancestry became ahead-only (`behind=0`) and remained exactly the 25 project-state files. The core `tools/aegis_state/compute.py` blob remained byte-identical to the merge-ref-tested core (`d6e2a21f0c32b8d3c71f973d230d1118a397508b`). Final-head run `33021291693`, job `98352018093`, produced:
 
-## Acceptance boundary
+```text
+schema parse = PASS
+VALID
+STATE_OK
+Ran 34 tests in 0.221s
+OK
+```
 
-v0.2 does not supersede v0.1 merely because unit tests pass. Acceptance requires:
+GitHub did not emit a fresh `pull_request` run for replacement PR #7 despite a valid merge ref. P34 therefore used an explicit P20 compound-evidence fallback and returned **PASS_WITH_FINDINGS**. The finding is classified as check-suite `ENVIRONMENT_DEFECT`, not implementation defect; no nonexistent run is treated as evidence.
 
-- v0.2 schema/validator/state tests PASS;
-- a fresh final-head PR-context CI run against `main` PASS on PR #7;
-- Aegis Skill project-state reference updated and repackaged;
-- formal 08 self-hosting rerun shows the real `BLOCKED_ENVIRONMENT` Gate in derived state;
-- PR #3 is represented as `integrated` at `d55686123bd22254c196f8232c8b115f469bde1e`;
-- PR #4 is represented as `integrated` at `555bac21d485fc4530680c61719fc36831021b0d`;
-- PR #6 remains `closed_unmerged` history;
-- PR #7 remains `awaiting_integration` until the replacement is merged into `main`.
+## Downstream verification handoff
+
+08 Self-Hosting must now be formally rerun on v0.2. The expected semantic oracle is not an all-clean project: the real OpenAI behavioral baseline remains `BLOCKED_ENVIRONMENT`, so correct v0.2 derived state should surface that Gate as the primary `verification / P34` blocker while representing integrated repository changes accurately.
