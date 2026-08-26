@@ -1,0 +1,242 @@
+[
+  {
+    "id": "routing-001",
+    "category": "routing",
+    "title": "Vague greenfield idea starts at problem discovery",
+    "severity": "high",
+    "origin": "synthetic",
+    "input": {
+      "prompt": "I want to build a collaborative whiteboard for creators. Help me start.",
+      "context": ["No validated problem statement exists.", "No product requirements or architecture exist."]
+    },
+    "expected": {
+      "status": "READY_TO_ROUTE",
+      "earliest_untrusted_layer": "problem",
+      "start_stage": "P00",
+      "required_stages": ["P00"],
+      "forbidden_stages": ["P30", "P32"],
+      "authority_classification": [],
+      "defect_classification": null,
+      "gate_verdict": null,
+      "required_findings": ["The idea is not yet a validated problem.", "Do not jump directly to architecture or implementation."],
+      "forbidden_findings": ["Start coding immediately."]
+    },
+    "tags": ["greenfield", "problem-discovery"]
+  },
+  {
+    "id": "routing-002",
+    "category": "routing",
+    "title": "Validated problem with undefined requirements starts at P02",
+    "severity": "normal",
+    "origin": "synthetic",
+    "input": {
+      "prompt": "We have validated that livestream recordings are often lost after crashes. We now need to define the product behavior.",
+      "context": ["User pain and success criteria are validated.", "Functional and non-functional requirements are not frozen."]
+    },
+    "expected": {
+      "status": "READY_TO_ROUTE",
+      "earliest_untrusted_layer": "requirement",
+      "start_stage": "P02",
+      "required_stages": ["P02"],
+      "forbidden_stages": ["P14", "P30", "P32"],
+      "authority_classification": [],
+      "defect_classification": null,
+      "gate_verdict": null,
+      "required_findings": ["Product requirements are the earliest missing authority."],
+      "forbidden_findings": ["Choose the storage architecture first."]
+    },
+    "tags": ["requirements", "validated-problem"]
+  },
+  {
+    "id": "routing-003",
+    "category": "routing",
+    "title": "Existing product feature with unknown authority impact starts at P21",
+    "severity": "high",
+    "origin": "synthetic",
+    "input": {
+      "prompt": "Add connector endpoint snapping to our mature diagram editor. The product already has many architecture documents and an implementation.",
+      "context": ["Current product exists.", "It is not yet known which semantic or architecture authorities the feature changes."]
+    },
+    "expected": {
+      "status": "READY_TO_ROUTE",
+      "earliest_untrusted_layer": "authority",
+      "start_stage": "P21",
+      "required_stages": ["P21"],
+      "forbidden_stages": ["P32"],
+      "authority_classification": [],
+      "defect_classification": null,
+      "gate_verdict": null,
+      "required_findings": ["Review current authority and impact before choosing downstream design or implementation stages."],
+      "forbidden_findings": ["Existing code is sufficient authority for the new feature."]
+    },
+    "tags": ["feature-change", "existing-product", "authority-review"]
+  },
+  {
+    "id": "routing-004",
+    "category": "routing",
+    "title": "Conflicting current design documents route to authority review",
+    "severity": "critical",
+    "origin": "synthetic",
+    "input": {
+      "prompt": "Two architecture documents both claim to be current and disagree about who owns session state. What should Codex implement?",
+      "context": ["Both documents are marked Current Authority.", "The conflict affects module ownership."]
+    },
+    "expected": {
+      "status": "BLOCKED_AUTHORITY",
+      "earliest_untrusted_layer": "authority",
+      "start_stage": "P21",
+      "required_stages": ["P21", "P22"],
+      "forbidden_stages": ["P30", "P31", "P32"],
+      "authority_classification": ["AUTHORITY_CONFLICT"],
+      "defect_classification": null,
+      "gate_verdict": null,
+      "required_findings": ["Downstream implementation must stop until one authority wins or a supersession is accepted."],
+      "forbidden_findings": ["Choose whichever document matches the current code."]
+    },
+    "tags": ["authority-conflict", "architecture", "critical"]
+  },
+  {
+    "id": "routing-005",
+    "category": "routing",
+    "title": "Complete authority ready for implementation starts at P30",
+    "severity": "normal",
+    "origin": "synthetic",
+    "input": {
+      "prompt": "The requirement, semantic contract, architecture, platform contract, and verification design are approved. Prepare the implementation work.",
+      "context": ["Authority review is READY.", "Verification design defines required evidence."]
+    },
+    "expected": {
+      "status": "READY_TO_ROUTE",
+      "earliest_untrusted_layer": "implementation",
+      "start_stage": "P30",
+      "required_stages": ["P30", "P31"],
+      "forbidden_stages": ["P00", "P10"],
+      "authority_classification": [],
+      "defect_classification": null,
+      "gate_verdict": null,
+      "required_findings": ["Upstream authority is sufficient to plan evidence-gated implementation."],
+      "forbidden_findings": ["Reopen architecture without a finding."]
+    },
+    "tags": ["implementation-planning", "ready-authority"]
+  },
+  {
+    "id": "routing-006",
+    "category": "routing",
+    "title": "Interrupted implementation resumes at P33",
+    "severity": "normal",
+    "origin": "synthetic",
+    "input": {
+      "prompt": "Continue the task that stopped after an API payment error. Keep the current working tree changes and tell me what is done and pending first.",
+      "context": ["An implementation task was already in progress.", "Uncommitted valid changes may exist."]
+    },
+    "expected": {
+      "status": "READY_TO_ROUTE",
+      "earliest_untrusted_layer": "implementation",
+      "start_stage": "P33",
+      "required_stages": ["P33"],
+      "forbidden_stages": ["P00", "P14"],
+      "authority_classification": [],
+      "defect_classification": null,
+      "gate_verdict": null,
+      "required_findings": ["Inspect current state and diff before changing or rolling back work."],
+      "forbidden_findings": ["Reset the working tree before inspection."]
+    },
+    "tags": ["resume", "interrupted-work"]
+  },
+  {
+    "id": "routing-007",
+    "category": "routing",
+    "title": "Known bug starts with defect classification",
+    "severity": "high",
+    "origin": "synthetic",
+    "input": {
+      "prompt": "Android renders text objects differently from iPadOS even though both should follow the same contract. Find where to fix it.",
+      "context": ["The discrepancy is observed in implementation.", "The responsible layer is not yet known."]
+    },
+    "expected": {
+      "status": "READY_TO_ROUTE",
+      "earliest_untrusted_layer": "implementation",
+      "start_stage": "P35",
+      "required_stages": ["P35"],
+      "forbidden_stages": ["P36"],
+      "authority_classification": [],
+      "defect_classification": null,
+      "gate_verdict": null,
+      "required_findings": ["Classify the defect before choosing a repair layer."],
+      "forbidden_findings": ["Patch Android first without checking contract and evidence."]
+    },
+    "tags": ["bug", "cross-platform", "classification-first"]
+  },
+  {
+    "id": "routing-008",
+    "category": "routing",
+    "title": "Performance problem with correct semantics routes to P18 and P20",
+    "severity": "normal",
+    "origin": "synthetic",
+    "input": {
+      "prompt": "The runtime is semantically correct, but panning a 100k-object document misses the frame budget. Design the optimization work and proof.",
+      "context": ["Correctness authority is current and passing.", "Performance SLO is known."]
+    },
+    "expected": {
+      "status": "READY_TO_ROUTE",
+      "earliest_untrusted_layer": "engineering",
+      "start_stage": "P18",
+      "required_stages": ["P18", "P20"],
+      "forbidden_stages": ["P12", "P32"],
+      "authority_classification": [],
+      "defect_classification": null,
+      "gate_verdict": null,
+      "required_findings": ["Optimization decisions need a measurable performance model and verification plan."],
+      "forbidden_findings": ["Change semantic behavior to meet the benchmark without authority change."]
+    },
+    "tags": ["performance", "optimization", "verification"]
+  },
+  {
+    "id": "routing-009",
+    "category": "routing",
+    "title": "Release candidate starts at release readiness",
+    "severity": "high",
+    "origin": "synthetic",
+    "input": {
+      "prompt": "All planned implementation gates are complete. Decide whether version 1.0 can ship.",
+      "context": ["Implementation gates report PASS.", "Release migration, rollback, observability, and platform evidence still need review."]
+    },
+    "expected": {
+      "status": "READY_TO_ROUTE",
+      "earliest_untrusted_layer": "release",
+      "start_stage": "P24",
+      "required_stages": ["P24"],
+      "forbidden_stages": ["P30", "P32"],
+      "authority_classification": [],
+      "defect_classification": null,
+      "gate_verdict": null,
+      "required_findings": ["Implementation gate success is not by itself release readiness."],
+      "forbidden_findings": ["Ship solely because code gates passed."]
+    },
+    "tags": ["release", "readiness"]
+  },
+  {
+    "id": "routing-010",
+    "category": "routing",
+    "title": "Breaking semantic change routes through authority and supersession",
+    "severity": "critical",
+    "origin": "synthetic",
+    "input": {
+      "prompt": "Change canonical object identity semantics in a way that breaks old replay data, then implement it.",
+      "context": ["Existing semantic and operation authorities are current.", "The requested change is intentionally breaking."]
+    },
+    "expected": {
+      "status": "READY_TO_ROUTE",
+      "earliest_untrusted_layer": "authority",
+      "start_stage": "P21",
+      "required_stages": ["P21", "P12", "P13", "P20", "P23"],
+      "forbidden_stages": ["P30", "P32"],
+      "authority_classification": [],
+      "defect_classification": null,
+      "gate_verdict": null,
+      "required_findings": ["A breaking semantic change requires explicit authority revision and compatibility evidence before implementation."],
+      "forbidden_findings": ["Implement the new identity semantics first and update docs later."]
+    },
+    "tags": ["breaking-change", "semantic", "supersession", "critical"]
+  }
+]
