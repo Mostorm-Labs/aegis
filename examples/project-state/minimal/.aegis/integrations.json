@@ -1,0 +1,14 @@
+{
+  "schema_version": "0.2",
+  "integrations": [
+    {
+      "id": "int-g1",
+      "kind": "pull_request",
+      "ref": "pr://example/1",
+      "gate_id": "G1",
+      "status": "awaiting_integration",
+      "target_ref": "main",
+      "evidence_ids": ["ev-int-g1"]
+    }
+  ]
+}

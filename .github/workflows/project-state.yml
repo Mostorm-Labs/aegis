@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - ".aegis/**"
+      - "docs/project-state-manifest-v*.md"
       - "schemas/project-state/**"
       - "tools/aegis_state/**"
       - "tests/project_state/**"
@@ -13,12 +14,17 @@ on:
   pull_request:
     paths:
       - ".aegis/**"
+      - "docs/project-state-manifest-v*.md"
       - "schemas/project-state/**"
       - "tools/aegis_state/**"
       - "tests/project_state/**"
       - "examples/project-state/**"
       - "skills/aegis/**"
       - ".github/workflows/project-state.yml"
+
+concurrency:
+  group: project-state-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate:
@@ -28,9 +34,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Validate minimal project manifests
+      - name: Parse project-state v0.2 schemas
+        run: |
+          for schema in schemas/project-state/v0.2/*.json; do
+            python3 -m json.tool "$schema" >/dev/null
+          done
+      - name: Validate minimal v0.2 project manifests
         run: python3 -m tools.aegis_state.cli validate examples/project-state/minimal
-      - name: Check generated minimal project state
+      - name: Check generated minimal v0.2 project state
         run: python3 -m tools.aegis_state.cli check examples/project-state/minimal
       - name: Run project-state unit tests
         run: python3 -m unittest discover -s tests/project_state -v

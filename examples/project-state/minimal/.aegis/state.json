@@ -1,13 +1,20 @@
 {
   "active_stage": "implementation",
-  "blocking_findings": [],
-  "earliest_untrusted_layer": null,
-  "generator_version": "0.1",
-  "manifest_digest": "b920c4c5866b7f81be25a2e9672175190aba5fa3984a2c43dad9c8d568e5454d",
+  "awaiting_integrations": [
+    "int-g1"
+  ],
+  "blocking_findings": [
+    "integration int-g1 is awaiting integration into main after Gate PASS"
+  ],
+  "blocking_gates": [],
+  "earliest_untrusted_layer": "implementation",
+  "generator_version": "0.2",
+  "manifest_digest": "434bcf0274cd0012a2bec260c20ca35665724b70ab0624d2b392a60d40a52d53",
   "needs_review_authorities": [],
   "needs_review_gates": [],
+  "recommended_handoff": "superpowers:finishing-a-development-branch",
   "recommended_next_stage": null,
-  "schema_version": "0.1",
+  "schema_version": "0.2",
   "stale_authorities": [],
   "stale_gates": []
 }

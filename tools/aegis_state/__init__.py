@@ -1,3 +1,3 @@
-"""Aegis project-state manifest tooling v0.1."""
+"""Aegis project-state manifest tooling."""
 
-GENERATOR_VERSION = "0.1"
+GENERATOR_VERSION = "0.2"

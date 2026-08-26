@@ -5,7 +5,7 @@ import json
 from typing import Literal
 
 from . import GENERATOR_VERSION
-from .model import ManifestSet
+from .model import ManifestSet, PASS_VERDICTS
 
 Validity = Literal["current", "needs_review", "stale"]
 
@@ -35,6 +35,12 @@ _LAYER_BY_KIND = {
     "release": "release",
 }
 _LAYER_ORDER = ["problem", "requirement", "object", "behavior", "schema", "operation", "architecture", "module", "flow", "platform", "engineering", "verification", "authority", "implementation", "release"]
+_GATE_BLOCK_ROUTE = {
+    "BLOCKED_AUTHORITY": ("authority", "P21"),
+    "BLOCKED_EVIDENCE": ("verification", "P34"),
+    "BLOCKED_IMPLEMENTATION": ("implementation", "P35"),
+    "BLOCKED_ENVIRONMENT": ("verification", "P34"),
+}
 
 
 def _worst(values: list[Validity]) -> Validity:
@@ -45,12 +51,20 @@ def _worst(values: list[Validity]) -> Validity:
     return "current"
 
 
+def _layer_rank(layer: str) -> int:
+    try:
+        return _LAYER_ORDER.index(layer)
+    except ValueError:
+        return _LAYER_ORDER.index("authority")
+
+
 def manifest_digest(manifests: ManifestSet) -> str:
     canonical = {
         "project": manifests.project,
         "authorities": manifests.authorities,
         "gates": manifests.gates,
         "evidence": manifests.evidence,
+        "integrations": manifests.integrations,
     }
     data = json.dumps(canonical, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(data).hexdigest()
@@ -60,8 +74,10 @@ def compute_state(manifests: ManifestSet) -> dict:
     authorities = manifests.authority_items
     gates = manifests.gate_items
     evidence = manifests.evidence_items
+    integrations = manifests.integration_items
     reviews = manifests.impact_reviews
     auth_by_id = {a["id"]: a for a in authorities if isinstance(a.get("id"), str)}
+    gate_by_id = {g["id"]: g for g in gates if isinstance(g.get("id"), str)}
     ev_by_id = {e["id"]: e for e in evidence if isinstance(e.get("id"), str)}
     replacement_by_old = {
         a["supersedes"]: a
@@ -141,9 +157,13 @@ def compute_state(manifests: ManifestSet) -> dict:
 
     stale_gates: list[str] = []
     needs_review_gates: list[str] = []
+    blocking_gates: list[str] = []
+    gate_effective: dict[str, Validity] = {}
     findings: list[str] = []
+    route_candidates: list[tuple[str, str | None, str | None]] = []
+
     for gate in gates:
-        gid = gate.get("id")
+        gid = str(gate.get("id"))
         impacts: list[Validity] = []
         for aid in gate.get("authority_ids", []):
             authority = auth_by_id.get(aid)
@@ -155,38 +175,59 @@ def compute_state(manifests: ManifestSet) -> dict:
             if ev_by_id.get(eid, {}).get("status") != "available":
                 impacts.append("stale")
         effective = _worst(impacts)
+        gate_effective[gid] = effective
         if effective == "stale":
-            stale_gates.append(str(gid))
+            stale_gates.append(gid)
         elif effective == "needs_review":
-            needs_review_gates.append(str(gid))
+            needs_review_gates.append(gid)
         declared = gate.get("validity")
         if declared in {"current", "needs_review", "stale"} and declared != effective:
             findings.append(f"gate {gid} validity drift: declared={declared}, computed={effective}")
+        verdict = gate.get("verdict")
+        if declared == "current" and effective == "current" and verdict in _GATE_BLOCK_ROUTE:
+            blocking_gates.append(gid)
+            layer, stage = _GATE_BLOCK_ROUTE[str(verdict)]
+            route_candidates.append((layer, stage, None))
+            findings.append(f"gate {gid} is currently {verdict}")
 
     for aid in stale_authorities:
         findings.append(f"authority {aid} is stale because a validity-bearing dependency is no longer current")
+        layer = _LAYER_BY_KIND.get(str(auth_by_id[aid].get("kind")), "authority")
+        route_candidates.append((layer, "P21", None))
     for aid in needs_review_authorities:
         findings.append(f"authority {aid} needs review because an upstream dependency changed")
+        layer = _LAYER_BY_KIND.get(str(auth_by_id[aid].get("kind")), "authority")
+        route_candidates.append((layer, "P21", None))
     for gid in stale_gates:
         findings.append(f"gate {gid} is stale under current authority/evidence")
+        route_candidates.append(("verification", "P34", None))
     for gid in needs_review_gates:
         findings.append(f"gate {gid} needs review under current authority/evidence")
+        route_candidates.append(("verification", "P34", None))
 
-    affected = stale_authorities + needs_review_authorities
-    if affected:
-        layers = [_LAYER_BY_KIND.get(str(auth_by_id[aid].get("kind")), "authority") for aid in affected]
-        earliest = min(layers, key=lambda x: _LAYER_ORDER.index(x) if x in _LAYER_ORDER else _LAYER_ORDER.index("authority"))
-        recommended = "P21"
-    elif stale_gates or needs_review_gates:
-        earliest = "verification"
-        recommended = "P34"
+    awaiting_integrations: list[str] = []
+    for integration in integrations:
+        iid = str(integration.get("id"))
+        if integration.get("status") != "awaiting_integration":
+            continue
+        awaiting_integrations.append(iid)
+        target = str(integration.get("target_ref"))
+        findings.append(f"integration {iid} is awaiting integration into {target} after Gate PASS")
+        gate = gate_by_id.get(integration.get("gate_id"))
+        if gate and gate.get("verdict") in PASS_VERDICTS and gate.get("validity") == "current" and gate_effective.get(str(gate.get("id"))) == "current":
+            route_candidates.append(("implementation", None, "superpowers:finishing-a-development-branch"))
+
+    if route_candidates:
+        primary = min(route_candidates, key=lambda item: (_layer_rank(item[0]), item[1] or "ZZZ", item[2] or "ZZZ"))
+        earliest, recommended, handoff = primary
     else:
         earliest = None
         recommended = None
+        handoff = None
 
     project = manifests.project.get("project") or {}
     return {
-        "schema_version": "0.1",
+        "schema_version": "0.2",
         "generator_version": GENERATOR_VERSION,
         "manifest_digest": manifest_digest(manifests),
         "active_stage": project.get("lifecycle_hint"),
@@ -196,5 +237,8 @@ def compute_state(manifests: ManifestSet) -> dict:
         "needs_review_authorities": sorted(needs_review_authorities),
         "stale_gates": sorted(stale_gates),
         "needs_review_gates": sorted(needs_review_gates),
+        "blocking_gates": sorted(blocking_gates),
+        "awaiting_integrations": sorted(awaiting_integrations),
         "recommended_next_stage": recommended,
+        "recommended_handoff": handoff,
     }
