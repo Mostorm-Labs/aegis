@@ -1,29 +1,39 @@
 # Aegis Evals
 
-This directory is the machine-readable seed of the Aegis Evaluation & Dogfooding Framework v0.1.
+This directory contains the machine-readable corpus for the Aegis Evaluation & Dogfooding Framework v0.1.
 
-## Seed corpus
+## Protected seed corpus
 
-- `cases/routing.json`: 10 routing cases
-- `cases/authority.json`: 8 authority cases
-- `cases/defect.json`: 6 defect cases
-- `cases/gate.json`: 6 gate cases
+- `cases/routing.json`: routing seed cases 001-010
+- `cases/authority.json`: authority seed cases 001-008
+- `cases/defect.json`: defect seed cases 001-006
+- `cases/gate.json`: gate seed cases 001-006
 
-Total: 30 cases.
+Protected seed total: **30 cases**.
 
-## What v0.1 proves
+The seed total is not a corpus-size ceiling. New real failures are added with `origin: dogfood` or `origin: incident` and must not replace protected seed cases.
 
-The checked-in validator proves corpus integrity only: JSON shape, required fields, stable IDs, enum values, category counts, and category-specific expectations.
+Current first dogfood regression:
 
-It does **not** run Aegis or score model behavior. Behavioral execution is the next layer.
+- `cases/dogfood.json`: `defect-007` — protects extensible corpus growth.
+
+## What corpus CI proves
+
+The validator proves corpus integrity only: JSON shape, required fields, stable/unique IDs, enum values, category-specific expectations, and continued presence of all 30 protected seed IDs.
+
+It explicitly allows additional dogfood/incident cases.
+
+It does **not** prove Aegis behavioral quality. Behavioral execution, normalization, deterministic scoring, and semantic evidence are separate layers.
 
 ## Case lifecycle
 
-1. Add or update a case only when current Aegis authority supports the expected result.
+1. Add or update a case only when Current Aegis Authority supports the expected result.
 2. For a real Aegis failure, add the failing scenario before changing the skill whenever practical.
 3. Mark real failures with `origin: dogfood` or `origin: incident`.
-4. Never delete a failing case only to make a change pass. If authority changes, supersede or revise the case with explicit rationale.
-5. Preserve behavior assertions rather than exact prose whenever possible.
+4. Never delete a failing case only to make a change pass.
+5. Never delete a protected seed case to keep a fixed total.
+6. If authority changes, revise/supersede affected expectations with explicit rationale.
+7. Preserve behavior assertions rather than exact prose whenever possible.
 
 ## Validate locally
 
@@ -31,11 +41,11 @@ It does **not** run Aegis or score model behavior. Behavioral execution is the n
 python3 evals/scripts/validate_corpus.py
 ```
 
-A successful run prints the category counts and exits with code 0.
+A successful run reports the full current count plus protected-seed integrity and exits with code 0.
 
-## Future execution contract
+## Normalized execution contract
 
-A future model runner should retain raw Aegis output and normalize it to a result object with fields such as:
+Execution adapters must retain raw Aegis output and normalize it to fields including:
 
 - `case_id`
 - `status`
@@ -48,4 +58,6 @@ A future model runner should retain raw Aegis output and normalize it to a resul
 - `findings`
 - `evidence_requirements`
 
-Exact fields are described in `docs/evaluation-and-dogfooding-v0.1.md`.
+Canonical statuses follow `skills/aegis/SKILL.md`; compatibility aliases such as `READY_TO_ROUTE` normalize to canonical `READY` before scoring.
+
+See `docs/evaluation-and-dogfooding-v0.1.md` for the verification authority.
