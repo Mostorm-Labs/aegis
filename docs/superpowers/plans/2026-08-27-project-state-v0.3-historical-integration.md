@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- `SCHEMA_VERSION = "0.3"` and `GENERATOR_VERSION = "0.3"`.
+- `SCHEMA_VERSION = "0.3"` and `GENERATOR_VERSION = "0.3"` in the accepted implementation.
 - Do not mutate `schemas/project-state/v0.1/` or `schemas/project-state/v0.2/`.
 - `integrated` is durable occurrence; later supersession must not erase it.
 - `awaiting_integration` still requires a current-effective `PASS`/`PASS_WITH_FINDINGS` Gate and available evidence.
@@ -20,73 +20,70 @@
 - A Gate is automatically historical only when all validity-bearing `authority_ids` are `Superseded/Historical` and it is retained for completed-history provenance.
 - Mixed Current + Historical Gate Authority sets fail closed to `needs_review` and contribute Authority/P21 routing.
 - Historical-only `BLOCKED_*` verdicts remain audit history but do not reactivate current blockers.
-- Missing/invalid occurrence evidence still rejects `integrated` provenance.
-- No PR #4 or Aegis-specific production special cases.
+- Missing or unavailable occurrence evidence rejects `integrated` provenance.
+- Production code must not special-case PR #4, merge revision `555bac21d485fc4530680c61719fc36831021b0d`, or Aegis repository IDs.
 - R03-09 real Aegis self-host oracle is mandatory acceptance evidence before P34.
 
 ---
 
-### Task 1: Freeze v0.3 version boundary and RED fixtures
+### Task 1: Add semantic RED regressions against the current v0.2 implementation
 
 **Files:**
-- Modify: `tests/project_state/helpers.py`
-- Modify: `tests/project_state/test_integrations_v02.py`
-- Modify: `tests/project_state/test_v02_model.py`
 - Create: `tests/project_state/test_history_v03.py`
-- Modify later in GREEN: `tools/aegis_state/__init__.py`, `tools/aegis_state/model.py`
+- Read only: `tools/aegis_state/model.py`, `tools/aegis_state/compute.py`
 
 **Interfaces:**
-- Consumes: existing `load_manifests()`, `validate_manifests()`, `compute_state()`.
-- Produces: v0.3 fixtures and focused RED oracles R03-01 through R03-08.
+- Consumes current v0.2 `load_manifests()`, `validate_manifests()`, and `compute_state()`.
+- Produces semantic RED evidence without changing manifest version first.
 
-- [ ] **Step 1: Migrate shared fixtures to schema 0.3 without changing existing behavioral assertions**
+- [ ] **Step 1: Create a local scenario writer inside `test_history_v03.py` that emits schema 0.2 manifests**
 
-Change all project-state test fixture manifests from `"schema_version":"0.2"` to `"schema_version":"0.3"`. Do not weaken existing assertions for Gate blockers, integration handoff, digest behavior, duplicate IDs, dangling refs, or unavailable evidence.
-
-- [ ] **Step 2: Add focused failing history tests**
-
-Create `tests/project_state/test_history_v03.py` with explicit cases equivalent to:
+Use ordinary authored manifests so the current loader accepts them. The helper must support:
 
 ```python
-class HistoryV03Tests(unittest.TestCase):
-    def test_integrated_survives_all_authority_supersession(self):
-        state, errors = scenario_integrated_then_superseded()
-        self.assertEqual(errors, [])
-        self.assertIn(
-            {"integration_id": "int-old", "applicability": "historical"},
-            state["integration_applicability"],
-        )
-        self.assertIn("G-old", state["historical_gates"])
-        self.assertNotIn("G-old", state["stale_gates"])
-
-    def test_historical_blocked_gate_cannot_support_integrated(self):
-        errors = scenario_integrated_with_historical_blocked_gate()
-        self.assertTrue(any("requires historical PASS/PASS_WITH_FINDINGS" in e for e in errors))
-
-    def test_awaiting_still_rejects_noncurrent_gate(self):
-        errors = scenario_awaiting_with_superseded_authority()
-        self.assertTrue(any("requires current-valid gate" in e for e in errors))
-
-    def test_current_stale_gate_remains_actionable(self):
-        state = scenario_current_authority_stale_gate()
-        self.assertIn("G-current", state["stale_gates"])
-        self.assertEqual(state["earliest_untrusted_layer"], "verification")
-        self.assertEqual(state["recommended_next_stage"], "P34")
-
-    def test_mixed_authority_gate_fails_closed_to_p21(self):
-        state = scenario_mixed_current_historical_gate()
-        self.assertIn("G-mixed", state["needs_review_gates"])
-        self.assertEqual(state["earliest_untrusted_layer"], "authority")
-        self.assertEqual(state["recommended_next_stage"], "P21")
-
-    def test_integrated_requires_available_occurrence_evidence(self):
-        errors = scenario_integrated_with_missing_occurrence_evidence()
-        self.assertTrue(any("uses unavailable evidence" in e for e in errors))
+def write_scenario(root: Path, *, authorities: list[dict], gate: dict, integration: dict, evidence_status: str = "available") -> None:
+    docs = {
+        "project.json": {"schema_version":"0.2","project":{"id":"demo","name":"Demo","profile":"standard","lifecycle_hint":"implementation"}},
+        "authorities.json": {"schema_version":"0.2","authorities":authorities,"impact_reviews":[]},
+        "gates.json": {"schema_version":"0.2","gates":[gate]},
+        "evidence.json": {"schema_version":"0.2","evidence":[{"id":"ev","type":"ci","ref":"ci://history","status":evidence_status}]},
+        "integrations.json": {"schema_version":"0.2","integrations":[integration]},
+    }
+    aegis = root / ".aegis"
+    aegis.mkdir(parents=True)
+    for name, data in docs.items():
+        (aegis / name).write_text(json.dumps(data), encoding="utf-8")
 ```
 
-The helper scenarios must build ordinary manifests; do not call any special history API unavailable to users.
+- [ ] **Step 2: Add R03-01/R03-02 test for durable integrated history**
 
-- [ ] **Step 3: Run focused tests and verify RED**
+Build one Superseded Authority, a historical PASS Gate, and an `integrated` record with `integrated_revision="abc123"`. Assert:
+
+```python
+errors = validate_manifests(load_manifests(root))
+self.assertEqual(errors, [])
+state = compute_state(load_manifests(root))
+self.assertIn({"integration_id":"int-old","applicability":"historical"}, state["integration_applicability"])
+self.assertIn("G-old", state["historical_gates"])
+self.assertNotIn("G-old", state["stale_gates"])
+```
+
+- [ ] **Step 3: Add R03-03/R03-04 tests**
+
+Historical `BLOCKED_IMPLEMENTATION` must not support an `integrated` record. An `awaiting_integration` record whose Gate is no longer current-valid must still be rejected.
+
+- [ ] **Step 4: Add R03-05/R03-06/R03-07/R03-08 tests**
+
+Assert all of the following:
+
+```text
+all-historical Gate -> historical_gates, no P34 route solely from history
+Current Authority + stale evidence -> stale_gates + verification/P34
+mixed Current + Historical Authority -> needs_review_gates + authority/P21
+integrated occurrence + missing evidence -> validation error
+```
+
+- [ ] **Step 5: Run focused tests and verify semantic RED**
 
 Run:
 
@@ -94,45 +91,47 @@ Run:
 python3 -m unittest tests.project_state.test_history_v03 -v
 ```
 
-Expected: failures caused by v0.2 semantics, including absent `integration_applicability` / `historical_gates`, integrated history rejected for non-current Gate, or mixed Gate routed as stale/P34 rather than Authority/P21. Import/syntax failures do not count as valid RED.
+Valid RED requires current v0.2 behavior to fail assertions because it rejects historical integration, lacks `historical_gates` / `integration_applicability`, or routes mixed/history incorrectly. Version mismatch, import error, syntax error, or missing fixture file does not count.
 
-- [ ] **Step 4: Commit the RED tests only**
+- [ ] **Step 6: Commit only the RED test file**
 
 ```bash
-git add tests/project_state
+git add tests/project_state/test_history_v03.py
 git commit -m "test: define project state v0.3 history semantics"
 ```
 
 ---
 
-### Task 2: Implement Gate history/actionability classification
+### Task 2: Implement Gate historical/actionable classification
 
 **Files:**
 - Modify: `tools/aegis_state/compute.py`
 - Test: `tests/project_state/test_history_v03.py`
 
 **Interfaces:**
-- Produces helper classification internal to `compute.py`:
-  - Authority membership state for a Gate: `current | mixed | historical | unknown`.
-  - Generated `historical_gates: list[str]`.
-- Preserves: existing `stale_gates`, `needs_review_gates`, `blocking_gates` for current-actionable Gate problems.
+- Produces internal `_gate_authority_membership(gate, auth_by_id)` returning `current | mixed | historical | unknown`.
+- Produces generated `historical_gates: list[str]`.
+- Preserves current-actionable `stale_gates`, `needs_review_gates`, and `blocking_gates`.
 
-- [ ] **Step 1: Add the smallest classification helper needed by the tests**
+- [ ] **Step 1: Add membership classifier**
 
-Implement internal logic equivalent to:
+Implement:
 
 ```python
 def _gate_authority_membership(gate: dict, auth_by_id: dict[str, dict]) -> str:
-    statuses = []
+    statuses: list[str] = []
     for aid in gate.get("authority_ids", []):
         authority = auth_by_id.get(aid)
         if not authority:
             return "unknown"
-        statuses.append(authority.get("status"))
+        status = authority.get("status")
+        if not isinstance(status, str):
+            return "unknown"
+        statuses.append(status)
     if not statuses:
         return "unknown"
-    has_current = any(s in {"Current", "Proposed"} for s in statuses)
-    has_history = any(s in {"Superseded", "Historical"} for s in statuses)
+    has_current = any(status in {"Current", "Proposed"} for status in statuses)
+    has_history = any(status in {"Superseded", "Historical"} for status in statuses)
     if has_current and has_history:
         return "mixed"
     if has_history and not has_current:
@@ -142,40 +141,37 @@ def _gate_authority_membership(gate: dict, auth_by_id: dict[str, dict]) -> str:
     return "unknown"
 ```
 
-`Proposed` remains validity-bearing like current planning state, matching existing authority validity semantics.
+- [ ] **Step 2: Split Gate computation by membership**
 
-- [ ] **Step 2: Separate historical Gate records from current actionable Gate validity**
+Use this exact policy:
 
-During Gate computation:
-
-```python
-membership = _gate_authority_membership(gate, auth_by_id)
-if membership == "historical":
-    historical_gates.append(gid)
-    # retain declared/effective provenance drift information if useful,
-    # but do not append this Gate to stale_gates/needs_review_gates or routing.
-elif membership in {"mixed", "unknown"}:
-    needs_review_gates.append(gid)
-    findings.append(f"gate {gid} needs Authority review because its validity-bearing Authority set is mixed or unresolved")
-    route_candidates.append(("authority", "P21", None))
-else:
-    # current Authority path: keep v0.2 evidence/validity computation.
+```text
+historical -> append gid to historical_gates; do not append to stale/needs_review/blocking; do not add route solely from historical verdict
+mixed/unknown -> append gid to needs_review_gates; add Authority/P21 route
+current -> keep existing evidence/effective validity and BLOCKED_* routing logic
 ```
 
-Historical-only `BLOCKED_*` verdicts must never enter `blocking_gates`.
+For mixed/unknown, add finding text that explicitly says Authority review is required.
 
-- [ ] **Step 3: Keep current stale Gate behavior unchanged**
+- [ ] **Step 3: Return `historical_gates` in deterministic state**
 
-For current Gate Authority membership, retain evidence checks and effective validity. A current stale Gate still goes to `stale_gates` and contributes `verification/P34`.
+Add:
 
-- [ ] **Step 4: Run Gate-focused tests**
+```python
+"historical_gates": sorted(historical_gates),
+```
+
+Historical-only `BLOCKED_*` verdicts must not enter `blocking_gates`.
+
+- [ ] **Step 4: Run focused Gate tests**
 
 Run:
 
 ```bash
 python3 -m unittest \
+  tests.project_state.test_history_v03.HistoryV03Tests.test_historical_gate_is_non_actionable \
   tests.project_state.test_history_v03.HistoryV03Tests.test_current_stale_gate_remains_actionable \
-  tests.project_state.test_history_v03.HistoryV03Tests.test_mixed_authority_gate_fails_closed_to_p21 -v
+  tests.project_state.test_history_v03.HistoryV03Tests.test_mixed_authority_gate_routes_p21 -v
 ```
 
 Expected: PASS.
@@ -195,147 +191,174 @@ git commit -m "feat: separate historical and actionable gates"
 - Modify: `tools/aegis_state/model.py`
 - Modify: `tools/aegis_state/compute.py`
 - Test: `tests/project_state/test_history_v03.py`
-- Test: `tests/project_state/test_v02_model.py`
-- Test: `tests/project_state/test_integrations_v02.py`
 
 **Interfaces:**
-- Produces generated field:
+- Produces generated `integration_applicability` ordered by `integration_id`.
+- Keeps authored statuses `awaiting_integration | integrated | closed_unmerged` unchanged.
+
+- [ ] **Step 1: Change strict validator semantics for `integrated`**
+
+For `integrated`, require all of:
 
 ```python
-"integration_applicability": [
-    {"integration_id": str, "applicability": "current|needs_review|stale|historical"}
-]
-```
-
-sorted by `integration_id`.
-
-- [ ] **Step 1: Change validator semantics only for completed occurrence**
-
-For `integrated`:
-
-```python
-if gate.get("verdict") not in PASS_VERDICTS:
+if not gate or gate.get("verdict") not in PASS_VERDICTS:
     errors.append(f"integration {iid}: requires historical PASS/PASS_WITH_FINDINGS gate {gate_id}")
-if not integrated_revision:
-    errors.append(...)
+if not isinstance(revision, str) or not revision:
+    errors.append(f"integration {iid}: integrated_revision is required when status=integrated")
 for eid in evidence_ids:
-    if evidence exists and evidence.status != "available":
+    ev = evidence_by_id.get(eid)
+    if ev and ev.get("status") != "available":
         errors.append(f"integration {iid}: uses unavailable evidence {eid}")
 ```
 
-Do **not** require `gate.validity == current` or computed current-valid Gate for `integrated`.
+Do not require `gate.validity == current` or effective-current Gate for completed `integrated` occurrence.
 
-For `awaiting_integration`, preserve the existing current verdict/declared/current-effective validation and available evidence requirement.
+- [ ] **Step 2: Preserve current fail-closed validation for `awaiting_integration`**
 
-For `closed_unmerged`, retain history without current Gate routing.
-
-- [ ] **Step 2: Restrict post-compute current-validity check to awaiting integrations**
-
-Change the existing validator loop that checks `noncurrent_gate_ids` so only `status == "awaiting_integration"` is rejected for stale/needs-review Gate validity. Completed `integrated` history must not be rejected solely because its Gate is now historical.
+For `awaiting_integration`, retain PASS verdict, declared `current`, effective-current Gate, and available evidence requirements. Restrict the post-compute `noncurrent_gate_ids` rejection loop to `status == "awaiting_integration"`.
 
 - [ ] **Step 3: Generate Integration applicability**
 
-Use Gate membership plus effective current validity:
+For each integration, use its Gate membership and effective validity:
 
 ```python
 if status in {"integrated", "closed_unmerged"} and membership == "historical":
     applicability = "historical"
 elif membership in {"mixed", "unknown"}:
     applicability = "needs_review"
-elif gate_effective[gid] == "stale":
+elif gate_effective.get(gate_id) == "stale":
     applicability = "stale"
-elif gate_effective[gid] == "needs_review":
+elif gate_effective.get(gate_id) == "needs_review":
     applicability = "needs_review"
 else:
     applicability = "current"
 ```
 
-For `awaiting_integration`, any non-current applicability should already fail strict validation; compute still remains deterministic.
+Append `{"integration_id": iid, "applicability": applicability}` and sort the final list by `integration_id`.
 
-- [ ] **Step 4: Ensure only current awaiting integrations create handoff**
+- [ ] **Step 4: Preserve integration handoff semantics**
 
-Keep `awaiting_integrations[]` and finishing-development-branch handoff only when the Gate is PASS/PASS_WITH_FINDINGS and current-effective. Historical completed records never create implementation handoff.
+Only `awaiting_integration` under a current-effective PASS/PASS_WITH_FINDINGS Gate may enter `awaiting_integrations[]` and create `superpowers:finishing-a-development-branch` handoff. `integrated` and `closed_unmerged` never create that handoff.
 
-- [ ] **Step 5: Run focused history and existing integration suites**
-
-Run:
+- [ ] **Step 5: Run all focused history tests**
 
 ```bash
-python3 -m unittest \
-  tests.project_state.test_history_v03 \
-  tests.project_state.test_integrations_v02 \
-  tests.project_state.test_v02_model -v
+python3 -m unittest tests.project_state.test_history_v03 -v
 ```
 
-Expected: PASS after fixture version migration; prior duplicate/dangling/evidence/current-awaiting behavior stays green.
+Expected: PASS.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add tools/aegis_state/model.py tools/aegis_state/compute.py tests/project_state
+git add tools/aegis_state/model.py tools/aegis_state/compute.py tests/project_state/test_history_v03.py
 git commit -m "feat: preserve historical integration occurrence"
 ```
 
 ---
 
-### Task 4: Advance schema/generator to v0.3 and expose generated projections
+### Task 4: Advance the executable contract to schema/generator 0.3
 
 **Files:**
 - Modify: `tools/aegis_state/__init__.py`
 - Modify: `tools/aegis_state/model.py`
 - Modify: `tools/aegis_state/compute.py`
+- Modify: `tests/project_state/helpers.py`
+- Modify: `tests/project_state/test_gate_blockers_v02.py`
+- Modify: `tests/project_state/test_integrations_v02.py`
+- Modify: `tests/project_state/test_v02_model.py`
+
+**Interfaces:**
+- `GENERATOR_VERSION == "0.3"`.
+- `SCHEMA_VERSION == "0.3"`.
+- `compute_state()` returns `schema_version == "0.3"`.
+
+- [ ] **Step 1: Advance runtime constants**
+
+Set:
+
+```python
+# tools/aegis_state/__init__.py
+GENERATOR_VERSION = "0.3"
+
+# tools/aegis_state/model.py
+SCHEMA_VERSION = "0.3"
+```
+
+Set generated `state["schema_version"]` to `"0.3"`.
+
+- [ ] **Step 2: Migrate existing project-state test fixtures from schema 0.2 to 0.3**
+
+Change fixture version strings and names needed for the new executable contract. Keep all prior behavioral assertions unchanged. Existing tests continue to prove duplicate IDs, dangling refs, Gate blocker routing, digest behavior, current-awaiting integration, and evidence requirements.
+
+- [ ] **Step 3: Run the complete project-state suite**
+
+```bash
+python3 -m unittest discover -s tests/project_state -v
+```
+
+Expected: all existing and new tests PASS.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add tools/aegis_state tests/project_state
+git commit -m "refactor: advance project state runtime to v0.3"
+```
+
+---
+
+### Task 5: Publish v0.3 schemas and migrate the minimal executable example
+
+**Files:**
 - Create: `schemas/project-state/v0.3/project.schema.json`
 - Create: `schemas/project-state/v0.3/authorities.schema.json`
 - Create: `schemas/project-state/v0.3/gates.schema.json`
 - Create: `schemas/project-state/v0.3/evidence.schema.json`
 - Create: `schemas/project-state/v0.3/integrations.schema.json`
 - Create: `schemas/project-state/v0.3/state.schema.json`
-- Modify: `examples/project-state/minimal/.aegis/*.json`
+- Modify: `examples/project-state/minimal/.aegis/project.json`
+- Modify: `examples/project-state/minimal/.aegis/authorities.json`
+- Modify: `examples/project-state/minimal/.aegis/gates.json`
+- Modify: `examples/project-state/minimal/.aegis/evidence.json`
+- Modify: `examples/project-state/minimal/.aegis/integrations.json`
+- Regenerate: `examples/project-state/minimal/.aegis/state.json`
 
 **Interfaces:**
-- `tools.aegis_state.GENERATOR_VERSION == "0.3"`
-- `tools.aegis_state.model.SCHEMA_VERSION == "0.3"`
-- generated state includes `historical_gates[]` and `integration_applicability[]`.
+- v0.1/v0.2 schema directories remain untouched.
+- v0.3 state schema includes `historical_gates[]` and `integration_applicability[]`.
 
-- [ ] **Step 1: Copy v0.2 schemas into a new v0.3 tree**
+- [ ] **Step 1: Create v0.3 schema tree by copying the six v0.2 schemas**
 
-Do not edit v0.2 files. Change `$id`, titles, and `schema_version` constants to 0.3.
+Update each `$id`, title, and `schema_version` constant to 0.3. Do not add authored applicability/actionability fields to `integrations.schema.json`.
 
-- [ ] **Step 2: Update v0.3 state schema**
+- [ ] **Step 2: Extend only the v0.3 state schema**
 
-Require deterministic fields already produced by state plus:
+Add:
 
 ```json
-"historical_gates": {
-  "type": "array",
-  "items": {"type": "string"},
-  "uniqueItems": true
-},
+"historical_gates": {"type":"array","items":{"type":"string"},"uniqueItems":true},
 "integration_applicability": {
-  "type": "array",
+  "type":"array",
   "items": {
-    "type": "object",
-    "additionalProperties": false,
-    "required": ["integration_id", "applicability"],
+    "type":"object",
+    "additionalProperties":false,
+    "required":["integration_id","applicability"],
     "properties": {
-      "integration_id": {"type": "string", "minLength": 1},
-      "applicability": {"enum": ["current", "needs_review", "stale", "historical"]}
+      "integration_id":{"type":"string","minLength":1},
+      "applicability":{"enum":["current","needs_review","stale","historical"]}
     }
   }
 }
 ```
 
-- [ ] **Step 3: Keep authored integration schema occurrence-focused**
+Require both fields in the state schema.
 
-The v0.3 `integrations.schema.json` keeps existing authored fields/statuses; do not add authored applicability/actionability fields.
+- [ ] **Step 3: Migrate minimal authored manifests to schema 0.3**
 
-- [ ] **Step 4: Advance constants and generated state version**
+Change authored manifest version strings to 0.3. Keep occurrence/actionability fields authored exactly as defined by the v0.3 schemas.
 
-Set generator/model schema to `0.3`; `compute_state()` returns `schema_version: "0.3"`.
-
-- [ ] **Step 5: Migrate minimal example to 0.3 and regenerate `state.json` using tooling**
-
-Run:
+- [ ] **Step 4: Regenerate and verify minimal state**
 
 ```bash
 python3 -m tools.aegis_state.cli recompute examples/project-state/minimal --write
@@ -343,68 +366,65 @@ python3 -m tools.aegis_state.cli validate examples/project-state/minimal
 python3 -m tools.aegis_state.cli check examples/project-state/minimal
 ```
 
-Expected:
+Expected output includes `STATE_WRITTEN`, `VALID`, and `STATE_OK`.
 
-```text
-STATE_WRITTEN
-VALID
-STATE_OK
-```
-
-Do not hand-edit generated `state.json` after recompute.
-
-- [ ] **Step 6: Parse all six v0.3 schemas**
-
-Run a stdlib JSON parse loop over `schemas/project-state/v0.3/*.json`; expected no parse failures.
-
-- [ ] **Step 7: Commit**
+- [ ] **Step 5: Parse all v0.3 schemas using stdlib JSON**
 
 ```bash
-git add tools/aegis_state schemas/project-state/v0.3 examples/project-state/minimal tests/project_state
+python3 -c 'import glob,json; [json.load(open(p)) for p in glob.glob("schemas/project-state/v0.3/*.json")]; print("SCHEMA_PARSE_OK")'
+```
+
+Expected: `SCHEMA_PARSE_OK`.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add schemas/project-state/v0.3 examples/project-state/minimal
 git commit -m "feat: publish project state schema v0.3"
 ```
 
 ---
 
-### Task 5: Update Aegis Skill project-state contract and CI
+### Task 6: Update Aegis Skill and repository CI
 
 **Files:**
 - Modify: `skills/aegis/references/project-state.md`
-- Modify: `skills/aegis/SKILL.md` only for thin version/reference wording if necessary
+- Modify: `skills/aegis/SKILL.md`
 - Modify: `.github/workflows/project-state.yml`
 
 **Interfaces:**
-- Skill continues to treat `state.json` as generated cache.
-- Skill understands historical occurrence/current applicability/current actionability split.
-- CI parses v0.3 schemas and runs full project-state tests.
+- Skill keeps `SKILL.md` as thin control plane and detailed project-state rules in `references/project-state.md`.
+- CI validates v0.3 schemas, minimal example, and full project-state tests.
 
-- [ ] **Step 1: Update `references/project-state.md` to v0.3**
+- [ ] **Step 1: Update `references/project-state.md` to v0.3 semantics**
 
-Document:
+Document exactly:
 
 ```text
 Historical Occurrence != Current Applicability != Current Actionability
+all historical Authority -> historical/non-actionable
+mixed Current + Historical Authority -> needs_review + Authority/P21
+current stale Gate -> actionable verification/P34
+historical BLOCKED verdict -> audit history only, never integration proof or current blocker
 ```
 
-and the exact all-historical / mixed / current rules from the approved spec. Preserve blocked-Gate propagation from v0.2.
+Preserve v0.2 blocked-Gate propagation rules for current Gates.
 
-- [ ] **Step 2: Keep `SKILL.md` thin**
+- [ ] **Step 2: Update only the thin bootstrap wording in `SKILL.md`**
 
-Only change bootstrap wording necessary to identify v0.3 manifests/reference; do not duplicate the full rules into the control-plane entrypoint.
+Change the version reference from v0.2 to v0.3 and mention historical/applicability bootstrap behavior. Do not duplicate the full algorithm.
 
-- [ ] **Step 3: Update workflow schema path/checks**
+- [ ] **Step 3: Update `.github/workflows/project-state.yml`**
 
-CI must parse `schemas/project-state/v0.3/*.json`, validate/check the minimal 0.3 example, and run:
+The workflow must parse `schemas/project-state/v0.3/*.json`, validate/check the minimal v0.3 example, and run:
 
 ```bash
 python3 -m unittest discover -s tests/project_state -v
 ```
 
-- [ ] **Step 4: Validate/package the Skill**
+Keep existing trigger paths for project-state Authority/spec changes.
 
-Use Skill Creator's repository validator/package scripts as required by the installed skill. Expected: `Skill is valid!` and a valid `skill.zip` archive.
-
-- [ ] **Step 5: Run full local regression**
+- [ ] **Step 4: Run full local regression**
 
 ```bash
 python3 -m unittest discover -s tests/project_state -v
@@ -412,7 +432,11 @@ python3 -m tools.aegis_state.cli validate examples/project-state/minimal
 python3 -m tools.aegis_state.cli check examples/project-state/minimal
 ```
 
-Expected: all tests pass; `VALID`; `STATE_OK`.
+Expected: unit suite PASS, `VALID`, `STATE_OK`.
+
+- [ ] **Step 5: Validate and package the complete Aegis Skill**
+
+Run the installed Skill Creator validator/package workflow against `skills/aegis`. Expected validator output contains `Skill is valid!`; archive integrity check must report no ZIP errors.
 
 - [ ] **Step 6: Commit**
 
@@ -423,98 +447,94 @@ git commit -m "docs: teach Aegis project state v0.3 history semantics"
 
 ---
 
-### Task 6: Execute R03-09 real Aegis self-host acceptance oracle
+### Task 7: Execute R03-09 real Aegis self-host oracle
 
-**Files:**
-- Evidence source: current PR #5 root `.aegis/` manifests and GitHub repository facts
-- No production special-case file.
-- If durable fixture is needed for CI, create only a generic `tests/project_state/fixtures/aegis_self_host_v03/` copy whose data is traceable to the same repository facts.
+**Evidence source:** current PR #5 root `.aegis/` manifests plus current GitHub repository facts.
 
 **Interfaces:**
-- Consumes v0.3 tooling from Tasks 2-5.
-- Produces acceptance evidence before P34.
+- Consumes v0.3 tooling.
+- Produces mandatory acceptance evidence before P34.
 
-- [ ] **Step 1: Build the truthful v0.3 self-host input from repository facts**
+- [ ] **Step 1: Build truthful v0.3 self-host input**
 
-Must preserve:
+Preserve all of these facts:
 
 ```text
 PR #4 integrated @ 555bac21d485fc4530680c61719fc36831021b0d
-07 v0.1 Superseded
+07 v0.1 = Superseded
 PR #7 integrated @ 8ca7b49d40a17e8cb7ffba86632da3aeae5e911c
-07 v0.2 Current (until v0.3 P34/supersession)
+07 v0.2 = Current until v0.3 supersession
 OpenAI real baseline = BLOCKED_ENVIRONMENT
 ```
 
-Do not delete or relabel historical PR #4 integration.
+- [ ] **Step 2: Recompute and strictly validate/check**
 
-- [ ] **Step 2: Run strict v0.3 recompute/validate/check**
-
-Required assertions:
+Required generated assertions:
 
 ```text
 int-pr4 applicability = historical
 int-pr7 applicability = current
 gate-project-state-pr4 in historical_gates
+gate-project-state-pr4 not in stale_gates
 blocking_gates = [gate-openai-real-baseline]
 earliest_untrusted_layer = verification
 recommended_next_stage = P34
 strict check = STATE_OK
 ```
 
-- [ ] **Step 3: Verify no PR #4/current-history repair hack exists**
+- [ ] **Step 3: Prove production code has no repository-specific repair**
 
-Search changed production files for `pr4`, merge SHA `555bac21`, or Aegis-specific IDs. Expected: no production logic special cases.
+Search changed production files for `pr4`, `555bac21d485fc4530680c61719fc36831021b0d`, and `Mostorm-Labs/aegis`. Expected: zero matches outside docs/tests/evidence fixtures.
 
-- [ ] **Step 4: Record exact oracle output in the feature PR / Notion evidence section**
+- [ ] **Step 4: Record exact self-host output in the feature PR and Notion v0.3 evidence section**
 
-Label it as real self-host acceptance evidence, distinct from generic unit tests.
+Label it as R03-09 acceptance evidence, distinct from generic unit regression.
 
 ---
 
-### Task 7: Repository P34 and supersession handoff
+### Task 8: P34, P23 supersession, repository integration, and formal 08 rerun
 
 **Files:**
 - Review all v0.3 changed files.
-- Update docs/status only after evidence.
+- Update Authority status only after P34 evidence passes.
 
 **Interfaces:**
-- P34 consumes: focused tests, full regression, schemas, minimal E2E, Skill validation, R03-09, GitHub CI.
+- P34 consumes focused regressions, full regression, schemas, minimal E2E, Skill package, R03-09, and fresh repository CI.
 
 - [ ] **Step 1: Open PR from `aegis/project-state-manifest-v0.3` to current `main`**
 
-PR body must state v0.2 remains Current until acceptance and list F08-03 / R03-01..09 evidence.
+PR body must identify F08-03 and list R03-01 through R03-09 evidence requirements. v0.2 remains Current while the PR is under review.
 
-- [ ] **Step 2: Require fresh GitHub CI on final head**
+- [ ] **Step 2: Require fresh CI on the final PR head**
 
-Do not accept old-head green runs. Inspect actual job steps/logs, not only status icons.
+Inspect workflow job steps/logs. Do not use an old-head green run as final evidence.
 
-- [ ] **Step 3: Perform P34**
+- [ ] **Step 3: Execute P34**
 
-Accept only if:
+Accept only when:
 
 ```text
-focused v0.3 regressions               PASS
-existing project-state regression      PASS
-v0.3 schema/minimal contract           PASS
-Skill validation/package               PASS
-R03-09 self-host oracle                STATE_OK
-historical PR #4 truth                 preserved
-current OpenAI blocker                 verification/P34
-fresh repository CI                    PASS
+focused v0.3 regressions          PASS
+full project-state regression     PASS
+v0.3 schema/minimal contract      PASS
+Aegis Skill validation/package    PASS
+R03-09 real self-host             STATE_OK
+historical PR #4 truth            preserved
+OpenAI blocker route              verification/P34
+fresh repository CI               PASS
 ```
 
-- [ ] **Step 4: If P34 passes, execute P23 supersession**
+- [ ] **Step 4: Execute P23 only after P34 acceptance**
 
-Only then:
+Set:
 
 ```text
 07 v0.2 -> Superseded/Historical
 07 v0.3 -> Current Replacement Authority
 ```
 
-Update Notion and GitHub companion docs with explicit supersession reason and evidence.
+Update Notion and repository companion docs with explicit supersession reason and accepted evidence.
 
-- [ ] **Step 5: Integrate repository PR, then formally rerun 08**
+- [ ] **Step 5: Merge the accepted v0.3 PR, record the actual merge revision, then formally rerun 08**
 
-The formal 08 rerun occurs after v0.3 repository integration. It must use current repository facts and may close F08-03 only if strict root self-host state remains truthful and `STATE_OK`.
+Formal 08 rerun must use current repository facts. F08-03 closes only if truthful root project state remains `STATE_OK` after v0.3 integration; otherwise classify the new earliest defect instead of forcing 08 PASS.
