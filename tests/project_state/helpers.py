@@ -3,26 +3,26 @@ from pathlib import Path
 
 
 def base_project():
-    return {"schema_version":"0.2","project":{"id":"demo","name":"Demo","profile":"standard","required_layers":["problem","authority","verification"],"lifecycle_hint":"implementation"}}
+    return {"schema_version":"0.3","project":{"id":"demo","name":"Demo","profile":"standard","required_layers":["problem","authority","verification"],"lifecycle_hint":"implementation"}}
 
 
 def base_authorities():
-    return {"schema_version":"0.2","authorities":[
+    return {"schema_version":"0.3","authorities":[
         {"id":"schema-v1","scope":"document","kind":"semantic_schema","version":"v1","status":"Current","ref":"docs/schema-v1.md","depends_on":[]},
         {"id":"arch-v1","scope":"runtime","kind":"system_architecture","version":"v1","status":"Current","ref":"docs/arch-v1.md","depends_on":["schema-v1"]}
     ],"impact_reviews":[]}
 
 
 def base_evidence():
-    return {"schema_version":"0.2","evidence":[{"id":"ev-g1","type":"automated_test","ref":"ci://g1","status":"available","subject_ids":["G1"]}]}
+    return {"schema_version":"0.3","evidence":[{"id":"ev-g1","type":"automated_test","ref":"ci://g1","status":"available","subject_ids":["G1"]}]}
 
 
 def base_gates():
-    return {"schema_version":"0.2","gates":[{"id":"G1","stage":"P34","verdict":"PASS","validity":"current","authority_ids":["arch-v1"],"evidence_ids":["ev-g1"]}]}
+    return {"schema_version":"0.3","gates":[{"id":"G1","stage":"P34","verdict":"PASS","validity":"current","authority_ids":["arch-v1"],"evidence_ids":["ev-g1"]}]}
 
 
 def base_integrations():
-    return {"schema_version":"0.2","integrations":[]}
+    return {"schema_version":"0.3","integrations":[]}
 
 
 def manifests():
