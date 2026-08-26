@@ -1,1 +1,0 @@
-Project State v0.3 evidence is recorded in `docs/project-state-manifest-v0.3-evidence.md` and evaluated under `2026-08-27-project-state-v0.3-p34-evidence-contract.md`.
