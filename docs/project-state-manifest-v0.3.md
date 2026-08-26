@@ -154,11 +154,12 @@ A Gate becomes historical/non-actionable only when **all** validity-bearing `aut
 Such a Gate:
 
 - remains in Gate history;
-- may support a historically true `integrated` occurrence when its historical verdict was `PASS`/`PASS_WITH_FINDINGS`;
-- does not become an active current blocker solely because its old Authority was superseded;
+- may support a historically true `integrated` occurrence only when its historical verdict was `PASS`/`PASS_WITH_FINDINGS`;
+- if its historical verdict was `BLOCKED_*`, that verdict remains audit history but cannot support an `integrated` occurrence;
+- does not reactivate an active `BLOCKED_*` current-project blocker merely because the verdict is retained;
 - must not route the current project to P34 solely for being historical.
 
-A Gate tied to any still-Current Authority whose evidence/validity is stale or needs review remains actionable and continues to route under existing validity semantics. Mixed Current + Historical Authority membership fails closed to current `needs_review`, not historical.
+A Gate tied to any still-Current Authority whose evidence/validity is stale or needs review remains actionable and continues to route under existing validity semantics. Mixed Current + Historical Authority membership fails closed to current `needs_review`, not historical; that mixed-authority condition itself contributes an Authority-layer `P21` review requirement.
 
 Generated state therefore needs a deterministic historical/actionable projection, including a representation such as `historical_gates[]` while preserving current `stale_gates[]` / `needs_review_gates[]` for actionable current problems.
 
@@ -178,10 +179,12 @@ Decision table:
 | Gate PASS, not merged | awaiting_integration | current | current/actionable | implementation handoff |
 | Gate PASS, merged | integrated | current | current/actionable | none |
 | All supporting Authority later superseded | integrated | historical | historical/non-actionable | none solely from history |
-| Mixed Current + Historical Authority | integrated | needs_review | actionable needs-review Gate | P34 |
+| Mixed Current + Historical Authority | integrated | needs_review | actionable Authority uncertainty | P21 |
 | Current Authority Gate needs review | integrated | needs_review | actionable needs-review Gate | P34 |
 | Current Authority Gate stale | integrated | stale | actionable stale Gate | P34 |
-| Gate historically BLOCKED | must not support integrated occurrence | n/a | historical blocked record | existing Gate semantics |
+| Gate historically BLOCKED and all Authority historical | must not support integrated occurrence | n/a | historical/non-actionable blocked record | none solely from history |
+
+Other independent earlier blockers may still take precedence under the existing earliest-untrusted-layer ordering.
 
 ## Versioning
 
@@ -205,11 +208,11 @@ Implementation must first add RED regressions for at least:
 
 1. `integrated` + later all supporting Authority superseded -> VALID; occurrence remains integrated; applicability = historical;
 2. `integrated` + historical PASS Gate -> allowed;
-3. `integrated` + historical BLOCKED Gate -> rejected;
+3. `integrated` + historical BLOCKED Gate -> rejected and old blocked verdict does not become a current blocker solely from history;
 4. `awaiting_integration` + stale/non-current-effective Gate -> rejected;
 5. historical stale Gate -> historical projection and no P34 routing;
 6. current Authority + stale Gate -> remains actionable and routes P34;
-7. mixed Current + Historical Gate Authorities -> `needs_review`, not historical;
+7. mixed Current + Historical Gate Authorities -> `needs_review` + Authority/P21, not historical;
 8. missing/invalid integration occurrence evidence -> integrated provenance cannot be accepted;
 9. real Aegis self-host oracle:
 
@@ -254,7 +257,8 @@ v0.3 may supersede v0.2 only when all are true:
 - schema/validator/compute regressions pass;
 - historical Integration truth survives Authority supersession;
 - stale Gate tied to current Authority still blocks correctly;
-- mixed Current/Historical dependencies fail closed to review;
+- mixed Current/Historical dependencies fail closed to Authority review;
+- historical `BLOCKED_*` verdicts do not reactivate current blockers solely from provenance;
 - stale Gate retained only as superseded-history provenance does not block current routing;
 - Aegis root self-host strict check returns `STATE_OK` under truthful PR #4 / PR #7 / OpenAI-baseline facts;
 - repository CI evidence passes the defined P34 gate;
