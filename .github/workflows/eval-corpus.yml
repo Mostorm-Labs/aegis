@@ -1,4 +1,4 @@
-name: Eval Corpus Integrity
+name: Aegis Eval Integrity
 
 on:
   push:
@@ -18,5 +18,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Validate Aegis seed corpus
+      - name: Validate Aegis corpus integrity
         run: python3 evals/scripts/validate_corpus.py
+      - name: Run Aegis evaluation unit tests
+        run: python3 -m unittest discover -s evals/tests -v
