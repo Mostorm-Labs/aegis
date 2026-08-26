@@ -30,15 +30,16 @@ Read [references/bootstrap-routing.md](references/bootstrap-routing.md) for rout
 
 When the project contains a `.aegis/` directory, inspect project-control state before ordinary routing:
 
-1. Read `project.json`, `authorities.json`, `gates.json`, `evidence.json`, and, for v0.2 projects, `integrations.json`.
+1. Read `project.json`, `authorities.json`, `gates.json`, `evidence.json`, and `integrations.json` for the current v0.3 contract.
 2. Treat `state.json` as a generated cache, never as independent authority.
-3. Validate IDs, current-authority uniqueness, dependency/supersession graphs, Gate evidence references, and declared Gate validity.
-4. Recompute derived validity when project tooling is available; compare it with committed `state.json`.
+3. Validate IDs, current-authority uniqueness, dependency/supersession graphs, Gate evidence references, Integration occurrence evidence, and declared Gate validity.
+4. Recompute derived validity, Gate actionability, and Integration applicability when project tooling is available; compare them with committed `state.json`.
 5. If manifest metadata conflicts with actual Current Authority, route to `P21`/`P22`; do not let `.aegis/` silently override authoritative documents.
-6. Include active `BLOCKED_*` Gate verdicts and awaiting repository integrations in derived routing; keep Authority status, Gate verdict/validity, and Integration status separate.
-7. If only Gate/Evidence validity is stale or a current Gate is blocked, route from the mapped Gate layer; if an upstream authority dependency is stale or needs review, route from that earlier layer.
+6. Include active `BLOCKED_*` Gate verdicts and current awaiting repository integrations in derived routing. Preserve historical Gate/Integration occurrence without reactivating completed history as current work.
+7. Keep Authority status, Gate verdict/validity, Integration occurrence, current applicability, and current actionability separate. Mixed Current/Historical Gate Authority fails closed to Authority review.
+8. If only current Gate/Evidence validity is stale or a current Gate is blocked, route from the mapped Gate layer; if an upstream authority dependency is stale or needs review, route from that earlier layer.
 
-Read [references/project-state.md](references/project-state.md) for the v0.2 manifest, blocked-Gate propagation, integration lifecycle, invalidation, and routing contract.
+Read [references/project-state.md](references/project-state.md) for the v0.3 manifest, historical occurrence/applicability/actionability split, blocked-Gate propagation, Integration lifecycle, invalidation, and routing contract.
 
 ## Stage map
 
