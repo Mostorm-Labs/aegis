@@ -96,6 +96,14 @@ class HistoryV03Tests(unittest.TestCase):
             errors = validate_manifests(load_manifests(root))
             self.assertTrue(any("unavailable evidence" in e for e in errors), errors)
 
+    def test_closed_unmerged_is_completed_history_even_under_current_gate(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_scenario(root, authorities=[auth("auth-current", "Current")], gate=gate("G-current", "PASS", ["auth-current"]), integration=integration("int-closed", "G-current", "closed_unmerged"))
+            state = compute_state(load_manifests(root))
+            self.assertIn({"integration_id":"int-closed","applicability":"historical"}, state["integration_applicability"])
+            self.assertNotIn("int-closed", state["awaiting_integrations"])
+
     def test_historical_blocked_gate_does_not_reactivate_current_blocker(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
