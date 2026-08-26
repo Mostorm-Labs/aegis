@@ -1,0 +1,15 @@
+{
+  "schema_version": "0.1",
+  "authorities": [
+    {
+      "id": "architecture-v1",
+      "scope": "runtime",
+      "kind": "system_architecture",
+      "version": "v1",
+      "status": "Current",
+      "ref": "docs/architecture-v1.md",
+      "depends_on": []
+    }
+  ],
+  "impact_reviews": []
+}
