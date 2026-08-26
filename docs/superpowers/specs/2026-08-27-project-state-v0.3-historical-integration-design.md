@@ -236,9 +236,13 @@ current actionable Gate
 
 A Gate becomes historical/non-actionable only when **all** validity-bearing `authority_ids` are `Superseded/Historical` and the Gate is retained solely as provenance for completed history.
 
+Such a Gate may support historical Integration provenance only if its historical verdict is `PASS` or `PASS_WITH_FINDINGS`.
+
+If its historical verdict is `BLOCKED_*`, retain that verdict as audit history but do not allow it to prove an `integrated` occurrence and do not reactivate it as a current blocker solely because the record remains present.
+
 A Gate remains current-actionable when any validity-bearing Authority is still `Current` and the Gate/evidence is stale or needs review.
 
-A mixed Current + Historical Authority set is never automatically historical. It is current `needs_review` until an explicit Authority review resolves the dependency set.
+A mixed Current + Historical Authority set is never automatically historical. It is current `needs_review`, and the mixed-authority condition itself contributes an Authority-layer `P21` review requirement.
 
 Generated state should expose historical Gates explicitly:
 
@@ -262,19 +266,24 @@ all validity-bearing Authority is Superseded/Historical
 → no P34 route solely from this condition
 ```
 
+This remains true even if the historical verdict was `BLOCKED_*`; the old verdict is audit history, not an active current Gate.
+
 ### Mixed Authority Gate
 
 ```text
 Current + Superseded/Historical Authority mix
 → needs_review
-→ current actionable
-→ P21/P34 as determined by the earlier untrusted layer
+→ current actionable Authority uncertainty
+→ contributes authority / P21
 ```
+
+Other independent earlier blockers may still take precedence under the existing earliest-untrusted-layer order.
 
 ### Current stale Gate
 
 ```text
 at least one subject Authority remains current
++ no unresolved mixed-authority condition
 + Gate/evidence is stale
 → actionable validity problem
 → current blocker
@@ -347,9 +356,9 @@ integrated occurrence
 
 A historical PASS/PASS_WITH_FINDINGS Gate may continue to support an already-integrated occurrence.
 
-### R03-03 — historical BLOCKED Gate cannot prove integration
+### R03-03 — historical BLOCKED Gate cannot prove integration or reactivate blocking
 
-An integrated occurrence whose historical supporting Gate verdict is blocked must be rejected.
+An integrated occurrence whose historical supporting Gate verdict is blocked must be rejected. A historical-only `BLOCKED_*` Gate must not become an active current blocker solely because its record is retained.
 
 ### R03-04 — awaiting work still requires current Gate
 
@@ -361,11 +370,11 @@ A Gate whose complete validity-bearing Authority set is Superseded/Historical mu
 
 ### R03-06 — stale current Gate remains actionable
 
-A Gate tied to any Current Authority that is stale must remain in actionable stale Gate state and route to P34.
+A Gate tied to Current Authority that is stale, with no unresolved mixed-authority condition, must remain in actionable stale Gate state and route to P34.
 
-### R03-07 — mixed Authority set fails closed
+### R03-07 — mixed Authority set fails closed to Authority review
 
-A Gate whose validity-bearing Authority set mixes Current and Superseded/Historical must become `needs_review`, not historical/non-actionable.
+A Gate whose validity-bearing Authority set mixes Current and Superseded/Historical must become `needs_review`, not historical/non-actionable, and must contribute Authority/P21 review.
 
 ### R03-08 — occurrence evidence remains mandatory
 
@@ -411,7 +420,7 @@ Do not repair failing history by:
 - treating all stale Gates as historical;
 - weakening `awaiting_integration` current-validity requirements.
 
-If the algorithm cannot determine whether a Gate is historical-only versus current-actionable, classify conservatively as `needs_review` and route to Authority/Gate review rather than silently declaring it historical.
+If the algorithm cannot determine whether a Gate is historical-only versus current-actionable, classify conservatively as `needs_review` and route to Authority review rather than silently declaring it historical.
 
 ## Components expected to change after plan approval
 
@@ -451,8 +460,9 @@ P34 may accept v0.3 only if:
 5. root Aegis self-host strict check returns `STATE_OK` with truthful repository history;
 6. current OpenAI `BLOCKED_ENVIRONMENT` remains the primary `verification/P34` blocker;
 7. PR #4 becomes historical/non-actionable rather than erased;
-8. mixed Current/Historical dependencies fail closed to review;
-9. repository CI provides fresh evidence.
+8. mixed Current/Historical dependencies fail closed to Authority review;
+9. historical `BLOCKED_*` verdicts do not reactivate current blockers solely from provenance;
+10. repository CI provides fresh evidence.
 
 Only after P34 acceptance:
 
