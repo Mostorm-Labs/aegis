@@ -52,14 +52,9 @@ A result becomes a stable dependency only when its required evidence passes the 
 
 Aegis is evaluated as a lifecycle decision system, not as a prose generator.
 
-The v0.1 evaluation framework defines a 30-case machine-readable seed corpus covering:
+The Evaluation & Dogfooding Framework starts with a **protected 30-case seed corpus** covering routing, authority, defect, and gate behavior. The corpus is intentionally extensible: real failures are added permanently as `dogfood` or `incident` regressions rather than replacing seed cases.
 
-- routing;
-- authority classification and drift;
-- defect classification;
-- gate verdicts.
-
-The corpus intentionally includes critical safety cases such as false PASS/READY, repository behavior being incorrectly promoted to authority, missing evidence being treated as optional, and defects being repaired at the wrong layer.
+The first dogfood regression (`defect-007`) was created by Aegis evaluating its own evaluation framework: the original validator incorrectly treated 30 as a corpus ceiling. CI now protects the 30 seed IDs while allowing regression growth.
 
 Validate corpus integrity locally with:
 
