@@ -1,0 +1,36 @@
+[
+  {
+    "id": "defect-007",
+    "category": "defect",
+    "title": "Dogfood regression growth cannot be capped at the 30-case seed",
+    "severity": "high",
+    "origin": "dogfood",
+    "input": {
+      "prompt": "The evaluation framework says every meaningful real Aegis failure should become a permanent regression case, but the corpus validator rejects any 31st case because it requires exactly 30 total cases. How should this be classified and repaired?",
+      "context": [
+        "The 30-case set was defined as the v0.1 seed corpus.",
+        "The dogfooding protocol requires durable growth after real failures.",
+        "The validator enforced total == 30 and therefore blocked the protocol itself."
+      ]
+    },
+    "expected": {
+      "status": "BLOCKED_AUTHORITY",
+      "earliest_untrusted_layer": "verification",
+      "start_stage": "P35",
+      "required_stages": ["P35", "P20", "P36"],
+      "forbidden_stages": ["P32"],
+      "authority_classification": [],
+      "defect_classification": "SPEC_DEFECT",
+      "gate_verdict": null,
+      "required_findings": [
+        "The seed count is a protected baseline, not a permanent corpus ceiling.",
+        "Verification authority and validator behavior must allow new dogfood/incident cases while preserving all seed cases."
+      ],
+      "forbidden_findings": [
+        "Delete an existing seed case to keep the total at 30.",
+        "Skip adding the dogfood regression because the corpus is full."
+      ]
+    },
+    "tags": ["dogfood", "evaluation-framework", "seed-policy", "regression"]
+  }
+]

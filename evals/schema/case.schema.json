@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mostorm-labs.github.io/aegis/evals/schema/case.schema.json",
+  "title": "Aegis Evaluation Case v0.1",
+  "type": "object",
+  "required": ["id", "category", "title", "severity", "origin", "input", "expected", "tags"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^(routing|authority|defect|gate)-[0-9]{3}$"},
+    "category": {"enum": ["routing", "authority", "defect", "gate"]},
+    "title": {"type": "string", "minLength": 3},
+    "severity": {"enum": ["normal", "high", "critical"]},
+    "origin": {"enum": ["synthetic", "dogfood", "incident"]},
+    "input": {
+      "type": "object",
+      "required": ["prompt", "context"],
+      "properties": {
+        "prompt": {"type": "string", "minLength": 3},
+        "context": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "expected": {
+      "type": "object",
+      "required": [
+        "status",
+        "earliest_untrusted_layer",
+        "start_stage",
+        "required_stages",
+        "forbidden_stages",
+        "required_findings",
+        "forbidden_findings"
+      ],
+      "properties": {
+        "status": {"type": ["string", "null"]},
+        "earliest_untrusted_layer": {"type": ["string", "null"]},
+        "start_stage": {"type": ["string", "null"]},
+        "required_stages": {"type": "array", "items": {"type": "string"}},
+        "forbidden_stages": {"type": "array", "items": {"type": "string"}},
+        "authority_classification": {"type": "array", "items": {"type": "string"}},
+        "defect_classification": {"type": ["string", "null"]},
+        "gate_verdict": {"type": ["string", "null"]},
+        "required_findings": {"type": "array", "items": {"type": "string"}},
+        "forbidden_findings": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "tags": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

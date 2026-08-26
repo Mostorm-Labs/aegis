@@ -48,6 +48,22 @@ Aegis finds the **Earliest Untrusted Layer** instead of blindly starting from co
 
 A result becomes a stable dependency only when its required evidence passes the relevant gate.
 
+## Evaluation & dogfooding
+
+Aegis is evaluated as a lifecycle decision system, not as a prose generator.
+
+The Evaluation & Dogfooding Framework starts with a **protected 30-case seed corpus** covering routing, authority, defect, and gate behavior. The corpus is intentionally extensible: real failures are added permanently as `dogfood` or `incident` regressions rather than replacing seed cases.
+
+The first dogfood regression (`defect-007`) was created by Aegis evaluating its own evaluation framework: the original validator incorrectly treated 30 as a corpus ceiling. CI now protects the 30 seed IDs while allowing regression growth.
+
+Validate corpus integrity locally with:
+
+```bash
+python3 evals/scripts/validate_corpus.py
+```
+
+See [`docs/evaluation-and-dogfooding-v0.1.md`](docs/evaluation-and-dogfooding-v0.1.md) and [`evals/README.md`](evals/README.md).
+
 ## Aegis + Superpowers
 
 Aegis is designed to compose with Superpowers rather than duplicate it.
@@ -69,12 +85,13 @@ The resulting archive should be named `skill.zip`.
 
 ## Status
 
-**v0.1 — Initial usable Skill.** The current goal is to validate routing and stage behavior on real projects before splitting Aegis into a multi-Skill suite.
+**v0.1 — Initial usable Skill.** The current development focus is v0.2 evaluation and dogfooding: establish behavioral baselines and regression evidence before splitting Aegis into a multi-Skill suite.
 
 ## Documentation
 
 - [`docs/methodology.md`](docs/methodology.md)
 - [`docs/architecture.md`](docs/architecture.md)
+- [`docs/evaluation-and-dogfooding-v0.1.md`](docs/evaluation-and-dogfooding-v0.1.md)
 - [`docs/roadmap.md`](docs/roadmap.md)
 
 ## License
