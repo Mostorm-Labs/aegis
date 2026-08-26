@@ -1,0 +1,12 @@
+{
+  "schema_version": "0.1",
+  "evidence": [
+    {
+      "id": "ev-g1",
+      "type": "automated_test",
+      "ref": "ci://example/g1",
+      "status": "available",
+      "subject_ids": ["G1"]
+    }
+  ]
+}

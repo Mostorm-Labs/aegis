@@ -1,0 +1,13 @@
+{
+  "active_stage": "implementation",
+  "blocking_findings": [],
+  "earliest_untrusted_layer": null,
+  "generator_version": "0.1",
+  "manifest_digest": "b920c4c5866b7f81be25a2e9672175190aba5fa3984a2c43dad9c8d568e5454d",
+  "needs_review_authorities": [],
+  "needs_review_gates": [],
+  "recommended_next_stage": null,
+  "schema_version": "0.1",
+  "stale_authorities": [],
+  "stale_gates": []
+}

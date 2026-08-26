@@ -34,6 +34,25 @@ A multi-Skill suite is likely the long-term architecture, but v0.1 first needs e
 
 Prematurely splitting all stages would create trigger and maintenance complexity before real usage evidence exists.
 
+## Persistent project-control state
+
+Aegis may optionally consume a project-owned `.aegis/` directory:
+
+```text
+.aegis/
+├── project.json
+├── authorities.json
+├── gates.json
+├── evidence.json
+└── state.json
+```
+
+The first four files are authored control metadata; `state.json` is a deterministic generated projection. This layer reduces repeated project-state reconstruction, makes validity dependencies machine-readable, and allows supersession to invalidate downstream authority/gates without rewriting historical Gate verdicts.
+
+The project-state layer does **not** become a new product/design authority. It points to and validates existing authority. If manifest metadata conflicts with a Current PRD/ADR/schema/architecture source, Aegis routes to Authority Review instead of silently preferring the manifest.
+
+See `docs/project-state-manifest-v0.1.md`.
+
 ## Future suite boundary
 
 Likely high-value independent Skills include:
@@ -54,4 +73,4 @@ Other low-frequency stages may remain reference-driven under a shared Aegis rout
 
 Aegis itself is reusable process authority. It must not embed private product authority.
 
-Project-specific Notion pages, repositories, PRDs, schemas, CI logs, and architecture decisions are read at execution time and classified as Current Authority, Draft/Proposed, Superseded/Historical, Implementation Reality, or Evidence.
+Project-specific Notion pages, repositories, PRDs, schemas, CI logs, architecture decisions, and `.aegis/` manifests are read at execution time and classified as Current Authority, Draft/Proposed, Superseded/Historical, Implementation Reality, Evidence, or project-control metadata as appropriate.
