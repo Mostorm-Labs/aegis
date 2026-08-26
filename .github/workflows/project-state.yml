@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - ".aegis/**"
+      - "docs/project-state-manifest-v*.md"
       - "schemas/project-state/**"
       - "tools/aegis_state/**"
       - "tests/project_state/**"
@@ -13,12 +14,17 @@ on:
   pull_request:
     paths:
       - ".aegis/**"
+      - "docs/project-state-manifest-v*.md"
       - "schemas/project-state/**"
       - "tools/aegis_state/**"
       - "tests/project_state/**"
       - "examples/project-state/**"
       - "skills/aegis/**"
       - ".github/workflows/project-state.yml"
+
+concurrency:
+  group: project-state-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate:
