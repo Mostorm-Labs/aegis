@@ -17,13 +17,13 @@ v0.1 is the current integrated project-state baseline until v0.2 completes P34, 
 
 As of the v0.2 P34 rerun:
 
+- PR #3 (06-02 provider tooling) is **integrated** into `main` at merge revision `d55686123bd22254c196f8232c8b115f469bde1e`; the live provider baseline remains separately `BLOCKED_ENVIRONMENT` because no OpenAI API credential is available.
 - PR #4 (07 v0.1) is **integrated** into `main` at merge revision `555bac21d485fc4530680c61719fc36831021b0d`.
 - PR #6 is **closed/unmerged** as a historical P34/check-suite container after cancelled/startup-failure/queued zombie workflow records; it is environment history, not current acceptance evidence.
 - PR #7 is the clean 07 v0.2 P34 replacement container targeting `main` directly.
-- PR #3 provider tooling remains open/unmerged and is still `awaiting_integration` if represented in a v0.2 project manifest.
 - Only a fresh final-head `main`-based PR-context run on PR #7 is eligible P34 repository evidence.
 
-This is the concrete F08-02 distinction: Authority acceptance, Gate verdict, and repository integration are separate state dimensions.
+This is the concrete F08-02 distinction: Authority acceptance, Gate verdict, and repository integration are separate state dimensions. Provider tooling integration and live-provider behavioral evidence are also separate facts.
 
 ## Scope
 
@@ -156,7 +156,7 @@ v0.2 does not supersede v0.1 merely because unit tests pass. Acceptance requires
 - a fresh final-head PR-context CI run against `main` PASS on PR #7;
 - Aegis Skill project-state reference updated and repackaged;
 - formal 08 self-hosting rerun shows the real `BLOCKED_ENVIRONMENT` Gate in derived state;
+- PR #3 is represented as `integrated` at `d55686123bd22254c196f8232c8b115f469bde1e`;
 - PR #4 is represented as `integrated` at `555bac21d485fc4530680c61719fc36831021b0d`;
-- PR #3 remains `awaiting_integration` until repository reality changes;
 - PR #6 remains `closed_unmerged` history;
 - PR #7 remains `awaiting_integration` until the replacement is merged into `main`.
