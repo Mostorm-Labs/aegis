@@ -14,11 +14,11 @@ def write_project(root: Path, *, integration_status="awaiting_integration", gate
     if integrated_revision is not None:
         integration["integrated_revision"] = integrated_revision
     docs = {
-        "project.json": {"schema_version":"0.2","project":{"id":"demo","name":"Demo","profile":"standard","lifecycle_hint":"implementation"}},
-        "authorities.json": {"schema_version":"0.2","authorities":[{"id":"auth","scope":"runtime","kind":"system_architecture","version":"v1","status":"Current","ref":"docs/a.md","depends_on":[]}],"impact_reviews":[]},
-        "gates.json": {"schema_version":"0.2","gates":[{"id":"G1","stage":"P34","verdict":gate_verdict,"validity":"current","authority_ids":["auth"],"evidence_ids":["ev"]}]},
-        "evidence.json": {"schema_version":"0.2","evidence":[{"id":"ev","type":"ci","ref":"ci://g1","status":"available"}]},
-        "integrations.json": {"schema_version":"0.2","integrations":[integration]},
+        "project.json": {"schema_version":"0.3","project":{"id":"demo","name":"Demo","profile":"standard","lifecycle_hint":"implementation"}},
+        "authorities.json": {"schema_version":"0.3","authorities":[{"id":"auth","scope":"runtime","kind":"system_architecture","version":"v1","status":"Current","ref":"docs/a.md","depends_on":[]}],"impact_reviews":[]},
+        "gates.json": {"schema_version":"0.3","gates":[{"id":"G1","stage":"P34","verdict":gate_verdict,"validity":"current","authority_ids":["auth"],"evidence_ids":["ev"]}]},
+        "evidence.json": {"schema_version":"0.3","evidence":[{"id":"ev","type":"ci","ref":"ci://g1","status":"available"}]},
+        "integrations.json": {"schema_version":"0.3","integrations":[integration]},
     }
     for name, data in docs.items():
         (d / name).write_text(json.dumps(data), encoding="utf-8")
