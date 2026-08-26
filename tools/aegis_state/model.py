@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
-SCHEMA_VERSION = "0.1"
+SCHEMA_VERSION = "0.2"
 AUTHORITY_STATUSES = {"Proposed", "Current", "Superseded", "Historical"}
 GATE_VERDICTS = {
     "PASS", "PASS_WITH_FINDINGS", "BLOCKED_IMPLEMENTATION",
@@ -13,6 +13,7 @@ GATE_VERDICTS = {
 GATE_VALIDITY = {"current", "needs_review", "stale"}
 EVIDENCE_STATUSES = {"available", "missing", "invalid", "superseded"}
 PASS_VERDICTS = {"PASS", "PASS_WITH_FINDINGS"}
+INTEGRATION_STATUSES = {"awaiting_integration", "integrated", "closed_unmerged"}
 
 
 class ManifestError(ValueError):
@@ -26,6 +27,7 @@ class ManifestSet:
     authorities: dict
     gates: dict
     evidence: dict
+    integrations: dict = field(default_factory=lambda: {"schema_version": SCHEMA_VERSION, "integrations": []})
 
     @property
     def authority_items(self) -> list[dict]:
@@ -42,6 +44,10 @@ class ManifestSet:
     @property
     def evidence_items(self) -> list[dict]:
         return list(self.evidence.get("evidence", []))
+
+    @property
+    def integration_items(self) -> list[dict]:
+        return list(self.integrations.get("integrations", []))
 
 
 def _read_json(path: Path) -> dict:
@@ -65,6 +71,7 @@ def load_manifests(project_root: Path | str) -> ManifestSet:
         authorities=_read_json(manifest_root / "authorities.json"),
         gates=_read_json(manifest_root / "gates.json"),
         evidence=_read_json(manifest_root / "evidence.json"),
+        integrations=_read_json(manifest_root / "integrations.json"),
     )
 
 
@@ -117,6 +124,7 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
     for name, data in [
         ("project", manifests.project), ("authorities", manifests.authorities),
         ("gates", manifests.gates), ("evidence", manifests.evidence),
+        ("integrations", manifests.integrations),
     ]:
         if data.get("schema_version") != SCHEMA_VERSION:
             errors.append(f"{name}: schema_version must be {SCHEMA_VERSION}")
@@ -125,33 +133,35 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
     if not isinstance(project, dict):
         errors.append("project: project must be an object")
     else:
-        for field in ("id", "name", "profile"):
-            if not isinstance(project.get(field), str) or not project.get(field):
-                errors.append(f"project: missing non-empty {field}")
+        for required in ("id", "name", "profile"):
+            if not isinstance(project.get(required), str) or not project.get(required):
+                errors.append(f"project: missing non-empty {required}")
         if project.get("profile") not in {"lite", "standard", "full"}:
             errors.append("project: profile must be lite, standard, or full")
 
     authorities = manifests.authority_items
     gates = manifests.gate_items
     evidence = manifests.evidence_items
+    integrations = manifests.integration_items
     reviews = manifests.impact_reviews
 
     for registry_name, items in [
-        ("authority", authorities), ("gate", gates),
-        ("evidence", evidence), ("impact review", reviews),
+        ("authority", authorities), ("gate", gates), ("evidence", evidence),
+        ("integration", integrations), ("impact review", reviews),
     ]:
         for duplicate in sorted(_duplicates(items, "id")):
             errors.append(f"duplicate {registry_name} id: {duplicate}")
 
     auth_by_id = {item.get("id"): item for item in authorities if isinstance(item.get("id"), str)}
+    gate_by_id = {item.get("id"): item for item in gates if isinstance(item.get("id"), str)}
     evidence_by_id = {item.get("id"): item for item in evidence if isinstance(item.get("id"), str)}
 
     current_by_scope_kind: dict[tuple[str, str], list[str]] = {}
     for item in authorities:
         aid = item.get("id")
-        for field in ("id", "scope", "kind", "version", "status", "ref"):
-            if not isinstance(item.get(field), str) or not item.get(field):
-                errors.append(f"authority {aid or '<unknown>'}: missing non-empty {field}")
+        for required in ("id", "scope", "kind", "version", "status", "ref"):
+            if not isinstance(item.get(required), str) or not item.get(required):
+                errors.append(f"authority {aid or '<unknown>'}: missing non-empty {required}")
         if item.get("status") not in AUTHORITY_STATUSES:
             errors.append(f"authority {aid}: invalid status {item.get('status')}")
         deps = item.get("depends_on", [])
@@ -190,9 +200,9 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
 
     for item in evidence:
         eid = item.get("id")
-        for field in ("id", "type", "ref", "status"):
-            if not isinstance(item.get(field), str) or not item.get(field):
-                errors.append(f"evidence {eid or '<unknown>'}: missing non-empty {field}")
+        for required in ("id", "type", "ref", "status"):
+            if not isinstance(item.get(required), str) or not item.get(required):
+                errors.append(f"evidence {eid or '<unknown>'}: missing non-empty {required}")
         if item.get("status") not in EVIDENCE_STATUSES:
             errors.append(f"evidence {eid}: invalid status {item.get('status')}")
 
@@ -245,5 +255,51 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
         for eid in evidence_ids:
             if eid not in evidence_by_id:
                 errors.append(f"impact review {rid}: dangling evidence id {eid}")
+
+    for integration in integrations:
+        iid = integration.get("id")
+        for required in ("id", "kind", "ref", "gate_id", "status", "target_ref"):
+            if not isinstance(integration.get(required), str) or not integration.get(required):
+                errors.append(f"integration {iid or '<unknown>'}: missing non-empty {required}")
+        if integration.get("status") not in INTEGRATION_STATUSES:
+            errors.append(f"integration {iid}: invalid status {integration.get('status')}")
+        gate_id = integration.get("gate_id")
+        gate = gate_by_id.get(gate_id)
+        if gate_id not in gate_by_id:
+            errors.append(f"integration {iid}: dangling gate id {gate_id}")
+        evidence_ids = integration.get("evidence_ids", [])
+        if not isinstance(evidence_ids, list) or not all(isinstance(x, str) for x in evidence_ids):
+            errors.append(f"integration {iid}: evidence_ids must be a string array")
+            evidence_ids = []
+        for eid in evidence_ids:
+            if eid not in evidence_by_id:
+                errors.append(f"integration {iid}: dangling evidence id {eid}")
+        status = integration.get("status")
+        revision = integration.get("integrated_revision")
+        if status == "integrated" and (not isinstance(revision, str) or not revision):
+            errors.append(f"integration {iid}: integrated_revision is required when status=integrated")
+        if status != "integrated" and revision is not None:
+            errors.append(f"integration {iid}: integrated_revision is only allowed when status=integrated")
+        if strict_gate_validity and status in {"awaiting_integration", "integrated"} and gate:
+            if gate.get("verdict") not in PASS_VERDICTS:
+                errors.append(f"integration {iid}: requires PASS/PASS_WITH_FINDINGS gate {gate_id}")
+            if gate.get("validity") != "current":
+                errors.append(f"integration {iid}: requires current gate {gate_id}")
+            for eid in evidence_ids:
+                ev = evidence_by_id.get(eid)
+                if ev and ev.get("status") != "available":
+                    errors.append(f"integration {iid}: uses unavailable evidence {eid}")
+
+    if strict_gate_validity and integrations and not errors:
+        from .compute import compute_state
+
+        derived = compute_state(manifests)
+        noncurrent_gate_ids = set(derived.get("stale_gates", [])) | set(derived.get("needs_review_gates", []))
+        for integration in integrations:
+            if integration.get("status") not in {"awaiting_integration", "integrated"}:
+                continue
+            gate_id = integration.get("gate_id")
+            if gate_id in noncurrent_gate_ids:
+                errors.append(f"integration {integration.get('id')}: requires current-valid gate {gate_id}")
 
     return errors
