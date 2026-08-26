@@ -1,0 +1,36 @@
+name: Aegis Project State Integrity
+
+on:
+  push:
+    paths:
+      - ".aegis/**"
+      - "schemas/project-state/**"
+      - "tools/aegis_state/**"
+      - "tests/project_state/**"
+      - "examples/project-state/**"
+      - "skills/aegis/**"
+      - ".github/workflows/project-state.yml"
+  pull_request:
+    paths:
+      - ".aegis/**"
+      - "schemas/project-state/**"
+      - "tools/aegis_state/**"
+      - "tests/project_state/**"
+      - "examples/project-state/**"
+      - "skills/aegis/**"
+      - ".github/workflows/project-state.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate minimal project manifests
+        run: python3 -m tools.aegis_state.cli validate examples/project-state/minimal
+      - name: Check generated minimal project state
+        run: python3 -m tools.aegis_state.cli check examples/project-state/minimal
+      - name: Run project-state unit tests
+        run: python3 -m unittest discover -s tests/project_state -v
