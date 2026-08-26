@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mostorm-labs.github.io/aegis/schemas/project-state/v0.1/state.schema.json",
+  "title": "Aegis Generated Project State v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "generator_version", "manifest_digest", "active_stage", "earliest_untrusted_layer", "blocking_findings", "stale_authorities", "needs_review_authorities", "stale_gates", "needs_review_gates", "recommended_next_stage"],
+  "properties": {
+    "schema_version": {"const": "0.1"},
+    "generator_version": {"const": "0.1"},
+    "manifest_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "active_stage": {"type": ["string", "null"]},
+    "earliest_untrusted_layer": {"type": ["string", "null"]},
+    "blocking_findings": {"type": "array", "items": {"type": "string"}},
+    "stale_authorities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "needs_review_authorities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "stale_gates": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "needs_review_gates": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "recommended_next_stage": {"type": ["string", "null"]}
+  }
+}
