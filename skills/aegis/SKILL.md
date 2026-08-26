@@ -26,6 +26,19 @@ Do not force every project through every stage. Preserve the logic even when sta
 
 Read [references/bootstrap-routing.md](references/bootstrap-routing.md) for routing rules and profile selection.
 
+## Project-state bootstrap
+
+When the project contains a `.aegis/` directory, inspect project-control state before ordinary routing:
+
+1. Read `project.json`, `authorities.json`, `gates.json`, and `evidence.json`.
+2. Treat `state.json` as a generated cache, never as independent authority.
+3. Validate IDs, current-authority uniqueness, dependency/supersession graphs, Gate evidence references, and declared Gate validity.
+4. Recompute derived validity when project tooling is available; compare it with committed `state.json`.
+5. If manifest metadata conflicts with actual Current Authority, route to `P21`/`P22`; do not let `.aegis/` silently override authoritative documents.
+6. If only Gate/Evidence validity is stale, route to `P34`; if an upstream authority dependency is stale or needs review, route from that earliest untrusted layer.
+
+Read [references/project-state.md](references/project-state.md) for the v0.1 manifest, invalidation, and routing contract.
+
 ## Stage map
 
 Use these stage IDs consistently:
