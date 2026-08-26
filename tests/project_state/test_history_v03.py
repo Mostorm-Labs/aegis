@@ -9,11 +9,11 @@ from tools.aegis_state.model import load_manifests, validate_manifests
 
 def write_scenario(root: Path, *, authorities, gate, integration, evidence_status="available"):
     docs = {
-        "project.json": {"schema_version":"0.2","project":{"id":"demo","name":"Demo","profile":"standard","lifecycle_hint":"implementation"}},
-        "authorities.json": {"schema_version":"0.2","authorities":authorities,"impact_reviews":[]},
-        "gates.json": {"schema_version":"0.2","gates":[gate]},
-        "evidence.json": {"schema_version":"0.2","evidence":[{"id":"ev","type":"ci","ref":"ci://history","status":evidence_status}]},
-        "integrations.json": {"schema_version":"0.2","integrations":[integration]},
+        "project.json": {"schema_version":"0.3","project":{"id":"demo","name":"Demo","profile":"standard","lifecycle_hint":"implementation"}},
+        "authorities.json": {"schema_version":"0.3","authorities":authorities,"impact_reviews":[]},
+        "gates.json": {"schema_version":"0.3","gates":[gate]},
+        "evidence.json": {"schema_version":"0.3","evidence":[{"id":"ev","type":"ci","ref":"ci://history","status":evidence_status}]},
+        "integrations.json": {"schema_version":"0.3","integrations":[integration]},
     }
     aegis = root / ".aegis"
     aegis.mkdir(parents=True)
