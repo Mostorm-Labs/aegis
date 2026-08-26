@@ -1,0 +1,105 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "status",
+    "earliest_untrusted_layer",
+    "start_stage",
+    "route",
+    "authority_classification",
+    "defect_classification",
+    "gate_verdict",
+    "findings",
+    "evidence_requirements"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "READY",
+        "READY_WITH_FINDINGS",
+        "BLOCKED_AUTHORITY",
+        "BLOCKED_MISSING_INPUT",
+        "BLOCKED_UNRESOLVED_DECISION",
+        "BLOCKED_EVIDENCE",
+        "BLOCKED_IMPLEMENTATION",
+        "BLOCKED_ENVIRONMENT"
+      ]
+    },
+    "earliest_untrusted_layer": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "start_stage": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "route": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "authority_classification": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "defect_classification": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "IMPLEMENTATION_DEFECT",
+        "SPEC_DEFECT",
+        "AUTHORITY_CONFLICT",
+        "MISSING_CONTRACT",
+        "TEST_DEFECT",
+        "EVIDENCE_GAP",
+        "ENVIRONMENT_DEFECT",
+        "DEPENDENCY_BLOCKER",
+        "UNRESOLVED_DECISION",
+        null
+      ]
+    },
+    "gate_verdict": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "PASS",
+        "PASS_WITH_FINDINGS",
+        "BLOCKED_AUTHORITY",
+        "BLOCKED_MISSING_INPUT",
+        "BLOCKED_UNRESOLVED_DECISION",
+        "BLOCKED_EVIDENCE",
+        "BLOCKED_IMPLEMENTATION",
+        "BLOCKED_ENVIRONMENT",
+        null
+      ]
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
