@@ -1,6 +1,8 @@
 # Aegis Evaluation & Dogfooding Framework v0.1
 
-Status: Proposed Verification Authority
+Status: Current Verification Authority
+
+Accepted by P34 Gate Review in PR #1 and merged to `main` at `9cb251ab8f245a57b51c5e0161f86c97dfde306d`.
 
 ## 1. Purpose
 
@@ -30,7 +32,7 @@ Evaluation decisions inherit Aegis v0.1 authority:
 - `skills/aegis/SKILL.md` — control-plane behavior contract;
 - `skills/aegis/references/stage-contracts.md` — stage outputs and exits;
 - `skills/aegis/references/verification-governance.md` — evidence, drift, defect, and gate vocabulary;
-- this document — proposed verification authority for evaluating Aegis itself.
+- this document — Current Verification Authority for evaluating Aegis itself.
 
 If the corpus conflicts with Current Aegis Authority, the corpus is wrong until the authority is explicitly revised or superseded.
 
@@ -209,6 +211,10 @@ The v0.1 CI proves:
 - category-specific expectations;
 - all 30 protected seed IDs remain present;
 - additional dogfood/incident cases are allowed.
+
+Fresh accepted evidence from PR #1:
+
+`PASS: 31 cases validated (authority=8, defect=7, gate=6, routing=10; seed=30, extensible=true)`
 
 It does not prove Aegis behavioral quality.
 
