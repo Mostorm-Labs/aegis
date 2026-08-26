@@ -129,7 +129,7 @@ Examples:
 
 - awaiting integration under a current PASS Gate -> actionable implementation handoff;
 - current stale Gate -> actionable P34 review;
-- stale Gate whose entire subject Authority is superseded history -> non-actionable historical record.
+- stale Gate whose complete validity-bearing Authority set is superseded history -> non-actionable historical record.
 
 ## Integration model
 
@@ -153,9 +153,11 @@ An `integrated` record is valid when:
 2. historical Gate verdict is `PASS` or `PASS_WITH_FINDINGS`;
 3. `integrated_revision` exists;
 4. occurrence evidence exists;
-5. occurrence evidence is available.
+5. occurrence evidence is `available`.
 
 It does not require the Gate to remain effective-current after later Authority supersession.
+
+If old occurrence evidence is replaced, the Integration may cite replacement `available` evidence without changing the historical occurrence. Evidence registry semantics otherwise remain unchanged in v0.3.
 
 This means a once-valid integration remains part of audit history even when its Authority is later superseded.
 
@@ -172,7 +174,7 @@ This preserves v0.2's fail-closed merge handoff behavior.
 
 ### `closed_unmerged`
 
-Remains historical evidence that the implementation candidate did not enter the baseline. It does not require current Gate validity and does not route as awaiting work.
+Remains historical evidence that the implementation candidate did not enter the baseline. It does not require current Gate validity and does not route as awaiting work. Once closed with no current action remaining, its applicability is historical.
 
 ## Derived Integration applicability
 
@@ -189,14 +191,16 @@ historical
 
 Rules:
 
-- current-effective Gate + current supporting Authority -> `current`;
-- current Authority but needs-review Gate/evidence -> `needs_review`;
-- current Authority but stale/invalid Gate/evidence -> `stale`;
-- supporting Authority is Superseded/Historical and occurrence is durable history -> `historical`.
+- `current`: all Gate `authority_ids` are `Current`, the Gate is effective-current, and required evidence is current-usable;
+- `needs_review`: at least one referenced Authority remains `Current` but the Gate/evidence needs review, **or** the Gate references a mixed set of `Current` and `Superseded/Historical` Authorities;
+- `stale`: at least one referenced Authority remains `Current` and current Gate/evidence validity is stale/invalid;
+- `historical`: the occurrence is completed (`integrated` or `closed_unmerged`) and **all** validity-bearing Gate Authorities are `Superseded/Historical`.
+
+A mixed Current + Historical Authority set must never be silently classified as historical. If the algorithm cannot establish the complete validity-bearing Authority set, fail closed to `needs_review`.
 
 The projection is generated into `state.json`, not authored into `integrations.json`.
 
-The final JSON shape must be deterministic and schema-defined. Preferred representation:
+Preferred deterministic representation:
 
 ```json
 {
@@ -230,11 +234,13 @@ historical Gate
 current actionable Gate
 ```
 
-A stale Gate is classified as historical/non-actionable when the reason it is stale is that all relevant supporting Authority for its reviewed subject is now Superseded/Historical and the Gate is retained solely as provenance for completed history.
+A Gate becomes historical/non-actionable only when **all** validity-bearing `authority_ids` are `Superseded/Historical` and the Gate is retained solely as provenance for completed history.
 
-A Gate remains current-actionable when it relates to still-current Authority and its evidence/validity is stale or needs review.
+A Gate remains current-actionable when any validity-bearing Authority is still `Current` and the Gate/evidence is stale or needs review.
 
-Generated state should expose historical Gates explicitly, preferably:
+A mixed Current + Historical Authority set is never automatically historical. It is current `needs_review` until an explicit Authority review resolves the dependency set.
+
+Generated state should expose historical Gates explicitly:
 
 ```json
 {
@@ -249,16 +255,26 @@ Generated state should expose historical Gates explicitly, preferably:
 ### Historical Gate
 
 ```text
-Gate stale only because subject Authority is superseded history
-→ retain in historical_gates
+all validity-bearing Authority is Superseded/Historical
++ Gate retained for completed-history provenance
+→ historical_gates
 → no current blocker solely from this condition
 → no P34 route solely from this condition
+```
+
+### Mixed Authority Gate
+
+```text
+Current + Superseded/Historical Authority mix
+→ needs_review
+→ current actionable
+→ P21/P34 as determined by the earlier untrusted layer
 ```
 
 ### Current stale Gate
 
 ```text
-subject Authority remains current
+at least one subject Authority remains current
 + Gate/evidence is stale
 → actionable validity problem
 → current blocker
@@ -269,7 +285,7 @@ subject Authority remains current
 
 ```text
 integrated occurrence
-+ supporting Authority superseded
++ all supporting Authority superseded/historical
 → occurrence stays integrated
 → applicability = historical
 → no integration handoff
@@ -321,7 +337,7 @@ The implementation plan must begin with RED tests. Required oracles:
 
 ```text
 integrated occurrence
-+ supporting Authority later superseded
++ all supporting Authority later superseded
 → manifest VALID
 → integration status remains integrated
 → applicability = historical
@@ -341,17 +357,21 @@ An integrated occurrence whose historical supporting Gate verdict is blocked mus
 
 ### R03-05 — historical stale Gate is non-actionable
 
-A Gate stale solely because its Authority was superseded must appear in historical Gate projection and must not route to P34.
+A Gate whose complete validity-bearing Authority set is Superseded/Historical must appear in historical Gate projection and must not route to P34 solely for that historical status.
 
 ### R03-06 — stale current Gate remains actionable
 
-A Gate tied to current Authority that is stale must remain in actionable stale Gate state and route to P34.
+A Gate tied to any Current Authority that is stale must remain in actionable stale Gate state and route to P34.
 
-### R03-07 — occurrence evidence remains mandatory
+### R03-07 — mixed Authority set fails closed
 
-Missing/invalid integration evidence invalidates an `integrated` occurrence even when historical.
+A Gate whose validity-bearing Authority set mixes Current and Superseded/Historical must become `needs_review`, not historical/non-actionable.
 
-### R03-08 — real Aegis self-host acceptance oracle
+### R03-08 — occurrence evidence remains mandatory
+
+Missing/invalid occurrence evidence invalidates an `integrated` occurrence. A replacement available evidence record may be cited without changing the occurrence.
+
+### R03-09 — real Aegis self-host acceptance oracle
 
 Input reality:
 
@@ -377,7 +397,7 @@ recommended_next_stage = P34
 strict root check = STATE_OK
 ```
 
-R03-08 is mandatory acceptance evidence. Generic unit tests without real self-host closure are insufficient.
+The real self-host oracle is mandatory acceptance evidence. Generic unit tests without real self-host closure are insufficient.
 
 ## Error handling / fail-closed rules
 
@@ -413,9 +433,11 @@ Exact file-level tasks belong in P30/P31, not this design spec.
 
 ## Migration / compatibility
 
-- v0.1 and v0.2 remain readable historical schema trees;
+- v0.1 and v0.2 remain preserved historical schema trees;
 - v0.3 tooling should fail clearly on unsupported older manifests unless an explicit migration path is invoked;
-- migration from v0.2 to v0.3 should preserve Integration occurrence records and Gate verdict history;
+- no separate general-purpose migration framework is required by this v0.3 scope;
+- the Aegis repository/root example may be migrated explicitly in the implementation package;
+- migration from v0.2 to v0.3 must preserve Integration occurrence records and Gate verdict history;
 - no migration is allowed to delete PR #4 historical integration truth merely to satisfy current validation.
 
 ## Acceptance and supersession
@@ -429,7 +451,8 @@ P34 may accept v0.3 only if:
 5. root Aegis self-host strict check returns `STATE_OK` with truthful repository history;
 6. current OpenAI `BLOCKED_ENVIRONMENT` remains the primary `verification/P34` blocker;
 7. PR #4 becomes historical/non-actionable rather than erased;
-8. repository CI provides fresh evidence.
+8. mixed Current/Historical dependencies fail closed to review;
+9. repository CI provides fresh evidence.
 
 Only after P34 acceptance:
 
