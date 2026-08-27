@@ -23,7 +23,7 @@
       "aegis-implementation",
       "aegis-gate-review"
     ],
-    "note": "Fresh platform evidence now covers one wrong specialist selection, one correct central-router selection, and one correct composite-only fallback."
+    "note": "Fresh platform evidence covers one wrong specialist selection, one correct central-router selection, one correct composite-only fallback, and one Probe 3 attempt whose initial-selection evidence is inadmissible because the v0.1 stimulus named the expected final handoff owner."
   },
   "acceptance": {
     "required_cases": 4,
@@ -33,9 +33,10 @@
       "Skill Creator package validation",
       "simulated self-routing",
       "expected-skill inference without platform observation",
-      "user-reported installation without a platform selection event"
+      "user-reported installation without a platform selection event",
+      "a routing probe whose stimulus names the expected selected or handoff Skill in a way that can bias platform auto-selection"
     ],
-    "pass_rule": "All four protected probes have real installed-platform evidence, with zero wrong selections, zero forbidden downstream execution, and zero handoff loops."
+    "pass_rule": "All four protected probes have real installed-platform evidence, with zero wrong selections, zero forbidden downstream execution, zero handoff loops, and no contaminated routing stimulus."
   },
   "cases": [
     {
@@ -81,14 +82,34 @@
     {
       "id": "09-01-upstream-blocker-reroute",
       "kind": "upstream_blocker_reroute",
-      "prompt": "Design the system architecture for this feature using the current project state.",
+      "active_fixture": "skillset/dogfood/fixtures/upstream-authority-blocker-v0.2.json",
       "expected_initial_skill": "aegis-architecture",
       "expected_handoff": "aegis",
-      "fixture": "Verified project state exposes an earlier Authority-layer blocker before P14.",
-      "precondition": "aegis-architecture and aegis are installed; the controlled fixture is supplied with the platform request",
+      "precondition": "aegis-architecture and aegis are installed; a routing-neutral verified blocker fixture is supplied with the platform request",
       "status": "BLOCKED_EVIDENCE",
       "evidence": [],
-      "reason": "The real specialist selection and fail-closed handoff have not yet been observed."
+      "attempts": [
+        {
+          "fixture": "skillset/dogfood/fixtures/upstream-authority-blocker-v0.1.json",
+          "actual_initial_skill": "aegis",
+          "content_behavior": "safe_stop",
+          "observed_behavior": "Composite aegis reported BLOCKED_AUTHORITY, stopped substantive P14 design, and preserved the P12 blocker.",
+          "evidence": {
+            "type": "user_provided_screenshot",
+            "platform": "ChatGPT web",
+            "visible_ui_observation": "Used aegis skill (twice); P14 System Architecture — Safety Preflight; Status BLOCKED_AUTHORITY",
+            "screenshot_sha256": "c7907741e15ae2510f3d33db249f3919160c8319c4bf61d60545fe79c2a89744"
+          },
+          "admissible_for_initial_selection_verdict": false,
+          "test_finding": {
+            "classification": "TEST_DEFECT",
+            "finding_id": "F09-02",
+            "summary": "Probe 3 v0.1 stimulus named the expected final handoff owner ('central aegis'), contaminating the platform auto-selection measurement.",
+            "resolution": "Supersede the routing stimulus with upstream-authority-blocker-v0.2.json, which preserves blocker facts but removes Skill/router names from the user prompt."
+          }
+        }
+      ],
+      "reason": "The v0.1 attempt is retained as evidence of safe fail-closed behavior but cannot decide initial specialist routing. A clean v0.2 platform selection event is still required."
     },
     {
       "id": "09-01-composite-fallback",
