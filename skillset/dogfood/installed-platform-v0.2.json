@@ -9,10 +9,27 @@
     {
       "id": "09-01-direct-specialist",
       "historical_status": "FAIL",
-      "policy": {"required_primary_owner":"aegis-gate-review","allowed_supporting_skills":["aegis-project-state"],"router_policy":"only_for_genuine_ambiguity_or_accepted_earlier_blocker","normal_terminal_owner":"aegis-gate-review"},
-      "evidence_refs": ["skillset/dogfood/installed-platform-v0.1.json#09-01-direct-specialist","skillset/dogfood/evidence/probe1-explicit-pr-multiskill-chain-v01.json","skillset/dogfood/evidence/probe1-repair-rerun-v01.json","skillset/dogfood/evidence/probe1-repair-rerun-v02.json"],
-      "supported_observations": ["aegis-project-state and aegis-gate-review were observed in the same explicit-PR response","aegis-gate-review was therefore demonstrably available in that response"],
-      "evidence_gaps": ["complete terminal invocation trace","final-answer owner","proof that no later ownership-changing invocation occurred"],
+      "policy": {
+        "required_primary_owner": "aegis-gate-review",
+        "allowed_supporting_skills": ["aegis-project-state"],
+        "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker",
+        "normal_terminal_owner": "aegis-gate-review"
+      },
+      "evidence_refs": [
+        "skillset/dogfood/installed-platform-v0.1.json#09-01-direct-specialist",
+        "skillset/dogfood/evidence/probe1-explicit-pr-multiskill-chain-v01.json",
+        "skillset/dogfood/evidence/probe1-repair-rerun-v01.json",
+        "skillset/dogfood/evidence/probe1-repair-rerun-v02.json"
+      ],
+      "supported_observations": [
+        "aegis-project-state and aegis-gate-review were observed in the same explicit-PR response",
+        "aegis-gate-review was therefore demonstrably available in that response"
+      ],
+      "evidence_gaps": [
+        "complete terminal invocation trace",
+        "final-answer owner",
+        "proof that no later ownership-changing invocation occurred"
+      ],
       "interpretation_status": "BLOCKED_EVIDENCE",
       "rerun_required": true,
       "reason": "Support-first execution is compatible with v0.2, so the historical first-selection FAIL cannot be carried forward. The retained evidence still does not prove terminal ownership strongly enough for PASS."
@@ -20,10 +37,14 @@
     {
       "id": "09-01-ambiguous-router",
       "historical_status": "PASS",
-      "policy": {"routing_only_reason":"genuine_ambiguity","router_policy":"required","normal_terminal_owner":"aegis"},
+      "policy": {
+        "routing_only_reason": "genuine_ambiguity",
+        "router_policy": "required",
+        "normal_terminal_owner": "aegis"
+      },
       "evidence_refs": ["skillset/dogfood/installed-platform-v0.1.json#09-01-ambiguous-router"],
       "supported_observations": ["aegis was visibly invoked for the protected ambiguous next-step prompt"],
-      "evidence_gaps": ["complete terminal invocation trace","final-answer owner"],
+      "evidence_gaps": ["complete terminal invocation trace", "final-answer owner"],
       "interpretation_status": "BLOCKED_EVIDENCE",
       "rerun_required": true,
       "reason": "The historical screenshot proves router invocation but not the complete terminal trace or final-answer ownership required by v0.2."
@@ -31,10 +52,27 @@
     {
       "id": "09-01-upstream-blocker-reroute",
       "historical_status": "FAIL",
-      "policy": {"requested_primary_owner":"aegis-architecture","allowed_supporting_skills":["aegis-project-state"],"short_circuit":{"allowed":true,"condition":"earlier_blocker_conclusively_established","terminal_owner":"aegis"},"must_stop":true},
+      "policy": {
+        "requested_primary_owner": "aegis-architecture",
+        "allowed_supporting_skills": ["aegis-project-state"],
+        "short_circuit": {
+          "allowed": true,
+          "condition": "earlier_blocker_conclusively_established",
+          "terminal_owner": "aegis"
+        },
+        "must_stop": true
+      },
       "evidence_refs": ["skillset/dogfood/installed-platform-v0.1.json#09-01-upstream-blocker-reroute"],
-      "supported_observations": ["the response returned BLOCKED_AUTHORITY","the historical record reports safe-stop behavior with no substantive P14 design","the active routing-neutral fixture represented the earlier authority blocker"],
-      "evidence_gaps": ["complete terminal invocation trace","final-answer owner","direct evidence that forbidden downstream substantive execution count was zero"],
+      "supported_observations": [
+        "the response returned BLOCKED_AUTHORITY",
+        "the historical record reports safe-stop behavior with no substantive P14 design",
+        "the active routing-neutral fixture represented the earlier authority blocker"
+      ],
+      "evidence_gaps": [
+        "complete terminal invocation trace",
+        "final-answer owner",
+        "direct evidence that forbidden downstream substantive execution count was zero"
+      ],
       "interpretation_status": "BLOCKED_EVIDENCE",
       "rerun_required": true,
       "reason": "v0.2 permits a trusted earlier blocker to skip the requested architecture Primary. The historical first-selection FAIL is therefore not authoritative, but the retained evidence is not a complete terminal trace."
@@ -42,10 +80,22 @@
     {
       "id": "09-01-composite-fallback",
       "historical_status": "PASS",
-      "policy": {"requested_primary_owner":"aegis-modeling","compatibility_owner":"aegis","requires_specialist_unavailable_evidence":true,"normal_terminal_owner":"aegis"},
+      "policy": {
+        "requested_primary_owner": "aegis-modeling",
+        "compatibility_owner": "aegis",
+        "requires_specialist_unavailable_evidence": true,
+        "normal_terminal_owner": "aegis"
+      },
       "evidence_refs": ["skillset/dogfood/installed-platform-v0.1.json#09-01-composite-fallback"],
-      "supported_observations": ["the protected conversation was recorded as composite-only","aegis was visibly invoked and failed closed with BLOCKED_MISSING_INPUT"],
-      "evidence_gaps": ["complete terminal invocation trace","final-answer owner","machine-observable specialist availability record for the terminal trace"],
+      "supported_observations": [
+        "the protected conversation was recorded as composite-only",
+        "aegis was visibly invoked and failed closed with BLOCKED_MISSING_INPUT"
+      ],
+      "evidence_gaps": [
+        "complete terminal invocation trace",
+        "final-answer owner",
+        "machine-observable specialist availability record for the terminal trace"
+      ],
       "interpretation_status": "BLOCKED_EVIDENCE",
       "rerun_required": true,
       "reason": "The historical composite-only precondition supports the intended compatibility scenario, but v0.2 requires terminal ownership and availability evidence that the retained screenshot does not fully encode."
@@ -60,14 +110,23 @@
     "state_check_command": "python3 -m tools.aegis_skillset.cli installed-platform-check .",
     "p34_gate_command": "python3 -m tools.aegis_skillset.cli installed-platform-gate .",
     "protected_cases": [
-      {"id":"09-01-direct-specialist","fresh_rerun_status":"NOT_RUN","oracle_verdict":"BLOCKED_EVIDENCE"},
-      {"id":"09-01-ambiguous-router","fresh_rerun_status":"NOT_RUN","oracle_verdict":"BLOCKED_EVIDENCE"},
-      {"id":"09-01-upstream-blocker-reroute","fresh_rerun_status":"NOT_RUN","oracle_verdict":"BLOCKED_EVIDENCE"},
-      {"id":"09-01-composite-fallback","fresh_rerun_status":"NOT_RUN","oracle_verdict":"BLOCKED_EVIDENCE"}
+      {"id": "09-01-direct-specialist", "fresh_rerun_status": "NOT_RUN", "oracle_verdict": "BLOCKED_EVIDENCE"},
+      {"id": "09-01-ambiguous-router", "fresh_rerun_status": "NOT_RUN", "oracle_verdict": "BLOCKED_EVIDENCE"},
+      {"id": "09-01-upstream-blocker-reroute", "fresh_rerun_status": "NOT_RUN", "oracle_verdict": "BLOCKED_EVIDENCE"},
+      {"id": "09-01-composite-fallback", "fresh_rerun_status": "NOT_RUN", "oracle_verdict": "BLOCKED_EVIDENCE"}
     ],
     "p34_behavioral_gate": "BLOCKED_EVIDENCE",
     "supersession_authorized": false,
     "reason": "The current assistant execution environment cannot produce the required fresh independent installed-platform traces under the full-specialist and composite-only catalog preconditions."
   },
-  "verdict": {"historical_reinterpretation":"BLOCKED_EVIDENCE","new_installed_platform_rerun_required":true,"task6_execution_environment":"BLOCKED_ENVIRONMENT","task6_rerun_evaluator":"PASS","p34_behavioral_gate":"BLOCKED_EVIDENCE","v01_history_rewritten":false,"v02_behavioral_pass_claimed":false,"supersession_authorized":false}
+  "verdict": {
+    "historical_reinterpretation": "BLOCKED_EVIDENCE",
+    "new_installed_platform_rerun_required": true,
+    "task6_execution_environment": "BLOCKED_ENVIRONMENT",
+    "task6_rerun_evaluator": "PASS",
+    "p34_behavioral_gate": "BLOCKED_EVIDENCE",
+    "v01_history_rewritten": false,
+    "v02_behavioral_pass_claimed": false,
+    "supersession_authorized": false
+  }
 }
