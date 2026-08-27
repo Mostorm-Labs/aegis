@@ -23,7 +23,7 @@
       "aegis-implementation",
       "aegis-gate-review"
     ],
-    "note": "Fresh platform evidence covers one wrong specialist selection, one correct central-router selection, one correct composite-only fallback, and one Probe 3 attempt whose initial-selection evidence is inadmissible because the v0.1 stimulus named the expected final handoff owner."
+    "note": "Baseline characterization is complete: two protected probes PASS and two admissible protected probes FAIL on real ChatGPT Web selection events."
   },
   "acceptance": {
     "required_cases": 4,
@@ -84,10 +84,23 @@
       "kind": "upstream_blocker_reroute",
       "active_fixture": "skillset/dogfood/fixtures/upstream-authority-blocker-v0.2.json",
       "expected_initial_skill": "aegis-architecture",
+      "actual_initial_skill": "aegis",
       "expected_handoff": "aegis",
       "precondition": "aegis-architecture and aegis are installed; a routing-neutral verified blocker fixture is supplied with the platform request",
-      "status": "BLOCKED_EVIDENCE",
-      "evidence": [],
+      "status": "FAIL",
+      "evidence": [{
+        "type": "user_provided_screenshot",
+        "platform": "ChatGPT web",
+        "visible_ui_observation": "Used aegis skill (twice); response returned BLOCKED_AUTHORITY and stopped substantive P14 design",
+        "screenshot_sha256": "4b131dcab83c12b64c6f5fd60782f8d474a7a04e5f2c8d7df0451415c7c16c54"
+      }],
+      "content_behavior": "safe_stop",
+      "defect_classification": {
+        "primary": "IMPLEMENTATION_DEFECT",
+        "finding_id": "F09-03",
+        "summary": "Routing-neutral direct P14 architecture request selects composite aegis instead of aegis-architecture.",
+        "suspected_boundary": "Composite aegis trigger description claims direct architecture work and overwhelms the specialist-owned direct trigger"
+      },
       "attempts": [
         {
           "fixture": "skillset/dogfood/fixtures/upstream-authority-blocker-v0.1.json",
@@ -105,11 +118,11 @@
             "classification": "TEST_DEFECT",
             "finding_id": "F09-02",
             "summary": "Probe 3 v0.1 stimulus named the expected final handoff owner ('central aegis'), contaminating the platform auto-selection measurement.",
-            "resolution": "Supersede the routing stimulus with upstream-authority-blocker-v0.2.json, which preserves blocker facts but removes Skill/router names from the user prompt."
+            "resolution": "Superseded by routing-neutral upstream-authority-blocker-v0.2.json."
           }
         }
       ],
-      "reason": "The v0.1 attempt is retained as evidence of safe fail-closed behavior but cannot decide initial specialist routing. A clean v0.2 platform selection event is still required."
+      "reason": "The routing-neutral v0.2 stimulus still selected the composite router instead of the architecture specialist. Safety behavior was correct, but initial Skill selection failed."
     },
     {
       "id": "09-01-composite-fallback",
@@ -130,23 +143,17 @@
       "reason": "The composite-only conversation safely handled a modeling-family request through aegis without specialist dependency and preserved upstream-authority fail-closed behavior."
     }
   ],
-  "supplemental_observations": [
-    {
-      "id": "session-router-observation-001",
-      "observation": "The 09-01 orchestration request invoked the installed composite aegis Skill.",
-      "accepted_for_gate": false
-    },
-    {
-      "id": "installation-report-001",
-      "observation": "The user reports all eight specialist skill.zip packages installed in ChatGPT.",
-      "accepted_for_gate": false
-    },
-    {
-      "id": "probe1-head-ci-001",
-      "observation": "After recording Probe 1 evidence, PR-context Skillset Integrity and Project State Integrity both remained successful.",
-      "accepted_for_gate": false
-    }
-  ],
+  "root_cause_analysis": {
+    "finding_id": "F09-RC-01",
+    "classification": "IMPLEMENTATION_DEFECT",
+    "summary": "The implemented discovery descriptions violate the approved Specific Skill Wins contract by advertising specialist-owned direct work from the composite/cross-cutting entrypoints.",
+    "evidence": [
+      "composite aegis description explicitly advertises direct feature/architecture design, Gate audit, defect classification, and evidence-definition work",
+      "aegis-project-state description advertises generic Authority/Gate/Evidence/Integration records rather than staying scoped to .aegis manifests",
+      "aegis-architecture and aegis-gate-review own the failed direct requests but their descriptions are less discriminative than the competing general/cross-cutting descriptions"
+    ],
+    "repair_owner": "Skill discovery metadata in canonical skillset sources"
+  },
   "verdict": {
     "multi_skill_behavioral_trigger": "BLOCKED_IMPLEMENTATION",
     "deterministic_skill_system_tooling": "PASS",
