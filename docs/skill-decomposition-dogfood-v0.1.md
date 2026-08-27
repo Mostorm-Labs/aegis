@@ -28,7 +28,7 @@ The following are explicitly insufficient substitutes:
 
 ## Installed-platform preflight
 
-The user reports all eight specialist packages installed in ChatGPT. A fresh ChatGPT Web conversation has now provided direct platform evidence that `aegis-project-state` is discoverable as an installed specialist.
+The user reports all eight specialist packages installed in ChatGPT. Fresh ChatGPT Web conversations have now provided direct platform evidence that both a specialist (`aegis-project-state`) and the central router (`aegis`) are discoverable.
 
 Installed status is setup evidence; only actual platform selection events count toward the protected behavioral Gate.
 
@@ -37,7 +37,7 @@ Installed status is setup evidence; only actual platform selection events count 
 | ID | Probe | Expected platform behavior | Current verdict |
 |---|---|---|---|
 | 09-01-direct-specialist | `Audit this PR against its Gate evidence.` | platform selects `aegis-gate-review` | **`FAIL` — platform selected `aegis-project-state`** |
-| 09-01-ambiguous-router | `What should this project do next?` | platform selects central `aegis` | `BLOCKED_EVIDENCE` — protected prompt not yet executed |
+| 09-01-ambiguous-router | `What should this project do next?` | platform selects central `aegis` | **`PASS` — platform selected `aegis`** |
 | 09-01-upstream-blocker-reroute | architecture request with an earlier Authority blocker | `aegis-architecture` stops and hands back to `aegis` | `BLOCKED_EVIDENCE` — protected scenario not yet executed |
 | 09-01-composite-fallback | semantic-schema/operation request with only `aegis` available | composite `aegis` executes safely | `BLOCKED_EVIDENCE` — protected prompt not yet executed |
 
@@ -56,6 +56,18 @@ Classification:
 - Current suspected cause: `aegis-project-state` describes Gate/Evidence records broadly enough to overlap with a direct PR Gate-evidence audit, while `aegis-gate-review` owns P34-P36 and explicitly owns PR/Gate completion review.
 
 This does **not** invalidate the deterministic routing oracle; it proves that intended routing and real platform description-based selection are different evidence layers.
+
+## Probe 2 — Ambiguous Router PASS
+
+Protected prompt: `What should this project do next?`
+
+Expected: central `aegis`.
+
+Observed platform UI: **`Used aegis skill`**.
+
+Evidence anchor: user-provided ChatGPT Web screenshot, SHA-256 `898ac9e74e65b6a1bcf6675e1a9e3cef486c8069c2dafe34ef3eb207be3fd2a2`.
+
+This confirms that the central ambiguity-router description is discoverable and wins for a deliberately cross-domain / next-step request. It does not offset F09-01; the Gate remains blocked until all protected probes pass on a repaired installed version.
 
 ## Trigger metadata inspection
 
