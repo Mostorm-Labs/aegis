@@ -1,0 +1,3 @@
+interface:
+  display_name: "Aegis Gate Review"
+  short_description: "Gate audit, defect classification, reverification"
