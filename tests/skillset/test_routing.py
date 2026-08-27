@@ -265,4 +265,54 @@ class TerminalTraceOracleTests(unittest.TestCase):
         self.assertIn('OWNERSHIP_LOOP', result.violations)
 
 
+class RoutingCorpusV02Tests(unittest.TestCase):
+    def test_v02_routing_cases_do_not_use_expected_skill(self):
+        import json
+        for name in ('direct-trigger.json', 'ambiguous-routing.json', 'upstream-blocker.json', 'compatibility.json'):
+            cases = json.loads((ROOT/'skillset/routing'/name).read_text(encoding='utf-8'))
+            for case in cases:
+                with self.subTest(file=name, case=case.get('id')):
+                    self.assertNotIn('expected_skill', case)
+                    self.assertNotIn('expected_initial_skill', case)
+                    self.assertNotIn('actual_first_skill', case)
+
+    def test_handoff_corpus_separates_support_and_ownership_edges(self):
+        import json
+        handoffs = json.loads((ROOT/'skillset/routing/cross-skill-handoff.json').read_text(encoding='utf-8'))
+        self.assertNotIn('valid', handoffs)
+        self.assertIn('valid_support_returns', handoffs)
+        self.assertIn('valid_ownership_handoffs', handoffs)
+        self.assertIn('forbidden_primary_chains', handoffs)
+        self.assertIn('forbidden_cycles', handoffs)
+
+    def test_old_primary_handoffs_are_now_forbidden_primary_chains(self):
+        import json
+        handoffs = json.loads((ROOT/'skillset/routing/cross-skill-handoff.json').read_text(encoding='utf-8'))
+        edges = {
+            tuple(edge)
+            for case in handoffs.get('forbidden_primary_chains', [])
+            for edge in case.get('edges', [])
+        }
+        self.assertIn(('aegis-architecture', 'aegis-verification'), edges)
+        self.assertIn(('aegis-verification', 'aegis-implementation'), edges)
+
+    def test_composition_trace_regression_corpus_matches_oracle(self):
+        import json
+        path = ROOT/'skillset/routing/composition-traces.json'
+        self.assertTrue(path.is_file(), 'composition trace regression corpus missing')
+        from tools.aegis_skillset.model import load_skillset
+        from tools.aegis_skillset.routing import evaluate_terminal_trace
+        config = load_skillset(ROOT)
+        fixtures = json.loads(path.read_text(encoding='utf-8'))
+        self.assertGreaterEqual(len(fixtures), 11)
+        for fixture in fixtures:
+            with self.subTest(case=fixture.get('id')):
+                result = evaluate_terminal_trace(fixture['case'], fixture['trace'], config)
+                self.assertEqual(fixture['expected_verdict'], result.verdict)
+                for violation in fixture.get('expected_violations', []):
+                    self.assertIn(violation, result.violations)
+                for gap in fixture.get('expected_evidence_gaps', []):
+                    self.assertIn(gap, result.evidence_gaps)
+
+
 if __name__=='__main__': unittest.main()
