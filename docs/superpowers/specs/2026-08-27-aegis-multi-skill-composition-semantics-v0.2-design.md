@@ -32,9 +32,11 @@ v0.1 conflated three different concerns:
 
 This made the behavioral oracle over-constrained: it treated the first visible Skill as the unique winner. Real platform behavior demonstrates that multiple Skills can participate in one turn.
 
-The required v0.2 invariant is therefore:
+The required v0.2 invariant is:
 
 > Multi-Skill execution may compose several Skills, but substantive authority remains single-owner and evidence-gated.
+
+During pure support-only preflight, substantive ownership may be temporarily unassigned. Once substantive execution begins, exactly one Primary Owner exists; at no time may more than one substantive owner exist.
 
 ## 3. Alternatives Considered
 
@@ -62,8 +64,6 @@ This model matches observed platform composition while preserving Aegis's eviden
 
 A Primary Owning Skill is the unique Skill authorized to own the user-visible substantive result for the active stage family.
 
-Examples:
-
 | Stage family | Primary owner |
 | --- | --- |
 | P00-P03 | `aegis-discovery` |
@@ -78,7 +78,7 @@ Direct Project State validation is owned by `aegis-project-state`, but Project S
 
 `Specific Skill Wins` is redefined normatively as:
 
-> If the requested substantive work belongs unambiguously to one available specialist and no earlier blocker short-circuits execution, that specialist must own the substantive result.
+> If the requested substantive work belongs unambiguously to one known-available specialist and no earlier blocker short-circuits execution, that specialist must own the substantive result.
 
 It no longer means the specialist must be the first invocation in the trace.
 
@@ -115,7 +115,7 @@ Router ownership is legitimate when the requested result is itself routing/class
 - “What should this project do next?”
 - “Where should we resume?”
 - “Which Aegis stage owns this?”
-- a blocked short-circuit whose only valid result is to state the blocker and next owning stage.
+- a blocked short-circuit whose valid result is to state the blocker and next owning stage.
 
 The Router may:
 
@@ -127,19 +127,21 @@ The Router may:
 - receive a blocked handoff from a Primary;
 - emit the terminal routing/blocking result.
 
-The Router may not perform specialist-owned substantive work in Multi-Skill Mode when the relevant specialist is available and execution is not short-circuited.
+The Router may not perform specialist-owned substantive work in Multi-Skill Mode when the relevant specialist is known available and execution is not short-circuited.
 
 ## 5. Runtime Modes
 
 ### 5.1 Multi-Skill Mode
 
-Reviewed specialists are installed and available.
+Reviewed specialists are known available.
 
 ```text
 aegis               -> Router / routing answer owner
 aegis-project-state -> support or direct state owner
 specialists         -> substantive stage owners
 ```
+
+For behavioral evidence, `known available` must be supported by the test environment: installed-Skill inventory, an equivalent observable platform fact, or a successful invocation of that reviewed specialist in the same installation state.
 
 The platform invoking `aegis` first does not by itself authorize composite fallback.
 
@@ -149,7 +151,7 @@ The relevant specialist is genuinely unavailable and the complete composite `aeg
 
 In this mode, `aegis` may execute stage-family work as compatibility owner while preserving all Aegis Authority/Gate rules.
 
-The runtime must not infer “specialist unavailable” merely from the absence of an earlier invocation in a partially observed trace.
+Compatibility fallback is admissible only when specialist unavailability is an explicit/observable test precondition. Absence from a partial trace is not evidence of unavailability.
 
 ## 6. Invocation Graph
 
@@ -163,7 +165,7 @@ Support Edge
 Ownership Handoff Edge
 ```
 
-A Support Edge preserves the current substantive owner. An Ownership Handoff transfers control to the central Router because the current owner cannot safely continue.
+A Support Edge preserves the existing substantive owner when one exists. In a support-first prefix there may be no substantive owner yet. An Ownership Handoff transfers control from a Primary owner to the central Router because substantive work cannot safely continue.
 
 ### 6.2 Allowed Graph Shapes
 
@@ -189,7 +191,7 @@ when Project State contributes facts and Gate Review owns the P34-P36 conclusion
 
 ### 6.3 Bounded Router Re-entry
 
-One bounded `Router -> Primary -> Router` cycle is permitted only when all conditions hold:
+One bounded `Router -> Primary -> Router` sequence is permitted only when all conditions hold:
 
 1. the Router selected the Primary based on available facts;
 2. the Primary discovers an earlier blocker not already conclusively known;
@@ -231,8 +233,6 @@ If Project State exists but cannot be deterministically verified, the Supporting
 
 A requested Primary need not execute merely to rediscover a conclusively established earlier blocker.
 
-Two paths are valid.
-
 ### 8.1 Primary-Detected Blocker
 
 ```text
@@ -257,7 +257,7 @@ The requested Primary may be skipped because substantive execution is already un
 
 A blocked short-circuit terminates the current substantive request. The Router may name the next owning stage but must not automatically execute that repair stage and resume the blocked downstream stage in the same run unless a separate Current Authority explicitly authorizes the end-to-end workflow.
 
-For example, this is forbidden by default:
+Forbidden by default:
 
 ```text
 P14 requested
@@ -343,7 +343,7 @@ Example: `aegis-project-state` independently declares P34 PASS as the Gate owner
 
 ### 11.3 `ROUTER_OWNERSHIP_LEAK`
 
-`aegis` performs specialist-owned substantive work in Multi-Skill Mode while the relevant specialist is available and no short-circuit applies.
+`aegis` performs specialist-owned substantive work in Multi-Skill Mode while the relevant specialist is known available and no short-circuit applies.
 
 ### 11.4 `DIRECT_PRIMARY_CHAIN`
 
@@ -381,17 +381,21 @@ actual_first_skill == expected_skill
 
 is removed from normative acceptance.
 
-### 12.2 Protected Case Schema
+### 12.2 Protected Case Contract
 
-Implementation planning should evolve protected cases toward fields equivalent to:
+Implementation planning should evolve protected cases toward a conditional ownership contract rather than a single expected Skill:
 
 ```json
 {
   "required_primary_owner": "aegis-gate-review",
   "allowed_supporting_skills": ["aegis-project-state"],
-  "router_allowed": true,
-  "primary_may_be_skipped_if": ["earlier_blocker_conclusively_established"],
-  "expected_terminal_owner": "aegis-gate-review",
+  "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker",
+  "short_circuit": {
+    "allowed": true,
+    "condition": "earlier_blocker_conclusively_established",
+    "terminal_owner": "aegis"
+  },
+  "normal_terminal_owner": "aegis-gate-review",
   "forbidden_violations": [
     "MULTIPLE_PRIMARY_OWNERS",
     "SUPPORT_OWNERSHIP_LEAK",
@@ -412,15 +416,16 @@ A protected installed-platform case PASSes only when the terminal trace proves:
 2. required Primary Owner appears, or an accepted earlier-blocker short-circuit explains safe absence;
 3. all Supporting Skills are allowlisted;
 4. Supporting Skills do not issue the substantive owning-stage verdict;
-5. Router does not steal specialist substantive work;
-6. final-answer owner is correct;
-7. forbidden downstream substantive execution count is zero;
-8. ownership cycles count is zero;
-9. handoff loops count is zero.
+5. Router use complies with the case's conditional Router policy;
+6. Router does not steal specialist substantive work;
+7. final-answer owner is correct;
+8. forbidden downstream substantive execution count is zero;
+9. ownership cycles count is zero;
+10. handoff loops count is zero.
 
 ### 12.4 BLOCKED_EVIDENCE Rule
 
-Use `BLOCKED_EVIDENCE` when the platform evidence is incomplete enough that final-answer ownership or the full Skill sequence cannot be established.
+Use `BLOCKED_EVIDENCE` when the platform evidence is incomplete enough that final-answer ownership, specialist availability, or the full Skill sequence cannot be established.
 
 Do not infer absence from a mid-response screenshot.
 
@@ -449,20 +454,22 @@ The protected case must no longer require `aegis-architecture` as the first invo
 
 ### 13.4 Composite Fallback
 
-Composite-only `aegis` remains valid when the relevant specialist is genuinely unavailable.
+Composite-only `aegis` remains valid only when specialist unavailability is an explicit/observable test precondition.
 
 ## 14. Deterministic Verification Changes Required After Approval
 
 No implementation occurs before written-spec approval. The subsequent plan must include RED-first coverage for:
 
-- role definitions and one substantive owner invariant;
+- zero-or-one owner during preflight and exactly-one owner during substantive execution;
 - allowlisted Supporting Skills;
 - support-first valid traces;
 - Primary-first support-return traces;
 - earlier-blocker short-circuit with Primary skipped;
 - valid bounded `Router -> Primary -> Router` blocker return;
+- conditional Router policy;
+- specialist-availability evidence for compatibility mode;
 - `support_return` versus `ownership_handoff` distinction;
-- each violation class;
+- every composition violation class;
 - terminal-trace acceptance replacing first-skill acceptance;
 - preservation of historical v0.1 dogfood evidence;
 - re-evaluation artifacts for v0.2 without rewriting history.
@@ -516,7 +523,7 @@ v0.2 does not:
 
 This written design is ready for human review only. Implementation remains unauthorized.
 
-After human written-spec approval, the only next skill/process transition is:
+After human written-spec approval, the only next process transition is:
 
 ```text
 writing-plans
