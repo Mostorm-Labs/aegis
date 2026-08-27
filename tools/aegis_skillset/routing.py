@@ -175,31 +175,182 @@ def evaluate_terminal_trace(case: dict, trace: dict, config: SkillSetConfig) -> 
     return TraceEvaluation(verdict, tuple(violations), tuple(evidence_gaps))
 
 
+def _legacy_selection_keys(case: dict) -> tuple[str, ...]:
+    return tuple(
+        key for key in ('expected_skill', 'expected_initial_skill', 'actual_first_skill')
+        if key in case
+    )
+
+
+def _validate_case_support(case: dict, config: SkillSetConfig, cid: str, errors: list[str]) -> None:
+    global_support = set(config.supporting_skills)
+    for skill in case.get('allowed_supporting_skills', ()):
+        if skill not in global_support:
+            errors.append(f'{cid}: supporting skill is not allowlisted: {skill}')
+
+
 def validate_routing_corpus(root: Path) -> list[str]:
-    root=Path(root); config=load_skillset(root); skills={s.name for s in config.skills}; errors=[]
-    routing=root/'skillset/routing'
-    seen=set()
+    root = Path(root)
+    config = load_skillset(root)
+    skills = {skill.name for skill in config.skills}
+    primary_specialists = set(config.primary_owner_by_stage.values())
+    router = config.ambiguity_router
+    routing = root / 'skillset/routing'
+    errors: list[str] = []
+    seen: set[str] = set()
+
     for name in CORPUS_FILES:
-        cases=json.loads((routing/name).read_text(encoding='utf-8'))
+        cases = json.loads((routing / name).read_text(encoding='utf-8'))
+        if not isinstance(cases, list):
+            errors.append(f'{name}: corpus must be a list')
+            continue
         for case in cases:
-            cid=case.get('id')
-            if not cid or cid in seen: errors.append(f'invalid or duplicate case id: {cid}')
+            cid = case.get('id')
+            if not cid or cid in seen:
+                errors.append(f'invalid or duplicate case id: {cid}')
+                continue
             seen.add(cid)
-            expected=case.get('expected_skill')
-            if expected not in skills: errors.append(f'{cid}: unknown expected skill {expected}')
-            if name=='ambiguous-routing.json' and expected!='aegis': errors.append(f'{cid}: ambiguous case must route to aegis')
-            if name=='upstream-blocker.json':
-                if not case.get('must_stop') or expected!='aegis': errors.append(f'{cid}: blocker case must stop and route to aegis')
-            if name=='direct-trigger.json':
-                stages=case.get('expected_stage_family',[])
-                for stage in stages:
-                    if config.primary_owner_by_stage.get(stage)!=expected:
-                        errors.append(f'{cid}: {stage} is not owned by {expected}')
-    handoffs=json.loads((routing/'cross-skill-handoff.json').read_text(encoding='utf-8'))
-    for case in handoffs.get('valid',[]):
-        if case['from'] not in skills or case['to'] not in skills: errors.append(f"{case['id']}: unknown handoff skill")
-    for case in handoffs.get('forbidden_cycles',[]):
-        if not _has_cycle(case['edges']): errors.append(f"{case['id']}: protected cycle fixture is not cyclic")
-    valid_edges=[(c['from'],c['to']) for c in handoffs.get('valid',[])]
-    if _has_cycle(valid_edges): errors.append('valid handoff graph contains cycle')
+            legacy = _legacy_selection_keys(case)
+            if legacy:
+                errors.append(f"{cid}: legacy first-skill fields are forbidden: {','.join(legacy)}")
+            _validate_case_support(case, config, cid, errors)
+
+            if name == 'direct-trigger.json':
+                required = case.get('required_primary_owner')
+                if required not in skills:
+                    errors.append(f'{cid}: unknown required primary owner {required}')
+                if case.get('normal_terminal_owner') != required:
+                    errors.append(f'{cid}: normal terminal owner must match required primary owner')
+                stages = case.get('expected_stage_family', [])
+                if required == config.cross_cutting_owners.get('project_state'):
+                    if stages:
+                        errors.append(f'{cid}: direct project-state case must not own P-stages')
+                else:
+                    for stage in stages:
+                        if config.primary_owner_by_stage.get(stage) != required:
+                            errors.append(f'{cid}: {stage} is not owned by {required}')
+
+            elif name == 'ambiguous-routing.json':
+                if case.get('router_policy') != 'required':
+                    errors.append(f'{cid}: ambiguous case must require router')
+                if case.get('normal_terminal_owner') != router:
+                    errors.append(f'{cid}: ambiguous case terminal owner must be {router}')
+                if case.get('required_primary_owner') or case.get('requested_primary_owner'):
+                    errors.append(f'{cid}: ambiguous case must not preselect a primary owner')
+
+            elif name == 'upstream-blocker.json':
+                requested = case.get('requested_primary_owner')
+                if requested not in primary_specialists:
+                    errors.append(f'{cid}: unknown requested primary owner {requested}')
+                short = case.get('short_circuit') or {}
+                if not case.get('must_stop'):
+                    errors.append(f'{cid}: blocker case must stop')
+                if short.get('allowed') is not True:
+                    errors.append(f'{cid}: blocker case must allow short-circuit')
+                if short.get('condition') != 'earlier_blocker_conclusively_established':
+                    errors.append(f'{cid}: blocker short-circuit condition is invalid')
+                if short.get('terminal_owner') != router:
+                    errors.append(f'{cid}: blocker terminal owner must be {router}')
+
+            elif name == 'compatibility.json':
+                requested = case.get('requested_primary_owner')
+                if requested not in primary_specialists:
+                    errors.append(f'{cid}: unknown requested primary owner {requested}')
+                if case.get('compatibility_owner') != config.compatibility_owner:
+                    errors.append(f'{cid}: compatibility owner must be {config.compatibility_owner}')
+                if case.get('requires_specialist_unavailable_evidence') is not True:
+                    errors.append(f'{cid}: compatibility requires specialist-unavailable evidence')
+                if case.get('normal_terminal_owner') != config.compatibility_owner:
+                    errors.append(f'{cid}: compatibility terminal owner must be {config.compatibility_owner}')
+                stage = case.get('fallback_stage')
+                if stage and config.primary_owner_by_stage.get(stage) != requested:
+                    errors.append(f'{cid}: fallback stage {stage} is not owned by {requested}')
+
+    handoffs = json.loads((routing / 'cross-skill-handoff.json').read_text(encoding='utf-8'))
+    if 'valid' in handoffs:
+        errors.append('cross-skill handoff corpus contains legacy valid primary handoffs')
+
+    for case in handoffs.get('valid_support_returns', []):
+        cid = case.get('id')
+        if case.get('type') != 'support_return':
+            errors.append(f'{cid}: support return type must be support_return')
+        if case.get('supporting_skill') not in config.supporting_skills:
+            errors.append(f'{cid}: invalid supporting skill')
+        if case.get('to_owner') not in skills:
+            errors.append(f'{cid}: unknown support return owner')
+
+    for case in handoffs.get('valid_ownership_handoffs', []):
+        cid = case.get('id')
+        if case.get('type') != 'ownership_handoff':
+            errors.append(f'{cid}: ownership handoff type must be ownership_handoff')
+        if case.get('from_owner') not in primary_specialists:
+            errors.append(f'{cid}: ownership handoff must originate from a primary specialist')
+        if case.get('to') != router:
+            errors.append(f'{cid}: ownership handoff must return to {router}')
+
+    for case in handoffs.get('forbidden_primary_chains', []):
+        cid = case.get('id')
+        edges = case.get('edges', [])
+        if not edges:
+            errors.append(f'{cid}: forbidden primary chain must contain an edge')
+        for edge in edges:
+            if not isinstance(edge, list) or len(edge) != 2:
+                errors.append(f'{cid}: invalid primary-chain edge')
+                continue
+            source, target = edge
+            if source not in primary_specialists or target not in primary_specialists or source == target:
+                errors.append(f'{cid}: primary-chain edge must connect distinct primary specialists')
+
+    for case in handoffs.get('forbidden_cycles', []):
+        if not _has_cycle(case.get('edges', [])):
+            errors.append(f"{case.get('id')}: protected cycle fixture is not cyclic")
+
+    trace_path = routing / 'composition-traces.json'
+    if not trace_path.is_file():
+        errors.append('composition trace regression corpus missing')
+        return errors
+
+    fixtures = json.loads(trace_path.read_text(encoding='utf-8'))
+    trace_ids: set[str] = set()
+    protected_violations: set[str] = set()
+    has_blocked_evidence = False
+    normative_violations = {
+        'MULTIPLE_PRIMARY_OWNERS',
+        'SUPPORT_OWNERSHIP_LEAK',
+        'ROUTER_OWNERSHIP_LEAK',
+        'DIRECT_PRIMARY_CHAIN',
+        'OWNERSHIP_LOOP',
+    }
+    for fixture in fixtures:
+        fid = fixture.get('id')
+        if not fid or fid in trace_ids:
+            errors.append(f'invalid or duplicate trace fixture id: {fid}')
+            continue
+        trace_ids.add(fid)
+        legacy = _legacy_selection_keys(fixture.get('case', {}))
+        if legacy:
+            errors.append(f"{fid}: trace case contains legacy first-skill fields: {','.join(legacy)}")
+        expected = fixture.get('expected_verdict')
+        if expected not in {'PASS', 'FAIL', 'BLOCKED_EVIDENCE'}:
+            errors.append(f'{fid}: invalid expected verdict {expected}')
+            continue
+        result = evaluate_terminal_trace(fixture.get('case', {}), fixture.get('trace', {}), config)
+        if result.verdict != expected:
+            errors.append(f'{fid}: expected {expected}, got {result.verdict}')
+        for violation in fixture.get('expected_violations', []):
+            protected_violations.add(violation)
+            if violation not in result.violations:
+                errors.append(f'{fid}: missing expected violation {violation}')
+        for gap in fixture.get('expected_evidence_gaps', []):
+            if gap not in result.evidence_gaps:
+                errors.append(f'{fid}: missing expected evidence gap {gap}')
+        if expected == 'BLOCKED_EVIDENCE':
+            has_blocked_evidence = True
+
+    missing_violation_fixtures = normative_violations - protected_violations
+    if missing_violation_fixtures:
+        errors.append('missing composition violation fixtures: ' + ','.join(sorted(missing_violation_fixtures)))
+    if not has_blocked_evidence:
+        errors.append('missing BLOCKED_EVIDENCE composition trace fixture')
+
     return errors
