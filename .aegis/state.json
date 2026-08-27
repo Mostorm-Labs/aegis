@@ -2,10 +2,12 @@
   "active_stage": "verification",
   "awaiting_integrations": [],
   "blocking_findings": [
-    "gate gate-openai-real-baseline is currently BLOCKED_ENVIRONMENT"
+    "gate gate-openai-real-baseline is currently BLOCKED_ENVIRONMENT",
+    "gate gate-skill-decomposition-v02-pr9 is currently BLOCKED_EVIDENCE"
   ],
   "blocking_gates": [
-    "gate-openai-real-baseline"
+    "gate-openai-real-baseline",
+    "gate-skill-decomposition-v02-pr9"
   ],
   "earliest_untrusted_layer": "verification",
   "generator_version": "0.3",
@@ -22,7 +24,7 @@
     {"applicability":"historical","integration_id":"int-pr7"},
     {"applicability":"current","integration_id":"int-pr8"}
   ],
-  "manifest_digest": "752bf62eb62648918111d23468707c351fe0e6a0a087cfc1c8e35acab8641578",
+  "manifest_digest": "c9ad008b4c9e5a5495d298363ee54452220257ec3e09e978a66a7d88fbc3bd14",
   "needs_review_authorities": [],
   "needs_review_gates": [],
   "recommended_handoff": null,
