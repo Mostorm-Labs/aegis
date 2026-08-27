@@ -16,14 +16,20 @@ def frontmatter_description(skill: str) -> str:
 class TriggerBoundaryTests(unittest.TestCase):
     def test_composite_facade_description_is_router_scoped(self):
         desc = frontmatter_description('aegis')
-        self.assertIn('ambiguous', desc)
-        self.assertIn('cross-domain', desc)
-        self.assertIn('where to start', desc)
+        self.assertIn('owning lifecycle stage is unknown', desc)
+        self.assertIn('what should this project do next', desc)
+        self.assertIn('where should we start or resume', desc)
+        self.assertIn('explicit handoff from a specialist', desc)
+        self.assertIn('single specialist clearly owns the request', desc)
+        self.assertIn('only this composite skill is installed', desc)
         for forbidden in (
-            'designing or changing a feature or architecture',
-            'auditing a gate',
-            'classifying defects',
-            'defining evidence',
+            'software-development work',
+            'earliest untrusted layer',
+            'gate',
+            'architecture',
+            'schema',
+            'implementation',
+            'evidence',
         ):
             self.assertNotIn(forbidden, desc)
 

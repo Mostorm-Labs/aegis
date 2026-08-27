@@ -1,6 +1,6 @@
 ---
 name: aegis
-description: Route ambiguous, cross-domain, or multi-stage Aegis software-development work to the earliest untrusted layer. Use when the user asks what this project should do next, where to start or resume, when multiple lifecycle stages plausibly apply, or when a specialist has stopped on an earlier blocker and needs a central handoff. This is the central router and composite fallback when no more specific Aegis specialist is available.
+description: Central Aegis router for requests whose owning lifecycle stage is unknown or genuinely spans multiple Aegis stage families. Use for "what should this project do next?", "where should we start or resume?", or an explicit handoff from a specialist after it stops. In a multi-skill installation, do not use this entrypoint when a single specialist clearly owns the request. When only this composite Skill is installed, it may act as the fallback.
 ---
 
 # Aegis
