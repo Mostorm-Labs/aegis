@@ -14,6 +14,10 @@
     {"id":"ev-pr7-p34","type":"gate_review","ref":"https://github.com/Mostorm-Labs/aegis/pull/7","status":"available","subject_ids":["gate-project-state-v02-pr7"]},
     {"id":"ev-pr7-merged","type":"repository_integration","ref":"https://github.com/Mostorm-Labs/aegis/pull/7","status":"available","subject_ids":["gate-project-state-v02-pr7"]},
     {"id":"ev-pr8-p34","type":"gate_review","ref":"https://github.com/Mostorm-Labs/aegis/pull/8","status":"available","subject_ids":["gate-project-state-v03-pr8"]},
-    {"id":"ev-pr8-merged","type":"repository_integration","ref":"https://github.com/Mostorm-Labs/aegis/pull/8","status":"available","subject_ids":["gate-project-state-v03-pr8"]}
+    {"id":"ev-pr8-merged","type":"repository_integration","ref":"https://github.com/Mostorm-Labs/aegis/pull/8","status":"available","subject_ids":["gate-project-state-v03-pr8"]},
+    {"id":"ev-pr9-task6-preflight","type":"environment_probe","ref":"skillset/dogfood/evidence/task6-platform-preflight-v0.2.json","status":"available","subject_ids":["gate-skill-decomposition-v02-pr9"]},
+    {"id":"ev-pr9-task6-rerun-state","type":"behavioral_gate_state","ref":"skillset/dogfood/installed-platform-rerun-v0.2.json","status":"available","subject_ids":["gate-skill-decomposition-v02-pr9"]},
+    {"id":"ev-pr9-f09-05","type":"defect_classification","ref":"skillset/dogfood/evidence/f09-05-project-state-persistence-v0.2.json","status":"available","subject_ids":["gate-skill-decomposition-v02-pr9"]},
+    {"id":"ev-pr9-task6-ci-33053118456","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33053118456","status":"available","subject_ids":["gate-skill-decomposition-v02-pr9"]}
   ]
 }
