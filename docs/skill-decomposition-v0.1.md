@@ -1,6 +1,8 @@
 # Aegis Skill Decomposition & Multi-Skill Architecture v0.1
 
-Status: **Proposed Execution Authority — implementation complete locally; repository P34 evidence pending.**
+Status: **Current Proposed Execution Authority — implementation complete; runtime composition semantics blocked by `F09-04`; proposed replacement v0.2 is under written-spec review.**
+
+Proposed replacement for Runtime Selection / Project-State support composition / Handoff / Platform Behavioral Trigger semantics: `docs/skill-decomposition-v0.2.md`. v0.1 is **not yet Superseded**; its nine-entrypoint topology, stage ownership, canonical source/build model, and historical evidence remain authoritative for this PR until v0.2 is accepted.
 
 ## Purpose
 
@@ -36,6 +38,8 @@ Generated Skills are self-contained and may not depend on sibling Skill director
 ## Specialist safety preflight
 
 A directly selected specialist performs only the minimum preflight needed to decide whether its owned stage family may execute. If `.aegis/` exists and deterministic Project State validation is available, validate/check before downstream work. If Project State cannot be deterministically verified, do not trust committed `state.json` as Authority; fail closed to `aegis` / `aegis-project-state` unless explicit Current Authority independently proves execution safety. Any earlier untrusted layer stops specialist execution and hands control back to `aegis`.
+
+**Governance note:** this preflight/composition wording is the area blocked by `F09-04`. Do not reinterpret it beyond v0.1's historical meaning while v0.2 is pending review.
 
 ## Handoff boundary
 
