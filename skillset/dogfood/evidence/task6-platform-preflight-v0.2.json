@@ -5,6 +5,18 @@
   "target_repository": "Mostorm-Labs/aegis",
   "pull_request": 9,
   "target_head": "17043a3a2fb0c81db78a6d166456bd1f1b2a84a7",
+  "head_binding_semantics": "observation_origin_only",
+  "applicability_review": {
+    "reviewed_pr_head": "c5f17398d837bf613f2c651be71e4f2eb8ef1c76",
+    "outcome": "LIMITED_APPLICABILITY",
+    "applies_to": "The environment limitation observed in this assistant execution context and the need for independent fresh installed-platform reruns.",
+    "does_not_support": [
+      "current-head installed-platform behavioral PASS",
+      "a claim about the user's target installed Skill catalog",
+      "P34 acceptance or P23 supersession"
+    ],
+    "reason": "The preflight observed assistant-environment Skill-resource exposure at its origin head. Later repository commits change implementation/evidence state but do not turn this environment observation into current-head behavioral evidence. Fresh platform events remain required."
+  },
   "platform_context": "current ChatGPT assistant execution environment",
   "observed_capability": {
     "aegis_skill_resources_exposed_to_this_session": [
