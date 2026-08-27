@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = ROOT / '.github/workflows/skillset.yml'
 REQUIRED_V02_PATHS = (
     'docs/skill-decomposition-v0.2.md',
+    'docs/skill-decomposition-dogfood-v0.2.md',
     'docs/superpowers/specs/*multi-skill-composition*.md',
     'docs/superpowers/plans/*multi-skill-composition*.md',
 )
