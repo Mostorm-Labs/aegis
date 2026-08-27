@@ -14,3 +14,11 @@ Assign ownership first; then freeze module interfaces/invariants; trace temporal
 **Earlier untrusted layer:** if product object/behavior/schema/operation semantics are not trustworthy, stop and hand back to `aegis`; architecture must not invent semantic truth.
 
 Read [references/architecture.md](references/architecture.md) and shared Authority/stage contracts.
+
+## Composition boundary
+
+Once substantive execution begins in this Skill's owned stage family, this Skill is the unique Primary Owner for that substantive result. It may consume Project State support from `aegis-project-state`; Project State support does not transfer ownership.
+
+Direct Primary-to-Primary substantive chaining is forbidden. After completing its owned stage, this Skill may suggest an unambiguous next Skill, but it must not automatically execute substantive work owned by that next Primary.
+
+If an earlier untrusted layer blocks safe execution, emit an `ownership_handoff` to `aegis` and stop substantive execution. Do not repair or silently redefine the earlier layer inside this specialist.

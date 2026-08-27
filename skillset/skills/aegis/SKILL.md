@@ -133,3 +133,11 @@ Aegis may compress stages for small projects, but never delete these four questi
 2. Is the authority/contract explicit?
 3. What evidence proves the result?
 4. Who or what gate decides whether downstream work may proceed?
+
+## Multi-Skill ownership boundary
+
+In **Multi-Skill Mode**, `aegis` is the final-answer owner only for genuine ambiguity, routing-only results, or an accepted **blocked short-circuit**. It must not own specialist substantive work when the relevant specialist is known available. A `support_return` from `aegis-project-state` supplies facts and does not transfer substantive ownership to the Router.
+
+In **Composite Compatibility Mode**, `aegis` may perform specialist work only when explicit specialist-unavailability evidence shows that the relevant specialist is unavailable. In that compatibility mode, `aegis` is the final-answer owner for the composite result.
+
+When a specialist discovers an earlier blocker and emits `ownership_handoff` to `aegis`, the blocked short-circuit is terminal unless separate Current Authority explicitly authorizes repair-and-resume.

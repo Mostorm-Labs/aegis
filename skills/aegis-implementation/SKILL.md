@@ -16,3 +16,11 @@ Use Superpowers when available for coding mechanics such as brainstorming, writi
 **Earlier untrusted layer:** if implementation discovers missing or contradictory Authority, stop and hand back to `aegis`; classify before fixing and do not redesign upstream truth inside a coding task.
 
 Read [references/implementation-control.md](references/implementation-control.md) and shared handoff/Authority contracts.
+
+## Composition boundary
+
+Once substantive execution begins in this Skill's owned stage family, this Skill is the unique Primary Owner for that substantive result. It may consume Project State support from `aegis-project-state`; Project State support does not transfer ownership.
+
+Direct Primary-to-Primary substantive chaining is forbidden. After completing its owned stage, this Skill may suggest an unambiguous next Skill, but it must not automatically execute substantive work owned by that next Primary.
+
+If an earlier untrusted layer blocks safe execution, emit an `ownership_handoff` to `aegis` and stop substantive execution. Do not repair or silently redefine the earlier layer inside this specialist.
