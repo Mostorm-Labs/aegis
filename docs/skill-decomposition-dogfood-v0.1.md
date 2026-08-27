@@ -1,6 +1,6 @@
 # 09-01 Multi-Skill Installed-Platform Behavioral Dogfooding
 
-Status: **ACTIVE — overall behavioral Gate remains `BLOCKED_EVIDENCE`.**
+Status: **ACTIVE — `F09-01` confirmed; overall behavioral Gate is `BLOCKED_IMPLEMENTATION`.**
 
 ## Purpose
 
@@ -26,24 +26,36 @@ The following are explicitly insufficient substitutes:
 - reasoning about which Skill should have been selected;
 - assistant-generated simulated prompts that do not create a new platform selection event.
 
-## Environment preflight — 2026-08-27T10:28+08:00
+## Installed-platform preflight
 
-In the current ChatGPT conversation, the observable installed Aegis entrypoint is the composite `aegis` Skill. The eight generated specialist packages exist as reviewed artifacts, but they are not observable as installed specialist entrypoints in this session.
+The user reports all eight specialist packages installed in ChatGPT. A fresh ChatGPT Web conversation has now provided direct platform evidence that `aegis-project-state` is discoverable as an installed specialist.
 
-This means the environment can provide useful supplemental evidence for the central facade, but cannot yet satisfy specialist-selection probes.
+Installed status is setup evidence; only actual platform selection events count toward the protected behavioral Gate.
 
 ## Protected probe matrix
 
 | ID | Probe | Expected platform behavior | Current verdict |
 |---|---|---|---|
-| 09-01-direct-specialist | `Audit this PR against its Gate evidence.` | platform selects `aegis-gate-review` | `BLOCKED_EVIDENCE` — specialist not observed installed |
-| 09-01-ambiguous-router | `What should this project do next?` | platform selects central `aegis` | `BLOCKED_EVIDENCE` — protected prompt not yet executed as an independent selection event |
-| 09-01-upstream-blocker-reroute | architecture request with an earlier Authority blocker | `aegis-architecture` stops and hands back to `aegis` | `BLOCKED_EVIDENCE` — specialist not observed installed |
-| 09-01-composite-fallback | semantic-schema/operation request with only `aegis` installed | composite `aegis` executes the stage family without specialist dependency | `BLOCKED_EVIDENCE` — protected prompt not yet executed as an independent selection event |
+| 09-01-direct-specialist | `Audit this PR against its Gate evidence.` | platform selects `aegis-gate-review` | **`FAIL` — platform selected `aegis-project-state`** |
+| 09-01-ambiguous-router | `What should this project do next?` | platform selects central `aegis` | `BLOCKED_EVIDENCE` — protected prompt not yet executed |
+| 09-01-upstream-blocker-reroute | architecture request with an earlier Authority blocker | `aegis-architecture` stops and hands back to `aegis` | `BLOCKED_EVIDENCE` — protected scenario not yet executed |
+| 09-01-composite-fallback | semantic-schema/operation request with only `aegis` available | composite `aegis` executes safely | `BLOCKED_EVIDENCE` — protected prompt not yet executed |
 
-## Supplemental observation
+## F09-01 — Gate audit prompt misroutes to Project State
 
-The current request to enter and execute 09-01 was routed through the installed composite `aegis` Skill. This is genuine platform behavior and supports the general central-router design, but it is **not** promoted into the protected Gate because the request is not the protected ambiguous-router prompt.
+Observed platform UI: **`Used aegis-project-state skill`** for the protected direct-specialist prompt.
+
+Expected: `aegis-gate-review`.
+
+Evidence anchor: user-provided ChatGPT Web screenshot, SHA-256 `b3d559dbca24a809442befdd402d67c5679a7a342d9f1052a3d7b64832e5da8d`.
+
+Classification:
+
+- Primary: `IMPLEMENTATION_DEFECT`.
+- Owning boundary: Skill trigger metadata / specialist description discrimination.
+- Current suspected cause: `aegis-project-state` describes Gate/Evidence records broadly enough to overlap with a direct PR Gate-evidence audit, while `aegis-gate-review` owns P34-P36 and explicitly owns PR/Gate completion review.
+
+This does **not** invalidate the deterministic routing oracle; it proves that intended routing and real platform description-based selection are different evidence layers.
 
 ## Gate policy
 
@@ -54,20 +66,20 @@ The current request to enter and execute 09-01 was routed through the installed 
 - zero reroute/handoff loops;
 - evidence tied to the actual request/environment rather than inferred from static artifacts.
 
-If any protected probe lacks valid platform evidence, the Gate remains `BLOCKED_EVIDENCE`.
+A concrete wrong selection is `BLOCKED_IMPLEMENTATION`, not `BLOCKED_EVIDENCE`.
 
 ## Current split verdict
 
 ```text
 Deterministic Skill-System Tooling = PASS
 Skill Package Gate                = PASS
-Multi-Skill Behavioral Trigger    = BLOCKED_EVIDENCE
+Multi-Skill Behavioral Trigger    = BLOCKED_IMPLEMENTATION
 Hosted Provider Baseline          = BLOCKED_ENVIRONMENT
-Overall 09                        = BLOCKED_EVIDENCE
+Overall 09                        = BLOCKED_IMPLEMENTATION
 ```
 
 ## Next evidence acquisition
 
-Install the reviewed specialist Skills in a platform environment that exposes their entrypoints, then execute the protected probes as independent requests. Record the actually selected Skill, handoff behavior, forbidden-stage behavior, and platform evidence back into `skillset/dogfood/installed-platform-v0.1.json`.
+Continue the remaining protected probes on the same installed version before changing trigger metadata, so the first behavioral pass captures the full collision surface. After the four-probe matrix is complete, repair trigger descriptions at the owning layer, rebuild/package the affected distributions, and rerun the failed probes on the new installed version.
 
-Do not merge PR #9 solely on deterministic/package evidence while this behavioral Gate remains blocked.
+Do not merge PR #9 while `F09-01` is open.
