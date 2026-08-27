@@ -24,11 +24,12 @@ The following are explicitly insufficient substitutes:
 - deterministic routing corpus results;
 - Skill Creator validation/package success;
 - reasoning about which Skill should have been selected;
-- assistant-generated simulated prompts that do not create a new platform selection event.
+- assistant-generated simulated prompts that do not create a new platform selection event;
+- a routing stimulus that itself names the expected selected or handoff Skill in a way that can bias auto-selection.
 
 ## Installed-platform preflight
 
-The user reports all eight specialist packages installed in ChatGPT. Fresh ChatGPT Web conversations have provided direct platform evidence that a specialist (`aegis-project-state`) and the central router (`aegis`) are discoverable. The pre-install conversation still exposes the composite `aegis` path and has now been used for the composite-only fallback probe.
+The user reports all eight specialist packages installed in ChatGPT. Fresh ChatGPT Web conversations have provided direct platform evidence that a specialist (`aegis-project-state`) and the central router (`aegis`) are discoverable. The pre-install conversation still exposes the composite `aegis` path and has been used for the composite-only fallback probe.
 
 Installed status is setup evidence; only actual platform selection events count toward the protected behavioral Gate.
 
@@ -38,7 +39,7 @@ Installed status is setup evidence; only actual platform selection events count 
 |---|---|---|---|
 | 09-01-direct-specialist | `Audit this PR against its Gate evidence.` | platform selects `aegis-gate-review` | **`FAIL` — platform selected `aegis-project-state`** |
 | 09-01-ambiguous-router | `What should this project do next?` | platform selects central `aegis` | **`PASS` — platform selected `aegis`** |
-| 09-01-upstream-blocker-reroute | architecture request with an earlier Authority blocker | `aegis-architecture` stops and hands back to `aegis` | `BLOCKED_EVIDENCE` — controlled fixture is frozen; platform probe still pending |
+| 09-01-upstream-blocker-reroute | architecture request with an earlier Authority blocker | `aegis-architecture` stops and hands back to `aegis` | **`BLOCKED_EVIDENCE` — v0.1 attempt invalid for selection verdict because of `TEST_DEFECT`; v0.2 rerun required** |
 | 09-01-composite-fallback | semantic-schema/operation request with only `aegis` available | composite `aegis` executes safely | **`PASS` — platform selected `aegis`, routed P12/P13, and failed closed on missing upstream authority** |
 
 ## F09-01 — Gate audit prompt misroutes to Project State
@@ -83,30 +84,40 @@ Evidence anchor: user-provided ChatGPT Web screenshot, SHA-256 `9f581b4018f005ec
 
 This satisfies the composite compatibility requirement.
 
-## Probe 3 controlled fixture
+## F09-02 — Probe 3 v0.1 fixture contaminates initial Skill selection
 
-The final baseline probe uses the frozen fixture `skillset/dogfood/fixtures/upstream-authority-blocker-v0.1.json`.
+Probe 3 v0.1 produced a real platform event:
 
-The fixture establishes:
+- observed UI: `Used aegis skill` (twice);
+- response behavior: `P14 System Architecture — Safety Preflight`, `BLOCKED_AUTHORITY`, no substantive P14 execution, and preserved P12 blocker;
+- screenshot SHA-256: `c7907741e15ae2510f3d33db249f3919160c8319c4bf61d60545fe79c2a89744`.
 
-- requested target = P14 System Architecture;
-- earlier untrusted layer = P12 Semantic Schema Authority;
-- state = `BLOCKED_AUTHORITY`;
-- required route = central `aegis` / P21 before P14 proceeds.
+However, the v0.1 user stimulus explicitly stated the expected final route was owned by **central `aegis`**. Because platform Skill selection is description-based, naming the expected handoff owner inside the stimulus can bias the very initial-selection behavior the probe is supposed to measure.
 
-Pass requires:
+Classification:
+
+- Primary: `TEST_DEFECT`.
+- Finding ID: `F09-02`.
+- The observed safe-stop behavior is retained as supplemental evidence.
+- The `aegis` initial selection is **not** promoted into either PASS or implementation FAIL for the protected routing case.
+
+The original fixture is preserved at `skillset/dogfood/fixtures/upstream-authority-blocker-v0.1.json` as historical test evidence.
+
+The active replacement fixture is `skillset/dogfood/fixtures/upstream-authority-blocker-v0.2.json`. It preserves the same verified P12 blocker facts but removes all Skill/router names from the user prompt. The expected oracle remains:
 
 1. initial platform selection = `aegis-architecture`;
 2. specialist stops before producing substantive P14 design;
 3. response identifies the P12 Authority blocker;
-4. handoff returns to central `aegis` (explicit text or structured handoff metadata is sufficient; a second visible Skill invocation is accepted but not required);
+4. handoff returns to central `aegis`;
 5. no silent repair/invention of P12 Authority and no direct specialist-to-specialist repair chain.
 
 ## Trigger metadata inspection
 
 Current `aegis-project-state` description includes broad trigger language for `Authority/Gate/Evidence/Integration records`, `blocked Gate propagation`, and state drift. Current `aegis-gate-review` description explicitly owns review of a PR/implementation for Gate completion and PASS-versus-BLOCKED classification. The platform selected the broader Project State description for the protected Gate-evidence prompt.
 
-Repair is deferred until the remaining baseline probe characterizes this installed version.
+Current `aegis-architecture` description already owns system/module architecture and explicitly says an earlier untrusted semantic layer must stop and hand back to `aegis`. The first Probe 3 attempt therefore does not establish a second implementation defect because its stimulus also named central `aegis` as the required final route.
+
+Repair of F09-01 remains deferred until the clean Probe 3 v0.2 rerun completes the baseline characterization.
 
 ## Gate policy
 
@@ -115,9 +126,10 @@ Repair is deferred until the remaining baseline probe characterizes this install
 - zero wrong Skill selections;
 - zero forbidden downstream execution;
 - zero reroute/handoff loops;
-- evidence tied to the actual request/environment rather than inferred from static artifacts.
+- evidence tied to the actual request/environment rather than inferred from static artifacts;
+- routing-neutral stimuli that do not name the expected selection/handoff target when that would bias the platform.
 
-A concrete wrong selection is `BLOCKED_IMPLEMENTATION`, not `BLOCKED_EVIDENCE`.
+A concrete wrong selection from an admissible probe is `BLOCKED_IMPLEMENTATION`; a contaminated routing probe remains `BLOCKED_EVIDENCE` and is repaired at the test layer.
 
 ## Current split verdict
 
@@ -131,6 +143,6 @@ Overall 09                        = BLOCKED_IMPLEMENTATION
 
 ## Next evidence acquisition
 
-Execute Probe 3 on the same installed specialist version using the frozen controlled fixture. After the four-probe baseline is complete, repair `F09-01` at the trigger-description boundary, rebuild/package the affected distributions, reinstall the repaired packages, and rerun failed/affected probes.
+Rerun Probe 3 in a fresh multi-skill conversation using `upstream-authority-blocker-v0.2.json`. After that clean baseline event is captured, repair `F09-01` at the trigger-description boundary, rebuild/package affected distributions, reinstall the repaired packages, and rerun failed/affected probes.
 
 Do not merge PR #9 while `F09-01` is open.
