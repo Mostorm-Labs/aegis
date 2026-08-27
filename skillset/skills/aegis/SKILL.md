@@ -1,6 +1,6 @@
 ---
 name: aegis
-description: AI-native, evidence-gated software development control plane for routing work from problem discovery through product requirements, semantic and architecture design, verification, implementation planning, gate review, release readiness, and feedback. Use when starting or resuming a software project, designing or changing a feature or architecture, reviewing authority or implementation drift, preparing work for coding agents, classifying defects, defining evidence, auditing a gate, or deciding where in the development lifecycle work should begin. Aegis selects the earliest untrusted layer, prevents silent authority changes, and requires evidence before downstream stages treat work as complete.
+description: Route ambiguous, cross-domain, or multi-stage Aegis software-development work to the earliest untrusted layer. Use when the user asks what this project should do next, where to start or resume, when multiple lifecycle stages plausibly apply, or when a specialist has stopped on an earlier blocker and needs a central handoff. This is the central router and composite fallback when no more specific Aegis specialist is available.
 ---
 
 # Aegis
