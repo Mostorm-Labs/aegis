@@ -14,6 +14,9 @@
     "fresh_session_observed_specialist_entrypoints": [
       "aegis-project-state"
     ],
+    "fresh_session_observed_router_entrypoints": [
+      "aegis"
+    ],
     "specialist_packages_exist": true,
     "user_reported_specialists_installed": true,
     "user_reported_installed_entrypoints": [
@@ -26,7 +29,7 @@
       "aegis-implementation",
       "aegis-gate-review"
     ],
-    "note": "The user reports all eight specialist packages installed. Fresh-session platform evidence now proves at least aegis-project-state is discoverable, but discoverability is not equivalent to correct auto-selection."
+    "note": "The user reports all eight specialist packages installed. Fresh-session platform evidence proves both specialist discoverability and central aegis router discoverability, but each protected behavior is judged only from its own independent platform event."
   },
   "acceptance": {
     "required_cases": 4,
@@ -71,11 +74,19 @@
       "kind": "ambiguous_router",
       "prompt": "What should this project do next?",
       "expected_initial_skill": "aegis",
+      "actual_initial_skill": "aegis",
       "expected_handoff": null,
       "precondition": "aegis is installed and the protected prompt is executed as an independent platform request with the multi-skill set available",
-      "status": "BLOCKED_EVIDENCE",
-      "evidence": [],
-      "reason": "The protected prompt has not yet been executed as a fresh platform selection event after specialist installation."
+      "status": "PASS",
+      "evidence": [
+        {
+          "type": "user_provided_screenshot",
+          "platform": "ChatGPT web",
+          "visible_ui_observation": "Used aegis skill",
+          "screenshot_sha256": "898ac9e74e65b6a1bcf6675e1a9e3cef486c8069c2dafe34ef3eb207be3fd2a2"
+        }
+      ],
+      "reason": "The installed platform selected the central aegis router for the protected ambiguous next-step request, matching the architecture contract."
     },
     {
       "id": "09-01-upstream-blocker-reroute",
