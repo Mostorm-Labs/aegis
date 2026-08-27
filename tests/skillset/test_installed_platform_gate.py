@@ -170,6 +170,13 @@ class InstalledPlatformGateTests(unittest.TestCase):
         self.assertEqual(2, proc.returncode, proc.stdout + proc.stderr)
         self.assertIn("BLOCKED_EVIDENCE", proc.stdout)
 
+    def test_workflow_runs_installed_platform_state_check(self):
+        workflow = (ROOT / ".github/workflows/skillset.yml").read_text(encoding="utf-8")
+        self.assertIn(
+            "python3 -m tools.aegis_skillset.cli installed-platform-check .",
+            workflow,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
