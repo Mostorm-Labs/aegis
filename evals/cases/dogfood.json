@@ -32,5 +32,110 @@
       ]
     },
     "tags": ["dogfood", "evaluation-framework", "seed-policy", "regression"]
+  },
+  {
+    "id": "defect-008",
+    "category": "defect",
+    "title": "Blocked Gate verdict must not disappear from derived project state",
+    "severity": "critical",
+    "origin": "dogfood",
+    "input": {
+      "prompt": "A project-state manifest contains a current P34 gate whose verdict is BLOCKED_ENVIRONMENT. The blocking attempt is preserved as available evidence, all authority/evidence validity is current, and recompute produces state.json with blocking_findings=[], earliest_untrusted_layer=null, and recommended_next_stage=null. How should this be classified and repaired?",
+      "context": [
+        "The real Aegis 06-02 behavioral baseline is blocked because no authorized OPENAI_API_KEY is available.",
+        "The current project-state computer derives blockers from authority/evidence validity but does not route on BLOCKED_* gate verdicts.",
+        "The self-hosting run passed structural validate/check while losing the active project blocker."
+      ]
+    },
+    "expected": {
+      "status": "BLOCKED_AUTHORITY",
+      "earliest_untrusted_layer": "verification",
+      "start_stage": "P35",
+      "required_stages": ["P35", "P21", "P20", "P36"],
+      "forbidden_stages": ["P32"],
+      "authority_classification": [],
+      "defect_classification": "SPEC_DEFECT",
+      "gate_verdict": null,
+      "required_findings": [
+        "Structural validity and Gate verdict are separate dimensions; a current BLOCKED_* verdict is still an active project blocker.",
+        "Define blocked-verdict-to-derived-state and routing semantics in project-state authority before changing compute_state()."
+      ],
+      "forbidden_findings": [
+        "Mark the evidence missing or stale merely to force state.json to become blocked.",
+        "Hand-edit generated state.json to add the blocker without changing authority."
+      ]
+    },
+    "tags": ["dogfood", "project-state", "false-ready", "gate-verdict", "authority"]
+  },
+  {
+    "id": "defect-009",
+    "category": "defect",
+    "title": "P34 PASS does not mean an open PR is integrated into main",
+    "severity": "high",
+    "origin": "dogfood",
+    "input": {
+      "prompt": "A feature implementation has passed its P34 tooling gate in an open pull request, but the pull request has not been merged into main. Downstream work asks whether it may treat that implementation as part of the current repository baseline. The project-state v0.1 manifest has no explicit integration lifecycle semantics. How should this be classified and routed?",
+      "context": [
+        "GitHub PR #3 and PR #4 both have accepted tooling evidence but remain open and unmerged.",
+        "Authority status and repository integration state are different facts.",
+        "Using a Gate failure or downgrading Current design authority would misrepresent the real state."
+      ]
+    },
+    "expected": {
+      "status": "BLOCKED_AUTHORITY",
+      "earliest_untrusted_layer": "implementation",
+      "start_stage": "P35",
+      "required_stages": ["P35", "P21"],
+      "forbidden_stages": ["P32"],
+      "authority_classification": [],
+      "defect_classification": "MISSING_CONTRACT",
+      "gate_verdict": null,
+      "required_findings": [
+        "P34 PASS proves the reviewed implementation scope; it does not prove that the code is integrated into the current main baseline.",
+        "Resolve the missing repository-integration handoff contract before downstream work assumes the feature exists in main."
+      ],
+      "forbidden_findings": [
+        "Treat the open pull request as current main merely because P34 passed.",
+        "Change Current design authority to Proposed only to encode an unmerged implementation."
+      ]
+    },
+    "tags": ["dogfood", "project-state", "integration", "pull-request", "handoff"]
+  },
+  {
+    "id": "defect-010",
+    "category": "defect",
+    "title": "Historical integration truth must survive later authority supersession",
+    "severity": "critical",
+    "origin": "dogfood",
+    "input": {
+      "prompt": "A pull request was genuinely merged into main after its P34 gate passed. Later, the authority that gate reviewed is superseded by a replacement authority. The project-state manifest truthfully records the old authority as Superseded and the old pull request as integrated with its real merge revision. Project State v0.2 then rejects the integrated record because its historical gate is no longer current/current-valid. How should this be classified and repaired?",
+      "context": [
+        "PR #4 was genuinely integrated into main at 555bac21d485fc4530680c61719fc36831021b0d under 07 v0.1.",
+        "07 v0.1 is now Superseded by 07 v0.2, so gate-project-state-pr4 is correctly no longer current-valid.",
+        "The v0.2 validator requires every integrated record to reference a current/current-valid PASS gate, which makes the two truthful historical facts impossible to represent together.",
+        "The formal self-host rerun recomputes the OpenAI BLOCKED_ENVIRONMENT gate correctly, but strict check fails on int-pr4."
+      ]
+    },
+    "expected": {
+      "status": "BLOCKED_AUTHORITY",
+      "earliest_untrusted_layer": "implementation",
+      "start_stage": "P35",
+      "required_stages": ["P35", "P21", "P20", "P36"],
+      "forbidden_stages": ["P32"],
+      "authority_classification": [],
+      "defect_classification": "SPEC_DEFECT",
+      "gate_verdict": null,
+      "required_findings": [
+        "Repository integration is a durable historical fact and must not be rewritten merely because the authority or gate that justified it is later superseded.",
+        "The project-state authority must separate historical integration provenance from current applicability/validity, and define whether historical stale gates remain actionable current blockers."
+      ],
+      "forbidden_findings": [
+        "Mark the superseded v0.1 authority Current again just to satisfy the integration validator.",
+        "Delete the PR #4 integration record or relabel the merged pull request as closed_unmerged.",
+        "Invent a new current PASS gate solely to make the historical integration validate.",
+        "Patch only generated state.json while leaving the authority contract unchanged."
+      ]
+    },
+    "tags": ["dogfood", "project-state", "integration-history", "supersession", "gate-history", "authority"]
   }
 ]
