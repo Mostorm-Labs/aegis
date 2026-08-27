@@ -3,6 +3,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]
 
+
 class RoutingTests(unittest.TestCase):
     def test_routing_module_exists(self):
         self.assertTrue((ROOT/'tools/aegis_skillset/routing.py').is_file())
@@ -11,5 +12,257 @@ class RoutingTests(unittest.TestCase):
         self.assertTrue((ROOT/'tools/aegis_skillset/routing.py').is_file())
         from tools.aegis_skillset.routing import validate_routing_corpus
         self.assertEqual([], validate_routing_corpus(ROOT))
+
+
+class TerminalTraceOracleTests(unittest.TestCase):
+    def _config(self):
+        from tools.aegis_skillset.model import load_skillset
+        return load_skillset(ROOT)
+
+    def _evaluate(self, case, trace):
+        from tools.aegis_skillset import routing
+        evaluator = getattr(routing, 'evaluate_terminal_trace', None)
+        self.assertIsNotNone(evaluator, 'terminal-trace evaluator missing')
+        return evaluator(case, trace, self._config())
+
+    @staticmethod
+    def _gate_case():
+        return {
+            'required_primary_owner': 'aegis-gate-review',
+            'allowed_supporting_skills': ['aegis-project-state'],
+            'router_policy': 'only_for_genuine_ambiguity_or_accepted_earlier_blocker',
+            'normal_terminal_owner': 'aegis-gate-review',
+            'short_circuit': {
+                'allowed': True,
+                'condition': 'earlier_blocker_conclusively_established',
+                'terminal_owner': 'aegis',
+            },
+        }
+
+    def test_support_first_gate_review_passes(self):
+        trace = {
+            'terminal': True,
+            'mode': 'multi_skill',
+            'invocations': [
+                {'skill': 'aegis-project-state', 'role': 'support'},
+                {'skill': 'aegis-gate-review', 'role': 'primary'},
+            ],
+            'final_answer_owner': 'aegis-gate-review',
+            'genuine_ambiguity': False,
+            'earlier_blocker_conclusively_established': False,
+            'specialist_availability': {'aegis-gate-review': 'available'},
+            'ownership_edges': [],
+            'handoff_edges': [],
+            'forbidden_downstream_substantive_execution': 0,
+            'primary_substantive_result_emitted': True,
+        }
+        result = self._evaluate(self._gate_case(), trace)
+        self.assertEqual('PASS', result.verdict)
+        self.assertEqual((), result.violations)
+        self.assertEqual((), result.evidence_gaps)
+
+    def test_support_ownership_leak_fails(self):
+        trace = {
+            'terminal': True,
+            'mode': 'multi_skill',
+            'invocations': [
+                {'skill': 'aegis-project-state', 'role': 'support'},
+            ],
+            'final_answer_owner': 'aegis-project-state',
+            'genuine_ambiguity': False,
+            'earlier_blocker_conclusively_established': False,
+            'specialist_availability': {'aegis-gate-review': 'available'},
+            'ownership_edges': [],
+            'handoff_edges': [],
+            'forbidden_downstream_substantive_execution': 0,
+            'primary_substantive_result_emitted': False,
+        }
+        result = self._evaluate(self._gate_case(), trace)
+        self.assertEqual('FAIL', result.verdict)
+        self.assertIn('SUPPORT_OWNERSHIP_LEAK', result.violations)
+
+    def test_router_ownership_leak_fails(self):
+        trace = {
+            'terminal': True,
+            'mode': 'multi_skill',
+            'invocations': [
+                {'skill': 'aegis', 'role': 'router'},
+            ],
+            'final_answer_owner': 'aegis',
+            'genuine_ambiguity': False,
+            'earlier_blocker_conclusively_established': False,
+            'specialist_availability': {'aegis-gate-review': 'available'},
+            'ownership_edges': [],
+            'handoff_edges': [],
+            'forbidden_downstream_substantive_execution': 0,
+            'primary_substantive_result_emitted': False,
+        }
+        result = self._evaluate(self._gate_case(), trace)
+        self.assertEqual('FAIL', result.verdict)
+        self.assertIn('ROUTER_OWNERSHIP_LEAK', result.violations)
+
+    def test_direct_primary_chain_fails(self):
+        case = {
+            'required_primary_owner': 'aegis-architecture',
+            'allowed_supporting_skills': ['aegis-project-state'],
+            'router_policy': 'only_for_genuine_ambiguity_or_accepted_earlier_blocker',
+            'normal_terminal_owner': 'aegis-architecture',
+        }
+        trace = {
+            'terminal': True,
+            'mode': 'multi_skill',
+            'invocations': [
+                {'skill': 'aegis-architecture', 'role': 'primary'},
+                {'skill': 'aegis-verification', 'role': 'primary'},
+            ],
+            'final_answer_owner': 'aegis-verification',
+            'genuine_ambiguity': False,
+            'earlier_blocker_conclusively_established': False,
+            'specialist_availability': {
+                'aegis-architecture': 'available',
+                'aegis-verification': 'available',
+            },
+            'ownership_edges': [['aegis-architecture', 'aegis-verification']],
+            'handoff_edges': [],
+            'forbidden_downstream_substantive_execution': 0,
+            'primary_substantive_result_emitted': True,
+        }
+        result = self._evaluate(case, trace)
+        self.assertEqual('FAIL', result.verdict)
+        self.assertIn('DIRECT_PRIMARY_CHAIN', result.violations)
+
+    def test_earlier_blocker_can_skip_requested_primary(self):
+        case = {
+            'requested_primary_owner': 'aegis-architecture',
+            'allowed_supporting_skills': ['aegis-project-state'],
+            'router_policy': 'only_for_genuine_ambiguity_or_accepted_earlier_blocker',
+            'short_circuit': {
+                'allowed': True,
+                'condition': 'earlier_blocker_conclusively_established',
+                'terminal_owner': 'aegis',
+            },
+            'must_stop': True,
+        }
+        trace = {
+            'terminal': True,
+            'mode': 'multi_skill',
+            'invocations': [
+                {'skill': 'aegis-project-state', 'role': 'support'},
+                {'skill': 'aegis', 'role': 'router'},
+            ],
+            'final_answer_owner': 'aegis',
+            'genuine_ambiguity': False,
+            'earlier_blocker_conclusively_established': True,
+            'specialist_availability': {'aegis-architecture': 'available'},
+            'ownership_edges': [],
+            'handoff_edges': [],
+            'forbidden_downstream_substantive_execution': 0,
+            'primary_substantive_result_emitted': False,
+        }
+        result = self._evaluate(case, trace)
+        self.assertEqual('PASS', result.verdict)
+
+    def test_compatibility_requires_unavailability_evidence(self):
+        case = {
+            'requested_primary_owner': 'aegis-modeling',
+            'compatibility_owner': 'aegis',
+            'requires_specialist_unavailable_evidence': True,
+            'normal_terminal_owner': 'aegis',
+        }
+        trace = {
+            'terminal': True,
+            'mode': 'compatibility',
+            'invocations': [
+                {'skill': 'aegis', 'role': 'compatibility'},
+            ],
+            'final_answer_owner': 'aegis',
+            'genuine_ambiguity': False,
+            'earlier_blocker_conclusively_established': False,
+            'specialist_availability': {},
+            'ownership_edges': [],
+            'handoff_edges': [],
+            'forbidden_downstream_substantive_execution': 0,
+            'primary_substantive_result_emitted': True,
+        }
+        result = self._evaluate(case, trace)
+        self.assertEqual('BLOCKED_EVIDENCE', result.verdict)
+        self.assertIn('specialist availability: aegis-modeling', result.evidence_gaps)
+
+    def test_bounded_router_primary_router_blocker_return_passes(self):
+        case = {
+            'required_primary_owner': 'aegis-architecture',
+            'allowed_supporting_skills': ['aegis-project-state'],
+            'router_policy': 'only_for_genuine_ambiguity_or_accepted_earlier_blocker',
+            'normal_terminal_owner': 'aegis-architecture',
+            'short_circuit': {
+                'allowed': True,
+                'condition': 'earlier_blocker_conclusively_established',
+                'terminal_owner': 'aegis',
+            },
+        }
+        trace = {
+            'terminal': True,
+            'mode': 'multi_skill',
+            'invocations': [
+                {'skill': 'aegis', 'role': 'router'},
+                {'skill': 'aegis-architecture', 'role': 'primary'},
+                {'skill': 'aegis', 'role': 'router'},
+            ],
+            'final_answer_owner': 'aegis',
+            'genuine_ambiguity': False,
+            'earlier_blocker_conclusively_established': True,
+            'specialist_availability': {'aegis-architecture': 'available'},
+            'ownership_edges': [
+                ['aegis', 'aegis-architecture'],
+                ['aegis-architecture', 'aegis'],
+            ],
+            'handoff_edges': [['aegis-architecture', 'aegis']],
+            'forbidden_downstream_substantive_execution': 0,
+            'primary_substantive_result_emitted': False,
+        }
+        result = self._evaluate(case, trace)
+        self.assertEqual('PASS', result.verdict)
+
+    def test_ownership_cycle_fails(self):
+        case = {
+            'required_primary_owner': 'aegis-architecture',
+            'allowed_supporting_skills': ['aegis-project-state'],
+            'router_policy': 'only_for_genuine_ambiguity_or_accepted_earlier_blocker',
+            'normal_terminal_owner': 'aegis-architecture',
+            'short_circuit': {
+                'allowed': True,
+                'condition': 'earlier_blocker_conclusively_established',
+                'terminal_owner': 'aegis',
+            },
+        }
+        trace = {
+            'terminal': True,
+            'mode': 'multi_skill',
+            'invocations': [
+                {'skill': 'aegis-architecture', 'role': 'primary'},
+                {'skill': 'aegis', 'role': 'router'},
+                {'skill': 'aegis-architecture', 'role': 'primary'},
+                {'skill': 'aegis', 'role': 'router'},
+            ],
+            'final_answer_owner': 'aegis',
+            'genuine_ambiguity': False,
+            'earlier_blocker_conclusively_established': True,
+            'specialist_availability': {'aegis-architecture': 'available'},
+            'ownership_edges': [
+                ['aegis-architecture', 'aegis'],
+                ['aegis', 'aegis-architecture'],
+                ['aegis-architecture', 'aegis'],
+            ],
+            'handoff_edges': [
+                ['aegis-architecture', 'aegis'],
+                ['aegis', 'aegis-architecture'],
+            ],
+            'forbidden_downstream_substantive_execution': 0,
+            'primary_substantive_result_emitted': False,
+        }
+        result = self._evaluate(case, trace)
+        self.assertEqual('FAIL', result.verdict)
+        self.assertIn('OWNERSHIP_LOOP', result.violations)
+
 
 if __name__=='__main__': unittest.main()
