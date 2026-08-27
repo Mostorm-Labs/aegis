@@ -1,8 +1,8 @@
 # Aegis Multi-Skill Composition Semantics v0.2
 
-Status: **Proposed Replacement Authority v0.2 — conceptual design approved; written-spec human review pending; implementation frozen.**
+Status: **Proposed Replacement Authority v0.2 — written-spec human-approved; deterministic implementation complete; installed-platform reverification and P34 acceptance pending; not Superseded.**
 
-This document responds to `F09-04` discovered by 09-01 installed-platform dogfooding. It does not yet supersede `docs/skill-decomposition-v0.1.md`. Supersession occurs only after written-spec approval, implementation/reverification, and P34 acceptance.
+This document responds to `F09-04` discovered by 09-01 installed-platform dogfooding. It does not yet supersede `docs/skill-decomposition-v0.1.md`. Written-spec approval and deterministic implementation are complete; installed-platform reverification and P34 acceptance remain required before supersession.
 
 ## 1. Scope
 
@@ -292,9 +292,9 @@ Expected consequences:
 
 No historical evidence is rewritten or deleted. Old verdicts remain historical under the v0.1 oracle; v0.2 creates a new interpretation record.
 
-## 14. Required Implementation Consequences After Approval
+## 14. Implementation Consequences — Current Deterministic State
 
-Implementation is not authorized yet. After written-spec approval, P30/P31 must minimally cover:
+Written-spec approval authorized P30/P31/P32 implementation. The deterministic consequences below are now implemented and gated; installed-platform behavioral evidence remains pending:
 
 - composition-role contract representation;
 - allowed invocation-graph / violation oracle;
@@ -307,11 +307,11 @@ Implementation is not authorized yet. After written-spec approval, P30/P31 must 
 
 ## 15. Supersession Rule
 
-Until written-spec review and P34 acceptance:
+Until installed-platform reverification and P34 acceptance:
 
 ```text
 09 v0.1 = current proposed execution authority, blocked by F09-04
-09 v0.2 = proposed replacement authority
+09 v0.2 = proposed replacement authority; deterministic implementation complete; P34 pending
 PR #9   = open / unmerged
 ```
 
