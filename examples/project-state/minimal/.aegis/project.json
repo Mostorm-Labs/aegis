@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2",
+  "schema_version": "0.3",
   "project": {
     "id": "aegis-state-example",
     "name": "Aegis State Example",

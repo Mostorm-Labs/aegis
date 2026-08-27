@@ -10,11 +10,11 @@ def write_v02(root: Path, integrations):
     d = root / ".aegis"
     d.mkdir(parents=True)
     docs = {
-        "project.json": {"schema_version":"0.2","project":{"id":"demo","name":"Demo","profile":"standard"}},
-        "authorities.json": {"schema_version":"0.2","authorities":[{"id":"auth","scope":"runtime","kind":"system_architecture","version":"v1","status":"Current","ref":"docs/a.md","depends_on":[]}],"impact_reviews":[]},
-        "gates.json": {"schema_version":"0.2","gates":[{"id":"G1","stage":"P34","verdict":"PASS","validity":"current","authority_ids":["auth"],"evidence_ids":["ev"]}]},
-        "evidence.json": {"schema_version":"0.2","evidence":[{"id":"ev","type":"ci","ref":"ci://g1","status":"available"}]},
-        "integrations.json": {"schema_version":"0.2","integrations":integrations},
+        "project.json": {"schema_version":"0.3","project":{"id":"demo","name":"Demo","profile":"standard"}},
+        "authorities.json": {"schema_version":"0.3","authorities":[{"id":"auth","scope":"runtime","kind":"system_architecture","version":"v1","status":"Current","ref":"docs/a.md","depends_on":[]}],"impact_reviews":[]},
+        "gates.json": {"schema_version":"0.3","gates":[{"id":"G1","stage":"P34","verdict":"PASS","validity":"current","authority_ids":["auth"],"evidence_ids":["ev"]}]},
+        "evidence.json": {"schema_version":"0.3","evidence":[{"id":"ev","type":"ci","ref":"ci://g1","status":"available"}]},
+        "integrations.json": {"schema_version":"0.3","integrations":integrations},
     }
     for name, data in docs.items():
         (d / name).write_text(json.dumps(data), encoding="utf-8")

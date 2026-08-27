@@ -8,13 +8,20 @@
   ],
   "blocking_gates": [],
   "earliest_untrusted_layer": "implementation",
-  "generator_version": "0.2",
-  "manifest_digest": "434bcf0274cd0012a2bec260c20ca35665724b70ab0624d2b392a60d40a52d53",
+  "generator_version": "0.3",
+  "historical_gates": [],
+  "integration_applicability": [
+    {
+      "applicability": "current",
+      "integration_id": "int-g1"
+    }
+  ],
+  "manifest_digest": "e4a1f125a4e09a68f895c4e3a1b98e6effe7592eff83b62fd8f9c34d7ef7ddb4",
   "needs_review_authorities": [],
   "needs_review_gates": [],
   "recommended_handoff": "superpowers:finishing-a-development-branch",
   "recommended_next_stage": null,
-  "schema_version": "0.2",
+  "schema_version": "0.3",
   "stale_authorities": [],
   "stale_gates": []
 }
