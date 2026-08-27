@@ -1,6 +1,6 @@
 # Aegis Self-Hosting v0.1 Dogfood Report
 
-Status: **Formal v0.3 rerun semantic oracle PASS locally; repository P34 pending.**
+Status: **Formal v0.3 rerun accepted — P34 `PASS_WITH_FINDINGS`; integrated in `main`.**
 
 ## Purpose
 
@@ -8,32 +8,16 @@ Preserve the complete self-hosting learning chain. The success condition is fait
 
 ## Pass I — strict v0.1 adoption
 
-The first Aegis self-host run found:
+The first self-host run found:
 
-- **F08-01:** current `BLOCKED_*` Gate verdicts disappeared from derived project state;
+- **F08-01:** current `BLOCKED_*` Gate verdicts disappeared from derived state;
 - **F08-02:** P34 PASS could not be distinguished from repository integration.
 
-Both were classified upstream and captured as `defect-008` / `defect-009`. Structural validation was green while semantic fidelity was `BLOCKED_AUTHORITY`.
+Both were classified upstream and captured as `defect-008` / `defect-009`. Structural validation was green while semantic fidelity remained `BLOCKED_AUTHORITY`.
 
 ## Pass II — formal v0.2 rerun
 
-07 v0.2 correctly closed F08-01 and basic F08-02:
-
-```text
-BLOCKED_ENVIRONMENT/current
-→ blocking_gates[]
-→ verification / P34
-```
-
-and repository state became explicit through:
-
-```text
-awaiting_integration
-integrated
-closed_unmerged
-```
-
-The same real Aegis facts then exposed **F08-03**: PR #4 was genuinely integrated under v0.1, but after v0.1 was superseded the old Gate was stale; v0.2 rejected the still-true integration because `integrated` required a current/current-valid Gate forever.
+07 v0.2 closed F08-01 and basic F08-02, but the same truthful project facts exposed **F08-03**: PR #4 had genuinely integrated under v0.1, yet v0.2 rejected that historical Integration after v0.1 was superseded because `integrated` required a current/current-valid Gate forever.
 
 Classification:
 
@@ -43,7 +27,7 @@ Primary   = SPEC_DEFECT
 Secondary = MISSING_CONTRACT
 ```
 
-This became permanent `defect-010` and routed to 07 v0.3.
+The finding became permanent `defect-010` and routed to 07 v0.3.
 
 ## Pass III — formal v0.3 rerun
 
@@ -63,7 +47,7 @@ Current Applicability
 Current Actionability
 ```
 
-### Reality input
+### Truthful input
 
 ```text
 07 v0.1 = Superseded
@@ -76,17 +60,7 @@ PR #8 = integrated current v0.3
 OpenAI real baseline = BLOCKED_ENVIRONMENT/current
 ```
 
-### Deterministic result
-
-Using current v0.3 production tooling on truthful root manifests:
-
-```text
-STATE_WRITTEN
-VALID
-STATE_OK
-```
-
-Generated state:
+### Accepted result
 
 ```text
 historical_gates = [
@@ -109,15 +83,54 @@ int-pr7 = historical
 int-pr8 = current
 ```
 
-### Finding status
+The exact projection is now committed on `main` as `.aegis/state.json`.
+
+### Fresh PR evidence
+
+PR #5 final head:
+
+```text
+3d0549bdfe5f2f057dda171d0c6a36a837840d44
+```
+
+Actual merge-ref:
+
+```text
+114d5acc228403224e3162b58ef05c4e34fd38e7
+```
+
+Project State run `33026385793`:
+
+```text
+validate-tooling / job 98368600472
+  schemas                 PASS
+  minimal validate        VALID
+  minimal state           STATE_OK
+  project-state tests     43/43 PASS
+
+self-host / job 98368600417
+  root validate           VALID
+  root state              STATE_OK
+  corpus                   34 cases PASS
+```
+
+Eval Integrity run `33026385830`, job `98368600085`:
+
+```text
+PASS: 34 cases validated
+Ran 34 tests
+OK
+```
+
+### Finding closure
 
 ```text
 F08-01 = CLOSED
 F08-02 = CLOSED
-F08-03 = CLOSED by real v0.3 self-host oracle
+F08-03 = CLOSED
 ```
 
-No repository-specific special case is required. Historical Gates no longer become current blockers solely from supersession, historical integrations remain durable, and current stale/blocked conditions remain actionable.
+No repository-specific special case is required. Historical Gate records no longer become current blockers solely because their Authority was superseded; historical integration facts remain durable; current Gate/evidence problems remain actionable.
 
 ## Independent current blocker
 
@@ -129,11 +142,11 @@ reason = no authorized OPENAI_API_KEY
 route = verification / P34
 ```
 
-This does not invalidate self-hosting fidelity. In fact, preserving this blocker while closing F08-03 is the required evidence that the system is not becoming false-clean.
+This is not a self-hosting failure. Keeping it visible while closing F08-03 proves the root state is not false-clean.
 
 ## Corpus
 
-Permanent regression history remains:
+Permanent regression history:
 
 ```text
 defect-007 corpus growth
@@ -142,18 +155,25 @@ defect-009 Gate PASS vs repository integration
 defect-010 historical integration durability
 ```
 
-Protected seed = 30. Expected total = 34.
+Protected seed = 30; current corpus = 34.
 
-## Current Gate split
+## Final Gate split
 
 ```text
-Project State v0.3 generic tooling   = PASS locally
-Root v0.3 state recomputation        = PASS
-Root strict validate/check           = VALID / STATE_OK
-Self-host semantic fidelity          = PASS locally
-OpenAI behavioral baseline           = BLOCKED_ENVIRONMENT (independent)
-Repository final-head CI             = PENDING
-Overall 08 P34                       = PENDING repository evidence
+Project State v0.3 generic tooling = PASS
+Root v0.3 state recomputation      = PASS
+Root strict validate/check         = VALID / STATE_OK
+Self-host semantic fidelity        = PASS
+OpenAI behavioral baseline         = BLOCKED_ENVIRONMENT (independent)
+Overall 08 P34                     = PASS_WITH_FINDINGS
 ```
 
-Do not promote 08 to final PASS based only on this local result; require fresh GitHub CI on the final PR head.
+## Repository integration
+
+PR #5 was squash-merged into `main` at:
+
+```text
+335578a9646c414bba7ecc672d53b9f366bc0d0e
+```
+
+08 therefore exits its Authority block. Project State is now self-hosted in the Aegis repository baseline. The next planned stage may enter 09 after its own design approval.
