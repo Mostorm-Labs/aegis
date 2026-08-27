@@ -56,6 +56,8 @@ jobs:
         run: python3 scripts/build_skillset.py --check
       - name: Validate intended routing and handoffs
         run: python3 -m tools.aegis_skillset.cli routing-check .
+      - name: Validate installed-platform rerun state
+        run: python3 -m tools.aegis_skillset.cli installed-platform-check .
       - name: Validate generated standalone Skill structure
         run: python3 scripts/validate_generated_skills.py
       - name: Run skillset tests
