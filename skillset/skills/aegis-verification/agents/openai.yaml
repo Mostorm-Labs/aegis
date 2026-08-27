@@ -1,0 +1,3 @@
+interface:
+  display_name: "Aegis Verification"
+  short_description: "Design invariants, oracles, evidence and Gates"
