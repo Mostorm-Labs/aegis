@@ -54,3 +54,21 @@ class MetadataNegativeTests(unittest.TestCase):
         config = load_skillset(ROOT)
         del config.primary_owner_by_stage['P36']
         self.assertTrue(any('missing stage ownership' in e for e in validate_skillset(config)))
+
+    def test_unknown_supporting_skill_is_rejected(self):
+        from dataclasses import replace
+        from tools.aegis_skillset.model import load_skillset, validate_skillset
+        config = replace(load_skillset(ROOT), supporting_skills=('aegis-project-state', 'aegis-unknown'))
+        self.assertTrue(any('unknown supporting skill' in e for e in validate_skillset(config)))
+
+    def test_non_aegis_compatibility_owner_is_rejected(self):
+        from dataclasses import replace
+        from tools.aegis_skillset.model import load_skillset, validate_skillset
+        config = replace(load_skillset(ROOT), compatibility_owner='aegis-gate-review')
+        self.assertTrue(any('compatibility owner must be aegis' in e for e in validate_skillset(config)))
+
+    def test_compatibility_without_unavailability_evidence_is_rejected(self):
+        from dataclasses import replace
+        from tools.aegis_skillset.model import load_skillset, validate_skillset
+        config = replace(load_skillset(ROOT), compatibility_requires_unavailable_evidence=False)
+        self.assertTrue(any('compatibility requires unavailable evidence' in e for e in validate_skillset(config)))
