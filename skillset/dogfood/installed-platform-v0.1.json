@@ -8,15 +8,15 @@
   },
   "observed_at": "2026-08-27T10:28:00+08:00",
   "environment_preflight": {
-    "surface": "current ChatGPT conversation",
-    "observable_installed_aegis_entrypoints": [
+    "surface": "ChatGPT web",
+    "observable_installed_aegis_entrypoints_in_preinstall_conversation": [
       "aegis"
     ],
-    "observable_specialist_entrypoints": [],
+    "fresh_session_observed_specialist_entrypoints": [
+      "aegis-project-state"
+    ],
     "specialist_packages_exist": true,
-    "specialists_observed_as_installed": false,
     "user_reported_specialists_installed": true,
-    "user_reported_at": "2026-08-27T11:43:12+09:00",
     "user_reported_installed_entrypoints": [
       "aegis-project-state",
       "aegis-discovery",
@@ -27,7 +27,7 @@
       "aegis-implementation",
       "aegis-gate-review"
     ],
-    "note": "The user reports that all eight specialist packages are installed. This is setup evidence, not platform-selection evidence. The current pre-install conversation still exposes only the composite aegis entrypoint, so specialist discoverability must be observed in a fresh conversation."
+    "note": "The user reports all eight specialist packages installed. Fresh-session platform evidence now proves at least aegis-project-state is discoverable, but discoverability is not equivalent to correct auto-selection."
   },
   "acceptance": {
     "required_cases": 4,
@@ -47,11 +47,25 @@
       "kind": "direct_specialist",
       "prompt": "Audit this PR against its Gate evidence.",
       "expected_initial_skill": "aegis-gate-review",
+      "actual_initial_skill": "aegis-project-state",
       "expected_handoff": null,
       "precondition": "aegis-gate-review is installed and discoverable by the platform",
-      "status": "BLOCKED_EVIDENCE",
-      "evidence": [],
-      "reason": "The user reports aegis-gate-review installed; a fresh-conversation platform selection event is still required."
+      "status": "FAIL",
+      "evidence": [
+        {
+          "type": "user_provided_screenshot",
+          "platform": "ChatGPT web",
+          "visible_ui_observation": "Used aegis-project-state skill",
+          "screenshot_sha256": "b3d559dbca24a809442befdd402d67c5679a7a342d9f1052a3d7b64832e5da8d"
+        }
+      ],
+      "defect_classification": {
+        "primary": "IMPLEMENTATION_DEFECT",
+        "finding_id": "F09-01",
+        "summary": "Direct Gate-audit prompt is misrouted to the Project State specialist instead of aegis-gate-review.",
+        "suspected_boundary": "Skill trigger metadata overlap between aegis-project-state and aegis-gate-review"
+      },
+      "reason": "The installed platform selected the wrong specialist. This is real behavioral evidence and blocks promotion even though deterministic routing expects aegis-gate-review."
     },
     {
       "id": "09-01-ambiguous-router",
@@ -74,7 +88,7 @@
       "precondition": "aegis-architecture and aegis are installed; the fixture is available to the platform request",
       "status": "BLOCKED_EVIDENCE",
       "evidence": [],
-      "reason": "The user reports the specialist installed, but the real specialist selection and fail-closed handoff have not yet been observed."
+      "reason": "The real specialist selection and fail-closed handoff have not yet been observed."
     },
     {
       "id": "09-01-composite-fallback",
@@ -86,13 +100,13 @@
       "precondition": "The protected prompt is executed as an independent request in a composite-only Skill catalog",
       "status": "BLOCKED_EVIDENCE",
       "evidence": [],
-      "reason": "The current pre-install conversation still exposes only composite aegis and can serve as the composite-only environment, but the protected fallback prompt itself has not yet been sent as an independent request."
+      "reason": "The pre-install conversation can serve as a composite-only environment, but the protected fallback prompt itself has not yet been sent as an independent request."
     }
   ],
   "supplemental_observations": [
     {
       "id": "session-router-observation-001",
-      "observation": "The current 09-01 orchestration request invoked the installed composite aegis Skill.",
+      "observation": "The 09-01 orchestration request invoked the installed composite aegis Skill.",
       "accepted_for_gate": false,
       "reason": "Useful platform evidence, but it is not one of the four protected probe prompts."
     },
@@ -100,14 +114,14 @@
       "id": "installation-report-001",
       "observation": "The user reports that all eight specialist skill.zip packages have been installed in ChatGPT.",
       "accepted_for_gate": false,
-      "reason": "This satisfies setup intent but does not prove platform auto-selection or discoverability in a fresh conversation."
+      "reason": "This is setup evidence; platform auto-selection requires independent request evidence."
     }
   ],
   "verdict": {
-    "multi_skill_behavioral_trigger": "BLOCKED_EVIDENCE",
+    "multi_skill_behavioral_trigger": "BLOCKED_IMPLEMENTATION",
     "deterministic_skill_system_tooling": "PASS",
     "skill_package_gate": "PASS",
     "hosted_provider_baseline": "BLOCKED_ENVIRONMENT",
-    "overall_09": "BLOCKED_EVIDENCE"
+    "overall_09": "BLOCKED_IMPLEMENTATION"
   }
 }
