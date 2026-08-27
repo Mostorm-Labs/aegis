@@ -1,0 +1,13 @@
+{
+  "version": "0.1",
+  "primary_owner_by_stage": {
+    "P00":"aegis-discovery","P01":"aegis-discovery","P02":"aegis-discovery","P03":"aegis-discovery",
+    "P10":"aegis-modeling","P11":"aegis-modeling","P12":"aegis-modeling","P13":"aegis-modeling",
+    "P14":"aegis-architecture","P15":"aegis-architecture","P16":"aegis-architecture","P17":"aegis-architecture","P18":"aegis-architecture",
+    "P20":"aegis-verification",
+    "P21":"aegis-governance","P22":"aegis-governance","P23":"aegis-governance","P24":"aegis-governance",
+    "P30":"aegis-implementation","P31":"aegis-implementation","P32":"aegis-implementation","P33":"aegis-implementation",
+    "P34":"aegis-gate-review","P35":"aegis-gate-review","P36":"aegis-gate-review"
+  },
+  "cross_cutting": {"project_state":"aegis-project-state","ambiguity_router":"aegis"}
+}
