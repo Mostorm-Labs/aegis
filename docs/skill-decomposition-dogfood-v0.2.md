@@ -33,6 +33,8 @@ P34 behavioral evidence      = BLOCKED_EVIDENCE
 P23 supersession             = NOT AUTHORIZED
 ```
 
+The original preflight `target_head` is an observation origin only. Its explicit applicability review does not treat that old head as current-head behavioral evidence and does not make any claim about the user's target installed Skill catalog.
+
 ## Evidence Admissibility Rule
 
 Each protected rerun must be a fresh platform request in an environment satisfying the case catalog precondition. Capture the complete terminal response, not only an early `Used <skill>` indicator.
@@ -212,6 +214,7 @@ Deterministic Skill-System Tooling = PASS
 Skill Package Gate                 = PASS
 v0.2 Deterministic Implementation = PASS
 Task 6 Rerun Evaluator / CLI       = PASS
+Project State Task 6 Persistence   = PASS
 Multi-Skill Behavioral Trigger     = BLOCKED_EVIDENCE
 Task 6 Execution Environment       = BLOCKED_ENVIRONMENT
 Hosted Provider Baseline           = BLOCKED_ENVIRONMENT
@@ -219,11 +222,36 @@ Overall 09                         = BLOCKED_AUTHORITY
 P23 Supersession                   = NOT AUTHORIZED
 ```
 
-The `Overall 09` parent remains blocked because v0.1 is still the unsuperseded execution authority while the replacement awaits P34 acceptance. The immediate Task 6 causal blocker is missing admissible platform evidence caused by the current execution-environment limitation.
+The `Overall 09` parent remains blocked because v0.1 is still the unsuperseded execution authority while the replacement awaits P34 acceptance. The immediate Task 6 causal blocker is still missing admissible platform evidence; the original assistant-environment preflight remains limited-applicability evidence only.
 
-## Project State Finding
+## Project State Finding — F09-05 Closed
 
-The current `.aegis` v0.3 manifests do not yet register the 09 skill-decomposition v0.1/v0.2 authority pair or a PR #9 P34 Gate record. This manifest omission does not override the repository authority documents, but it must be closed as part of P23/P34 persistence if v0.2 is accepted, so Project State does not drift after supersession.
+The first fresh Task 6 probe batch exposed `F09-05`: PR #9's active P34 `BLOCKED_EVIDENCE` Gate existed in repository/dogfood truth but had not been persisted into the authored `.aegis` v0.3 manifests. The original preflight artifact also retained its origin head without an explicit applicability limitation.
+
+Classification:
+
+```text
+F09-05
+Primary                  = IMPLEMENTATION_DEFECT
+Secondary                = EVIDENCE_GAP
+Earliest Untrusted Layer = verification
+Start Stage              = P35
+Repair Stage             = P36
+```
+
+Classification evidence: `skillset/dogfood/evidence/f09-05-project-state-persistence-v0.2.json`.
+
+P36 repaired only Project State truth/persistence:
+
+- `aegis-skill-decomposition-v0.1` and `aegis-skill-decomposition-v0.2` are registered as `Proposed`; neither is superseded;
+- `gate-skill-decomposition-v02-pr9` is registered as `P34 / BLOCKED_EVIDENCE / current`;
+- Task 6 preflight, rerun-state, defect-classification, and deterministic CI evidence are registered in `.aegis/evidence.json`;
+- `.aegis/state.json` is freshly recomputed and now lists both the OpenAI baseline blocker and PR #9 Task 6 blocker;
+- the original Task 6 preflight head is explicitly observation-origin-only with limited applicability.
+
+Repair head `8539aa01ebb8ab01ee6fbb027063c249ec3f2b38` passed `Aegis Project State Integrity #203 / 33056538634`, including root manifest validation and fresh state recomputation/check. `Aegis Skillset Integrity #154 / 33056538611` also passed.
+
+This repair is **not** P34 behavioral acceptance, does not convert any protected platform case to PASS, does not supersede v0.1, and does not authorize merge.
 
 ## Supersession Rule
 
