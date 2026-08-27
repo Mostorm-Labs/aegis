@@ -11,9 +11,12 @@ on:
       - "tests/skillset/**"
       - "evals/providers/openai/bundle.py"
       - "docs/skill-decomposition-v0.1.md"
+      - "docs/skill-decomposition-v0.2.md"
       - "docs/skill-decomposition-dogfood-v0.1.md"
       - "docs/superpowers/specs/*skill-decomposition*.md"
+      - "docs/superpowers/specs/*multi-skill-composition*.md"
       - "docs/superpowers/plans/*skill-decomposition*.md"
+      - "docs/superpowers/plans/*multi-skill-composition*.md"
       - ".github/workflows/skillset.yml"
   pull_request:
     paths:
@@ -25,9 +28,12 @@ on:
       - "tests/skillset/**"
       - "evals/providers/openai/bundle.py"
       - "docs/skill-decomposition-v0.1.md"
+      - "docs/skill-decomposition-v0.2.md"
       - "docs/skill-decomposition-dogfood-v0.1.md"
       - "docs/superpowers/specs/*skill-decomposition*.md"
+      - "docs/superpowers/specs/*multi-skill-composition*.md"
       - "docs/superpowers/plans/*skill-decomposition*.md"
+      - "docs/superpowers/plans/*multi-skill-composition*.md"
       - ".github/workflows/skillset.yml"
 
 concurrency:
