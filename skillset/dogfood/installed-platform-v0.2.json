@@ -61,7 +61,9 @@
       "historical_status": "FAIL",
       "policy": {
         "requested_primary_owner": "aegis-architecture",
-        "allowed_supporting_skills": ["aegis-project-state"],
+        "allowed_supporting_skills": [
+          "aegis-project-state"
+        ],
         "short_circuit": {
           "allowed": true,
           "condition": "earlier_blocker_conclusively_established",
@@ -112,10 +114,44 @@
       "reason": "The historical composite-only precondition supports the intended compatibility scenario, but v0.2 requires terminal ownership and availability evidence that the retained screenshot does not fully encode."
     }
   ],
+  "task6_rerun": {
+    "status": "BLOCKED_ENVIRONMENT",
+    "target_head": "17043a3a2fb0c81db78a6d166456bd1f1b2a84a7",
+    "preflight_evidence_ref": "skillset/dogfood/evidence/task6-platform-preflight-v0.2.json",
+    "protocol_ref": "docs/skill-decomposition-dogfood-v0.2.md",
+    "protected_cases": [
+      {
+        "id": "09-01-direct-specialist",
+        "fresh_rerun_status": "NOT_RUN",
+        "oracle_verdict": "BLOCKED_EVIDENCE"
+      },
+      {
+        "id": "09-01-ambiguous-router",
+        "fresh_rerun_status": "NOT_RUN",
+        "oracle_verdict": "BLOCKED_EVIDENCE"
+      },
+      {
+        "id": "09-01-upstream-blocker-reroute",
+        "fresh_rerun_status": "NOT_RUN",
+        "oracle_verdict": "BLOCKED_EVIDENCE"
+      },
+      {
+        "id": "09-01-composite-fallback",
+        "fresh_rerun_status": "NOT_RUN",
+        "oracle_verdict": "BLOCKED_EVIDENCE"
+      }
+    ],
+    "p34_behavioral_gate": "BLOCKED_EVIDENCE",
+    "supersession_authorized": false,
+    "reason": "The current assistant execution environment cannot produce the required fresh independent installed-platform traces under the full-specialist and composite-only catalog preconditions."
+  },
   "verdict": {
     "historical_reinterpretation": "BLOCKED_EVIDENCE",
     "new_installed_platform_rerun_required": true,
+    "task6_execution_environment": "BLOCKED_ENVIRONMENT",
+    "p34_behavioral_gate": "BLOCKED_EVIDENCE",
     "v01_history_rewritten": false,
-    "v02_behavioral_pass_claimed": false
+    "v02_behavioral_pass_claimed": false,
+    "supersession_authorized": false
   }
 }
