@@ -1,1 +1,0 @@
-Review scope is limited to Project State v0.3 historical integration durability, Gate history/actionability, schema/generator 0.3, tests, minimal example, Skill reference, and CI. Unrelated changes are out of scope.
