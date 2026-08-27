@@ -1,0 +1,60 @@
+name: Aegis Skillset Integrity
+
+on:
+  push:
+    paths:
+      - "skillset/**"
+      - "skills/**"
+      - "tools/aegis_skillset/**"
+      - "scripts/build_skillset.py"
+      - "scripts/validate_generated_skills.py"
+      - "tests/skillset/**"
+      - "evals/providers/openai/bundle.py"
+      - "docs/skill-decomposition-v0.1.md"
+      - "docs/skill-decomposition-dogfood-v0.1.md"
+      - "docs/superpowers/specs/*skill-decomposition*.md"
+      - "docs/superpowers/plans/*skill-decomposition*.md"
+      - ".github/workflows/skillset.yml"
+  pull_request:
+    paths:
+      - "skillset/**"
+      - "skills/**"
+      - "tools/aegis_skillset/**"
+      - "scripts/build_skillset.py"
+      - "scripts/validate_generated_skills.py"
+      - "tests/skillset/**"
+      - "evals/providers/openai/bundle.py"
+      - "docs/skill-decomposition-v0.1.md"
+      - "docs/skill-decomposition-dogfood-v0.1.md"
+      - "docs/superpowers/specs/*skill-decomposition*.md"
+      - "docs/superpowers/plans/*skill-decomposition*.md"
+      - ".github/workflows/skillset.yml"
+
+concurrency:
+  group: skillset-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deterministic-skillset:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate skill identity and ownership
+        run: python3 -m tools.aegis_skillset.cli validate .
+      - name: Check generated distributions
+        run: python3 scripts/build_skillset.py --check
+      - name: Validate intended routing and handoffs
+        run: python3 -m tools.aegis_skillset.cli routing-check .
+      - name: Validate generated standalone Skill structure
+        run: python3 scripts/validate_generated_skills.py
+      - name: Run skillset tests
+        run: python3 -m unittest discover -s tests/skillset -v
+      - name: Run Project State regressions
+        run: python3 -m unittest discover -s tests/project_state -v
+      - name: Validate protected Aegis evaluation corpus
+        run: python3 evals/scripts/validate_corpus.py
+      - name: Run Aegis evaluation regressions
+        run: python3 -m unittest discover -s evals/tests -v
