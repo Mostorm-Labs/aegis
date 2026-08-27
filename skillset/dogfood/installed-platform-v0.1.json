@@ -6,7 +6,6 @@
     "branch": "aegis/skill-decomposition-v0.1",
     "pre_dogfood_head": "19e8a3a6c31ef447d5972280686d397e4ac43d95"
   },
-  "observed_at": "2026-08-27T10:28:00+08:00",
   "environment_preflight": {
     "surface": "ChatGPT web",
     "observable_installed_aegis_entrypoints_in_preinstall_conversation": [
@@ -115,6 +114,12 @@
       "observation": "The user reports that all eight specialist skill.zip packages have been installed in ChatGPT.",
       "accepted_for_gate": false,
       "reason": "This is setup evidence; platform auto-selection requires independent request evidence."
+    },
+    {
+      "id": "probe1-head-ci-001",
+      "observation": "After recording Probe 1 evidence, PR-context Aegis Skillset Integrity run 33034541497 and Aegis Project State Integrity run 33034541454 both completed successfully on head 5002811bc212ebddfd2fdd5fa25b4bd784aa3f29.",
+      "accepted_for_gate": false,
+      "reason": "Repository CI protects deterministic/project-state behavior but does not repair the installed-platform misrouting failure."
     }
   ],
   "verdict": {
