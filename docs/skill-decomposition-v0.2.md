@@ -43,7 +43,7 @@ Until v0.2 is accepted, Overall 09 remains `BLOCKED_AUTHORITY`.
 
 ## 3. Core Model — Single-Owner Compositional Graph
 
-A user turn may invoke multiple Skills, but there is at most one substantive owner at a time.
+A user turn may invoke multiple Skills. During pure supporting preflight, substantive ownership may still be unassigned. Once substantive execution begins, there is exactly one substantive owner; at no time may there be more than one.
 
 ```text
 Primary Owning Skill
@@ -53,7 +53,7 @@ Supporting Skill
 Central Router
 ```
 
-The invocation order does not itself define ownership.
+Invocation order does not itself define ownership.
 
 ### 3.1 Primary Owning Skill
 
@@ -112,19 +112,21 @@ It does not own specialist substantive work when the relevant specialist is avai
 
 ### 4.1 Multi-Skill Mode
 
-When reviewed specialists are available:
+When reviewed specialists are known available:
 
 ```text
-aegis              = router / routing answer owner
-aegis-project-state= cross-cutting support or direct state owner
-specialists        = stage-family substantive owners
+aegis               = router / routing answer owner
+aegis-project-state = cross-cutting support or direct state owner
+specialists         = stage-family substantive owners
 ```
+
+For behavioral evidence, `known available` must come from the test environment: installed-Skill inventory, an equivalent observable platform fact, or a successful invocation of that reviewed specialist in the same installation state. Merely not seeing a specialist earlier in a partial trace does not prove unavailability.
 
 ### 4.2 Composite Compatibility Mode
 
 When the relevant specialist is genuinely unavailable, the composite `aegis` distribution may execute the requested stage family as compatibility owner.
 
-The platform merely invoking `aegis` first is not proof that specialists are unavailable.
+Compatibility fallback requires evidence that the relevant specialist is unavailable in the test/runtime context. The platform merely invoking `aegis` first is not sufficient.
 
 ## 5. Allowed Invocation Graph
 
@@ -148,7 +150,7 @@ User -> Supporting -> Router
 Primary -> Router      # only for earlier blocker / ambiguity handoff
 ```
 
-A support-first sequence is valid when the Supporting Skill remains non-owning and the substantive owner is preserved.
+A support-first sequence is valid even though substantive ownership is not yet assigned during the supporting-only prefix.
 
 Example valid Gate audit:
 
@@ -253,7 +255,7 @@ v0.2 defines the following violation classes:
 
 - `MULTIPLE_PRIMARY_OWNERS` — more than one Skill claims the same substantive result;
 - `SUPPORT_OWNERSHIP_LEAK` — a Supporting Skill issues the owning stage's final substantive verdict;
-- `ROUTER_OWNERSHIP_LEAK` — central `aegis` performs specialist-owned substantive work in Multi-Skill Mode while that specialist is available;
+- `ROUTER_OWNERSHIP_LEAK` — central `aegis` performs specialist-owned substantive work in Multi-Skill Mode while that specialist is known available;
 - `DIRECT_PRIMARY_CHAIN` — one primary specialist automatically transfers substantive execution to another primary specialist without the router/evidence boundary;
 - `OWNERSHIP_LOOP` — an invocation graph cycles between owner/router/support roles without terminal progress.
 
@@ -275,6 +277,8 @@ A protected installed-platform case PASSes only when the **complete terminal inv
 
 A mid-stream screenshot is not a complete invocation trace and cannot prove that a later required owner never appears.
 
+Protected cases must express Router policy conditionally rather than as an unqualified boolean. For example, a direct Gate audit may allow the Router only for genuine ambiguity or an accepted earlier-blocker short-circuit; normal terminal ownership remains `aegis-gate-review`.
+
 ## 13. Protected Probe Reinterpretation
 
 After v0.2 acceptance, existing 09-01 evidence must be re-reviewed under the new oracle rather than mechanically preserving v0.1 verdicts.
@@ -284,7 +288,7 @@ Expected consequences:
 - explicit Gate audit `project-state -> gate-review` becomes a PASS candidate if the completed response shows Gate Review owns the P34-P36 result;
 - ambiguous-router case with `aegis` remains a PASS candidate;
 - upstream-blocker cases no longer require `aegis-architecture` to be the first invocation when an accepted preflight conclusively short-circuits P14 before substantive execution;
-- composite-only fallback remains valid when specialists are genuinely unavailable.
+- composite-only fallback remains valid only when specialist unavailability is part of the observable test precondition.
 
 No historical evidence is rewritten or deleted. Old verdicts remain historical under the v0.1 oracle; v0.2 creates a new interpretation record.
 
@@ -295,9 +299,10 @@ Implementation is not authorized yet. After written-spec approval, P30/P31 must 
 - composition-role contract representation;
 - allowed invocation-graph / violation oracle;
 - replacement of first-skill routing assertions with terminal-trace assertions;
+- conditional Router policy and earlier-blocker short-circuit policy;
 - `support_return` vs `ownership_handoff` contract;
 - 09-01 evidence re-evaluation without deleting historical v0.1 results;
-- regression protection for Primary Owner, Supporting Skill, Router, short-circuit, final-answer owner, and cycle violations;
+- regression protection for Primary Owner, Supporting Skill, Router, short-circuit, final-answer owner, availability evidence, and cycle violations;
 - Skill instructions/shared contracts only where needed to make the accepted runtime semantics executable.
 
 ## 15. Supersession Rule
