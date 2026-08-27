@@ -28,7 +28,7 @@ The following are explicitly insufficient substitutes:
 
 ## Installed-platform preflight
 
-The user reports all eight specialist packages installed in ChatGPT. Fresh ChatGPT Web conversations have now provided direct platform evidence that both a specialist (`aegis-project-state`) and the central router (`aegis`) are discoverable.
+The user reports all eight specialist packages installed in ChatGPT. Fresh ChatGPT Web conversations have provided direct platform evidence that a specialist (`aegis-project-state`) and the central router (`aegis`) are discoverable. The pre-install conversation still exposes the composite `aegis` path and has now been used for the composite-only fallback probe.
 
 Installed status is setup evidence; only actual platform selection events count toward the protected behavioral Gate.
 
@@ -38,8 +38,8 @@ Installed status is setup evidence; only actual platform selection events count 
 |---|---|---|---|
 | 09-01-direct-specialist | `Audit this PR against its Gate evidence.` | platform selects `aegis-gate-review` | **`FAIL` — platform selected `aegis-project-state`** |
 | 09-01-ambiguous-router | `What should this project do next?` | platform selects central `aegis` | **`PASS` — platform selected `aegis`** |
-| 09-01-upstream-blocker-reroute | architecture request with an earlier Authority blocker | `aegis-architecture` stops and hands back to `aegis` | `BLOCKED_EVIDENCE` — protected scenario not yet executed |
-| 09-01-composite-fallback | semantic-schema/operation request with only `aegis` available | composite `aegis` executes safely | `BLOCKED_EVIDENCE` — protected prompt not yet executed |
+| 09-01-upstream-blocker-reroute | architecture request with an earlier Authority blocker | `aegis-architecture` stops and hands back to `aegis` | `BLOCKED_EVIDENCE` — controlled fixture is frozen; platform probe still pending |
+| 09-01-composite-fallback | semantic-schema/operation request with only `aegis` available | composite `aegis` executes safely | **`PASS` — platform selected `aegis`, routed P12/P13, and failed closed on missing upstream authority** |
 
 ## F09-01 — Gate audit prompt misroutes to Project State
 
@@ -67,13 +67,46 @@ Observed platform UI: **`Used aegis skill`**.
 
 Evidence anchor: user-provided ChatGPT Web screenshot, SHA-256 `898ac9e74e65b6a1bcf6675e1a9e3cef486c8069c2dafe34ef3eb207be3fd2a2`.
 
-This confirms that the central ambiguity-router description is discoverable and wins for a deliberately cross-domain / next-step request. It does not offset F09-01; the Gate remains blocked until all protected probes pass on a repaired installed version.
+This confirms that the central ambiguity-router description is discoverable and wins for a deliberately cross-domain / next-step request.
+
+## Probe 4 — Composite Fallback PASS
+
+Protected prompt: `Design the semantic schema and operation model for this feature.`
+
+Environment: the already-open pre-install conversation, which exposes only the composite `aegis` entrypoint.
+
+Observed platform UI: **`Used aegis skill`**.
+
+Observed behavior: Aegis routed the request to P12 Semantic Schema + P13 Operation/Mutation Model and returned `BLOCKED_MISSING_INPUT` because upstream object/behavior authority was unavailable. It did not depend on `aegis-modeling` and did not invent downstream semantics.
+
+Evidence anchor: user-provided ChatGPT Web screenshot, SHA-256 `9f581b4018f005ec2a10ecb82f8a9a2db524788799dc3b6a87128dbe04d32974`.
+
+This satisfies the composite compatibility requirement.
+
+## Probe 3 controlled fixture
+
+The final baseline probe uses the frozen fixture `skillset/dogfood/fixtures/upstream-authority-blocker-v0.1.json`.
+
+The fixture establishes:
+
+- requested target = P14 System Architecture;
+- earlier untrusted layer = P12 Semantic Schema Authority;
+- state = `BLOCKED_AUTHORITY`;
+- required route = central `aegis` / P21 before P14 proceeds.
+
+Pass requires:
+
+1. initial platform selection = `aegis-architecture`;
+2. specialist stops before producing substantive P14 design;
+3. response identifies the P12 Authority blocker;
+4. handoff returns to central `aegis` (explicit text or structured handoff metadata is sufficient; a second visible Skill invocation is accepted but not required);
+5. no silent repair/invention of P12 Authority and no direct specialist-to-specialist repair chain.
 
 ## Trigger metadata inspection
 
 Current `aegis-project-state` description includes broad trigger language for `Authority/Gate/Evidence/Integration records`, `blocked Gate propagation`, and state drift. Current `aegis-gate-review` description explicitly owns review of a PR/implementation for Gate completion and PASS-versus-BLOCKED classification. The platform selected the broader Project State description for the protected Gate-evidence prompt.
 
-This is sufficient to classify the observed behavior as an implementation defect in trigger discrimination. Repair is deferred until the remaining probes have characterized the same installed version.
+Repair is deferred until the remaining baseline probe characterizes this installed version.
 
 ## Gate policy
 
@@ -98,6 +131,6 @@ Overall 09                        = BLOCKED_IMPLEMENTATION
 
 ## Next evidence acquisition
 
-Continue the remaining protected probes on the same installed version before changing trigger metadata, so the first behavioral pass captures the full collision surface. After the four-probe matrix is complete, repair trigger descriptions at the owning layer, rebuild/package the affected distributions, and rerun the failed probes on the new installed version.
+Execute Probe 3 on the same installed specialist version using the frozen controlled fixture. After the four-probe baseline is complete, repair `F09-01` at the trigger-description boundary, rebuild/package the affected distributions, reinstall the repaired packages, and rerun failed/affected probes.
 
 Do not merge PR #9 while `F09-01` is open.
