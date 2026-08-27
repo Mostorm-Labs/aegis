@@ -15,7 +15,19 @@
     "observable_specialist_entrypoints": [],
     "specialist_packages_exist": true,
     "specialists_observed_as_installed": false,
-    "note": "Package existence is not installed-platform evidence. The current conversation exposes the composite aegis Skill but does not expose the eight generated specialist Skills as installed entrypoints."
+    "user_reported_specialists_installed": true,
+    "user_reported_at": "2026-08-27T11:43:12+09:00",
+    "user_reported_installed_entrypoints": [
+      "aegis-project-state",
+      "aegis-discovery",
+      "aegis-modeling",
+      "aegis-architecture",
+      "aegis-verification",
+      "aegis-governance",
+      "aegis-implementation",
+      "aegis-gate-review"
+    ],
+    "note": "The user reports that all eight specialist packages are installed. This is setup evidence, not platform-selection evidence. The current pre-install conversation still exposes only the composite aegis entrypoint, so specialist discoverability must be observed in a fresh conversation."
   },
   "acceptance": {
     "required_cases": 4,
@@ -24,7 +36,8 @@
       "static routing corpus",
       "Skill Creator package validation",
       "simulated self-routing",
-      "expected-skill inference without platform observation"
+      "expected-skill inference without platform observation",
+      "user-reported installation without a platform selection event"
     ],
     "pass_rule": "All four protected probes have real installed-platform evidence, with zero wrong selections, zero forbidden downstream execution, and zero handoff loops."
   },
@@ -38,7 +51,7 @@
       "precondition": "aegis-gate-review is installed and discoverable by the platform",
       "status": "BLOCKED_EVIDENCE",
       "evidence": [],
-      "reason": "The specialist package exists but is not observable as installed in the current platform session."
+      "reason": "The user reports aegis-gate-review installed; a fresh-conversation platform selection event is still required."
     },
     {
       "id": "09-01-ambiguous-router",
@@ -46,10 +59,10 @@
       "prompt": "What should this project do next?",
       "expected_initial_skill": "aegis",
       "expected_handoff": null,
-      "precondition": "aegis is installed and the protected prompt is executed as an independent platform request",
+      "precondition": "aegis is installed and the protected prompt is executed as an independent platform request with the multi-skill set available",
       "status": "BLOCKED_EVIDENCE",
       "evidence": [],
-      "reason": "The current session did route the 09-01 orchestration request through aegis, but the protected prompt itself has not been executed as a separate platform selection event."
+      "reason": "The protected prompt has not yet been executed as a fresh platform selection event after specialist installation."
     },
     {
       "id": "09-01-upstream-blocker-reroute",
@@ -61,7 +74,7 @@
       "precondition": "aegis-architecture and aegis are installed; the fixture is available to the platform request",
       "status": "BLOCKED_EVIDENCE",
       "evidence": [],
-      "reason": "The specialist is not observable as installed in the current platform session, so the stop-and-reroute behavior cannot be observed."
+      "reason": "The user reports the specialist installed, but the real specialist selection and fail-closed handoff have not yet been observed."
     },
     {
       "id": "09-01-composite-fallback",
@@ -69,11 +82,11 @@
       "prompt": "Design the semantic schema and operation model for this feature.",
       "expected_initial_skill": "aegis",
       "expected_handoff": null,
-      "fixture": "Only the composite aegis Skill is installed.",
-      "precondition": "The protected prompt is executed as an independent request in a composite-only installed environment",
+      "fixture": "Only the composite aegis Skill is available to the conversation.",
+      "precondition": "The protected prompt is executed as an independent request in a composite-only Skill catalog",
       "status": "BLOCKED_EVIDENCE",
       "evidence": [],
-      "reason": "The environment precondition is currently met, but the protected fallback prompt has not been executed as an independent platform selection event."
+      "reason": "The current pre-install conversation still exposes only composite aegis and can serve as the composite-only environment, but the protected fallback prompt itself has not yet been sent as an independent request."
     }
   ],
   "supplemental_observations": [
@@ -82,6 +95,12 @@
       "observation": "The current 09-01 orchestration request invoked the installed composite aegis Skill.",
       "accepted_for_gate": false,
       "reason": "Useful platform evidence, but it is not one of the four protected probe prompts."
+    },
+    {
+      "id": "installation-report-001",
+      "observation": "The user reports that all eight specialist skill.zip packages have been installed in ChatGPT.",
+      "accepted_for_gate": false,
+      "reason": "This satisfies setup intent but does not prove platform auto-selection or discoverability in a fresh conversation."
     }
   ],
   "verdict": {
