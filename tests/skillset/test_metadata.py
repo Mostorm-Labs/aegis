@@ -32,6 +32,13 @@ class MetadataTests(unittest.TestCase):
         config = load_skillset(ROOT)
         self.assertEqual('aegis', config.ambiguity_router)
 
+    def test_v02_composition_metadata_is_frozen(self):
+        load_skillset, _ = self._load()
+        config = load_skillset(ROOT)
+        self.assertEqual(('aegis-project-state',), getattr(config, 'supporting_skills', None))
+        self.assertEqual('aegis', getattr(config, 'compatibility_owner', None))
+        self.assertIs(True, getattr(config, 'compatibility_requires_unavailable_evidence', None))
+
 if __name__ == '__main__':
     unittest.main()
 
