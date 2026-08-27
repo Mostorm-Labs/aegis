@@ -25,6 +25,9 @@ class SkillSetConfig:
     primary_owner_by_stage: dict[str, str]
     cross_cutting_owners: dict[str, str]
     ambiguity_router: str
+    supporting_skills: tuple[str, ...]
+    compatibility_owner: str
+    compatibility_requires_unavailable_evidence: bool
     raw_manifest: dict
 
 
@@ -34,7 +37,17 @@ def load_skillset(root: Path) -> SkillSetConfig:
     ownership = json.loads((root / 'skillset/ownership.json').read_text(encoding='utf-8'))
     skills = tuple(SkillSpec(name=i['name'], role=i['role'], source_path=i['source_path'], distribution_path=i['distribution_path'], shared_refs=tuple(i.get('shared_refs', []))) for i in manifest['skills'])
     cross = dict(ownership.get('cross_cutting', {}))
-    return SkillSetConfig(skills, dict(ownership['primary_owner_by_stage']), cross, cross['ambiguity_router'], manifest)
+    composition = dict(ownership.get('composition', {}))
+    return SkillSetConfig(
+        skills,
+        dict(ownership['primary_owner_by_stage']),
+        cross,
+        cross['ambiguity_router'],
+        tuple(composition.get('supporting_skills', ())),
+        composition.get('compatibility_owner', ''),
+        composition.get('compatibility_requires_unavailable_evidence', False),
+        manifest,
+    )
 
 
 def validate_skillset(config: SkillSetConfig) -> list[str]:
