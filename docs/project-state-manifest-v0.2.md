@@ -1,38 +1,40 @@
 # Aegis Project State Manifest + Authority Dependency Graph v0.2
 
-Status: **Current Replacement Authority v0.2 — P34 PASS_WITH_FINDINGS; integrated in `main`.**
+Status: **Superseded / Historical v0.2.**
 
-This document is the repository companion to Notion `07 v0.2 Aegis Project State Authority Repair — Gate Propagation + Integration Lifecycle Closure` and supersedes `docs/project-state-manifest-v0.1.md`.
+This document is the repository companion to Notion `07 v0.2 Aegis Project State Authority Repair — Gate Propagation + Integration Lifecycle Closure`. It superseded `docs/project-state-manifest-v0.1.md` and is now itself superseded by `docs/project-state-manifest-v0.3.md`.
+
+Supersession reason: the formal 08 self-host rerun confirmed **F08-03 — SPEC_DEFECT + MISSING_CONTRACT**. v0.2 required an `integrated` repository occurrence to retain a current/current-valid PASS Gate forever, so a truthful historical integration could become impossible to represent after its supporting Authority was correctly superseded. v0.3 separates Historical Occurrence, Current Applicability, and Current Actionability and was accepted at P34, then integrated through PR #8 at `be385b3549900ba5bc34170dbfa8b4e583631a1d`.
+
+The v0.2 conclusions and evidence below remain historical record and continue to explain F08-01/F08-02 closure. They are no longer Current execution/design authority.
 
 ## Authority basis
 
-v0.2 is driven only by two confirmed self-hosting findings from 08:
+v0.2 was driven only by two confirmed self-hosting findings from 08:
 
-- **F08-01 — SPEC_DEFECT + MISSING_CONTRACT:** a current `BLOCKED_*` Gate can exist while generated state reports no blocker, no earliest untrusted layer, and no next stage.
-- **F08-02 — MISSING_CONTRACT:** P34 PASS cannot currently be distinguished from repository integration; open/unmerged PRs can only be stored as opaque evidence.
+- **F08-01 — SPEC_DEFECT + MISSING_CONTRACT:** a current `BLOCKED_*` Gate could exist while generated state reported no blocker, no earliest untrusted layer, and no next stage.
+- **F08-02 — MISSING_CONTRACT:** P34 PASS could not be distinguished from repository integration; open/unmerged PRs could only be stored as opaque evidence.
 
 07 v0.1 remains preserved as Superseded/Historical authority. v0.2 was accepted at P34 with an explicit GitHub check-suite environment finding and integrated through PR #7 at merge revision `8ca7b49d40a17e8cb7ffba86632da3aeae5e911c`.
 
-## Repository integration reality
+## Repository integration reality at v0.2
 
-At v0.2 integration:
-
-- PR #3 (06-02 provider tooling) is **integrated** into `main` at `d55686123bd22254c196f8232c8b115f469bde1e`; the live provider baseline remains separately `BLOCKED_ENVIRONMENT` because no OpenAI API credential is available.
-- PR #4 (07 v0.1) is **integrated** into `main` at `555bac21d485fc4530680c61719fc36831021b0d`.
-- PR #6 is **closed/unmerged** historical `ENVIRONMENT_DEFECT` / check-suite evidence.
-- PR #7 (07 v0.2) is **integrated** into `main` at `8ca7b49d40a17e8cb7ffba86632da3aeae5e911c`.
+- PR #3 (06-02 provider tooling) was integrated into `main` at `d55686123bd22254c196f8232c8b115f469bde1e`; the live provider baseline remains separately `BLOCKED_ENVIRONMENT` because no OpenAI API credential is available.
+- PR #4 (07 v0.1) was integrated into `main` at `555bac21d485fc4530680c61719fc36831021b0d`.
+- PR #6 is closed/unmerged historical `ENVIRONMENT_DEFECT` / check-suite evidence.
+- PR #7 (07 v0.2) was integrated into `main` at `8ca7b49d40a17e8cb7ffba86632da3aeae5e911c`.
 
 Authority acceptance, Gate verdict/validity, repository integration, and external behavioral evidence are separate state dimensions.
 
 ## Scope
 
-Close only:
+v0.2 closed only:
 
 1. current blocked Gate verdict -> derived blocker/routing semantics;
 2. repository integration lifecycle as a separate authored manifest;
 3. derived handoff for accepted-but-not-integrated implementation.
 
-Do not redesign authority DAGs, evidence status, supersession invalidation, P00-P36, or Gate verdict vocabulary.
+It did not redesign authority DAGs, evidence status, supersession invalidation, P00-P36, or Gate verdict vocabulary.
 
 ## Gate verdict propagation
 
@@ -49,11 +51,11 @@ Only Gates with effective validity `current` contribute active verdict blockers.
 
 A stale/needs-review Gate is handled by validity semantics, not resurrected as a current blocker from its historical verdict.
 
-Generated state adds `blocking_gates[]` and includes stable blocker findings.
+Generated state added `blocking_gates[]` and stable blocker findings.
 
 ## Integration manifest
 
-v0.2 adds authored `.aegis/integrations.json`.
+v0.2 added authored `.aegis/integrations.json`.
 
 Minimal integrated record:
 
@@ -76,24 +78,25 @@ Allowed statuses:
 - `integrated`
 - `closed_unmerged`
 
-`integrated` additionally requires `integrated_revision`.
+`integrated` additionally required `integrated_revision`.
 
-## Integration invariants
+## Historical v0.2 integration invariants
 
-- IDs are unique.
-- `gate_id` resolves to a Gate.
-- `evidence_ids` resolve to Evidence.
-- `awaiting_integration` requires a current-valid `PASS` or `PASS_WITH_FINDINGS` Gate.
-- `integrated` requires a current-valid pass Gate, a non-empty `integrated_revision`, and available integration evidence.
-- blocked/stale Gates cannot be represented as integrated.
-- `closed_unmerged` never advances the current repository baseline.
-- Authority status, Gate verdict, and Integration status remain separate facts.
+v0.2 required:
 
-Aegis records and routes integration state. It does not own the git merge/rebase action.
+- unique Integration IDs;
+- resolvable Gate/Evidence references;
+- `awaiting_integration` to depend on a current-valid `PASS` / `PASS_WITH_FINDINGS` Gate;
+- `integrated` to depend on a current-valid pass Gate, non-empty `integrated_revision`, and available evidence;
+- blocked/stale Gates not to be represented as integrated;
+- `closed_unmerged` not to advance current repository baseline;
+- Authority status, Gate verdict, and Integration status to remain separate facts.
+
+The bolded defect later discovered in F08-03 was the requirement that a completed `integrated` occurrence continue to have a current-valid Gate. v0.3 replaces that semantic rule; this historical document does not.
 
 ## Derived integration state
 
-Generated `state.json` v0.2 adds:
+Generated `state.json` v0.2 added:
 
 ```text
 blocking_gates[]
@@ -101,7 +104,7 @@ awaiting_integrations[]
 recommended_handoff
 ```
 
-If no earlier Authority/Gate blocker exists but an integration is awaiting:
+If no earlier Authority/Gate blocker existed but an integration was awaiting:
 
 ```text
 earliest_untrusted_layer = implementation
@@ -109,28 +112,15 @@ recommended_next_stage = null
 recommended_handoff = superpowers:finishing-a-development-branch
 ```
 
-The finding must say the Gate passed but implementation is not yet in the target baseline.
-
-If a verification blocker such as `BLOCKED_ENVIRONMENT` and an awaiting integration coexist, lifecycle precedence selects `verification / P34` as primary while preserving the integration finding.
+If a verification blocker such as `BLOCKED_ENVIRONMENT` and an awaiting integration coexisted, lifecycle precedence selected `verification / P34` as primary while preserving the integration finding.
 
 ## Versioning
 
-Do not overwrite `schemas/project-state/v0.1/`. v0.2 uses `schemas/project-state/v0.2/`; v0.1 remains preserved as history.
-
-A v0.2 project has five authored control manifests plus generated state:
-
-```text
-.aegis/project.json
-.aegis/authorities.json
-.aegis/gates.json
-.aegis/evidence.json
-.aegis/integrations.json
-.aegis/state.json   # generated
-```
+v0.2 used `schemas/project-state/v0.2/`; v0.1 remained preserved as history. v0.3 now uses its own `schemas/project-state/v0.3/` and v0.2 schema files remain immutable historical contract artifacts.
 
 ## Accepted P34 evidence
 
-The initial PR #6 accumulated cancelled/startup-failure workflow records, later followed by valid main-based PR-context runs. Accepted core merge-ref evidence is run `33021019280`, job `98351117474`, which checked out `refs/pull/6/merge` and produced:
+The initial PR #6 accumulated cancelled/startup-failure workflow records, later followed by valid main-based PR-context runs. Accepted core merge-ref evidence was run `33021019280`, job `98351117474`, which checked out `refs/pull/6/merge` and produced:
 
 ```text
 schema parse = PASS
@@ -150,8 +140,8 @@ Ran 34 tests in 0.221s
 OK
 ```
 
-GitHub did not emit a fresh `pull_request` run for replacement PR #7 despite a valid merge ref. P34 therefore used an explicit P20 compound-evidence fallback and returned **PASS_WITH_FINDINGS**. The finding is classified as check-suite `ENVIRONMENT_DEFECT`, not implementation defect; no nonexistent run is treated as evidence.
+GitHub did not emit a fresh `pull_request` run for replacement PR #7 despite a valid merge ref. P34 therefore used an explicit P20 compound-evidence fallback and returned **PASS_WITH_FINDINGS**. The finding was classified as check-suite `ENVIRONMENT_DEFECT`, not implementation defect.
 
-## Downstream verification handoff
+## Supersession handoff
 
-08 Self-Hosting must now be formally rerun on v0.2. The expected semantic oracle is not an all-clean project: the real OpenAI behavioral baseline remains `BLOCKED_ENVIRONMENT`, so correct v0.2 derived state should surface that Gate as the primary `verification / P34` blocker while representing integrated repository changes accurately.
+The downstream 08 Self-Hosting rerun on v0.2 correctly closed F08-01/F08-02 but exposed F08-03. That finding routed work back to P21/P20 and produced v0.3. Do not use this v0.2 document as Current project-state authority; follow `docs/project-state-manifest-v0.3.md`.
