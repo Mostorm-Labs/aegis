@@ -146,9 +146,58 @@ Acceptance:
 
 ## Normalization and Oracle
 
-For each protected run, create a new evidence artifact under `skillset/dogfood/evidence/`, normalize the complete trace into the current v0.2 trace vocabulary, and evaluate it with `tools.aegis_skillset.routing.evaluate_terminal_trace` against the corresponding policy.
+The executable Task 6 rerun manifest is:
 
-Every protected case must evaluate to:
+```text
+skillset/dogfood/installed-platform-rerun-v0.2.json
+```
+
+It binds each protected Task 6 case to the current canonical routing policy and keeps `evidence_ref` empty until a fresh admissible platform artifact exists. It is orchestration metadata, not platform evidence.
+
+For every fresh platform run, create a new evidence artifact under `skillset/dogfood/evidence/` with this envelope:
+
+```json
+{
+  "schema_version": "0.2",
+  "case_id": "09-01-...",
+  "fresh_platform_event": true,
+  "complete_response_captured": true,
+  "platform_event_id": "<stable event/session identifier>",
+  "environment": {
+    "catalog_mode": "full_specialist | composite_only"
+  },
+  "trace": {
+    "terminal": true,
+    "mode": "multi_skill | compatibility",
+    "invocations": [],
+    "final_answer_owner": "...",
+    "genuine_ambiguity": false,
+    "earlier_blocker_conclusively_established": false,
+    "specialist_availability": {},
+    "ownership_edges": [],
+    "handoff_edges": [],
+    "forbidden_downstream_substantive_execution": 0,
+    "primary_substantive_result_emitted": true
+  }
+}
+```
+
+Then set only that case's `evidence_ref` in `installed-platform-rerun-v0.2.json`. The evaluator resolves the canonical case source and delegates semantic acceptance to the existing `tools.aegis_skillset.routing.evaluate_terminal_trace`; it does not define a second behavioral oracle.
+
+Two commands intentionally have different meanings:
+
+```bash
+python3 -m tools.aegis_skillset.cli installed-platform-check .
+python3 -m tools.aegis_skillset.cli installed-platform-gate .
+```
+
+`installed-platform-check` validates the rerun manifest/evidence structure and reports the current aggregate state. A structurally valid `BLOCKED_EVIDENCE` state exits successfully so deterministic repository CI remains separate from the behavioral Gate.
+
+`installed-platform-gate` is the strict P34 behavioral command. It exits non-zero until **all four protected cases are `PASS`**. At the current zero-evidence state it must report `BLOCKED_EVIDENCE`; that result cannot authorize supersession.
+
+The Skillset Integrity workflow runs `installed-platform-check` on every relevant PR update so Task 6 evidence/manifests cannot drift silently.
+
+Every protected case must ultimately evaluate to:
 
 ```text
 PASS
@@ -162,6 +211,7 @@ Any `BLOCKED_EVIDENCE` remains blocked. Any hard composition violation is a P35 
 Deterministic Skill-System Tooling = PASS
 Skill Package Gate                 = PASS
 v0.2 Deterministic Implementation = PASS
+Task 6 Rerun Evaluator / CLI       = PASS
 Multi-Skill Behavioral Trigger     = BLOCKED_EVIDENCE
 Task 6 Execution Environment       = BLOCKED_ENVIRONMENT
 Hosted Provider Baseline           = BLOCKED_ENVIRONMENT
