@@ -1,6 +1,6 @@
 ---
 name: aegis-architecture
-description: Design Aegis system and module architecture, runtime data flow, platform contracts, and engineering/optimization boundaries. Use when the user asks who owns state or capabilities, how modules depend on each other, how runtime flows execute, how platform bridges differ without changing semantics, or how to define performance/resource architecture.
+description: Design the system architecture for a feature or project, including module ownership, runtime data flow, platform contracts, and engineering or performance boundaries. Use for direct architecture-design requests, P14-P18 work, questions about who owns state or capabilities, or how modules depend on each other. If required semantic authority is untrusted, apply the architecture safety preflight and stop before substantive design.
 ---
 
 # Aegis Architecture

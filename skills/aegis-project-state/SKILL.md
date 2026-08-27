@@ -1,6 +1,6 @@
 ---
 name: aegis-project-state
-description: Inspect, validate, recompute, and reason about Aegis .aegis project-control manifests and Project State v0.3. Use when a user asks to read, validate, repair, persist, compare, or resume from .aegis state, Authority/Gate/Evidence/Integration records, state drift, blocked Gate propagation, or historical integration applicability.
+description: Inspect, validate, recompute, and compare Aegis .aegis project-control manifests and Project State v0.3. Use when the user explicitly asks to read, validate, repair, persist, or diagnose .aegis manifests, state.json drift, current versus historical integration applicability, or deterministic project-state recomputation.
 ---
 
 # Aegis Project State

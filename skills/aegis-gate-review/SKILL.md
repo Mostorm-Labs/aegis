@@ -1,6 +1,6 @@
 ---
 name: aegis-gate-review
-description: Audit implementation and evidence against Aegis Gate criteria, classify defects, and route fixes/reverification. Use when the user asks to review a PR or implementation for Gate completion, determine PASS versus BLOCKED, classify whether a failure is implementation/spec/authority/test/evidence/environment related, or verify a fix and regression closure.
+description: Audit a PR or implementation against Gate evidence and Gate exit criteria, determine PASS versus BLOCKED, classify defects, and route fix or reverification. Use for direct PR Gate audits, requests to review Gate evidence, verify Gate completion, classify whether a failure is implementation/spec/authority/test/evidence/environment related, or confirm regression closure.
 ---
 
 # Aegis Gate Review
