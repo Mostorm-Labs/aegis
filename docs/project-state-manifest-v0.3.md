@@ -1,14 +1,14 @@
 # Aegis Project State Historical Integration Durability + Gate History Semantics v0.3
 
-Status: **Proposed Replacement Authority v0.3**
+Status: **Current Replacement Authority v0.3 — P34 PASS; integrated in `main`.**
 
-This document is the repository companion to the Notion authority `07 v0.3 Project State Historical Integration Durability + Gate History Semantics`.
+This document is the repository companion to the Notion authority `07 v0.3 Aegis Project State Historical Integration Durability + Gate History Semantics` and supersedes `docs/project-state-manifest-v0.2.md`.
 
-It is driven by the formal 08 self-host rerun finding **F08-03** and does not supersede v0.2 until P34 acceptance and repository integration complete.
+P34 accepted v0.3 on PR #8 after fresh merge-ref CI. PR #8 was then squash-merged into `main` at revision `be385b3549900ba5bc34170dbfa8b4e583631a1d`.
 
 ## Authority basis
 
-Current v0.2 correctly closes:
+v0.2 correctly closed:
 
 - F08-01: active `BLOCKED_*` Gate verdicts propagate into derived project state and routing;
 - F08-02: Authority status, Gate verdict/validity, and repository Integration status are distinct dimensions.
@@ -22,7 +22,7 @@ its supporting 07 v0.1 Authority was later superseded
         ↓
 v0.2 marks the old Gate stale
         ↓
-v0.2 rejects the still-true integration occurrence
+v0.2 rejects the still-true integrated occurrence
 ```
 
 Classification:
@@ -31,7 +31,7 @@ Classification:
 - Secondary: `MISSING_CONTRACT`
 - Repair owner: 07 Project State Authority
 
-The defect is not that the validator failed to match v0.2. The validator correctly enforced an incomplete v0.2 contract.
+The defect was not that the validator failed to match v0.2. The validator correctly enforced an incomplete v0.2 contract.
 
 ## Scope
 
@@ -104,7 +104,7 @@ integrated -> not integrated
 
 For `awaiting_integration`, current actionability still matters. It continues to require a current-effective `PASS` or `PASS_WITH_FINDINGS` Gate and available evidence because it represents an action that is still proposed now.
 
-`closed_unmerged` remains non-integrated history and is non-actionable unless a new integration candidate is explicitly authored.
+`closed_unmerged` is completed non-integrated history: it is non-actionable, has Integration applicability `historical`, never enters `awaiting_integrations[]`, and never creates a finishing-development-branch handoff. This does not automatically make its supporting Gate historical; Gate actionability remains independently derived.
 
 ## Derived Integration applicability
 
@@ -121,16 +121,15 @@ historical
 
 Rules:
 
-- `current`: all Gate `authority_ids` are `Current`, the Gate is effective-current, and required evidence is current-usable;
-- `needs_review`: at least one referenced Authority remains `Current` but the Gate/evidence needs review, **or** the Gate references a mixed set of `Current` and `Superseded/Historical` Authorities;
-- `stale`: at least one referenced Authority remains `Current` and current Gate/evidence validity is stale/invalid;
-- `historical`: the occurrence is already completed (`integrated` or `closed_unmerged`) and **all** validity-bearing Gate Authorities are `Superseded/Historical`.
+- `closed_unmerged` -> `historical`;
+- `integrated` + all Gate `authority_ids` Current + effective-current Gate/evidence -> `current`;
+- `integrated` + mixed Current and Superseded/Historical Authority -> `needs_review`;
+- `integrated` + still-current Authority but stale/invalid Gate/evidence -> `stale`;
+- `integrated` + all validity-bearing Gate Authorities Superseded/Historical -> `historical`.
 
 A mixed Current + Historical Authority set must never be silently classified as historical. If the algorithm cannot determine the set safely, fail closed to `needs_review`.
 
-For `closed_unmerged`, applicability is historical once no current integration action remains.
-
-Generated state must expose deterministic Integration applicability. The exact JSON representation may be an ordered list or map, but it must be byte-stable and schema-defined.
+Generated state exposes deterministic Integration applicability through `integration_applicability[]`, ordered by Integration ID.
 
 ## Gate history and current actionability
 
@@ -149,7 +148,10 @@ Historical Gate Record
 Current Actionable Gate
 ```
 
-A Gate becomes historical/non-actionable only when **all** validity-bearing `authority_ids` are `Superseded/Historical` and the Gate is retained solely as provenance for completed history.
+A Gate becomes historical/non-actionable only when both are true:
+
+1. all validity-bearing `authority_ids` are `Superseded/Historical`; and
+2. the Gate is retained as provenance for a completed Integration (`integrated` or `closed_unmerged`).
 
 Such a Gate:
 
@@ -161,7 +163,7 @@ Such a Gate:
 
 A Gate tied to any still-Current Authority whose evidence/validity is stale or needs review remains actionable and continues to route under existing validity semantics. Mixed Current + Historical Authority membership fails closed to current `needs_review`, not historical; that mixed-authority condition itself contributes an Authority-layer `P21` review requirement.
 
-Generated state therefore needs a deterministic historical/actionable projection, including a representation such as `historical_gates[]` while preserving current `stale_gates[]` / `needs_review_gates[]` for actionable current problems.
+Generated state exposes provenance-only Gates in `historical_gates[]`, while `stale_gates[]` / `needs_review_gates[]` remain current actionable problems.
 
 ## Supersession semantics
 
@@ -172,8 +174,6 @@ Authority supersession may change applicability.
 Authority supersession does not erase historical occurrence.
 ```
 
-Decision table:
-
 | Situation | Integration occurrence | Derived applicability | Gate treatment | Current route |
 | --- | --- | --- | --- | --- |
 | Gate PASS, not merged | awaiting_integration | current | current/actionable | implementation handoff |
@@ -183,6 +183,7 @@ Decision table:
 | Current Authority Gate needs review | integrated | needs_review | actionable needs-review Gate | P34 |
 | Current Authority Gate stale | integrated | stale | actionable stale Gate | P34 |
 | Gate historically BLOCKED and all Authority historical | must not support integrated occurrence | n/a | historical/non-actionable blocked record | none solely from history |
+| Candidate closed without merge | closed_unmerged | historical | Gate remains independently classified | none from Integration |
 
 Other independent earlier blockers may still take precedence under the existing earliest-untrusted-layer ordering.
 
@@ -190,78 +191,59 @@ Other independent earlier blockers may still take precedence under the existing 
 
 This change is semantically incompatible with v0.2 even where field names are reused.
 
-Therefore:
-
 ```text
 schemas/project-state/v0.3/
 SCHEMA_VERSION = "0.3"
 GENERATOR_VERSION = "0.3"
 ```
 
-Do not overwrite `schemas/project-state/v0.1/` or `schemas/project-state/v0.2/`.
+`schemas/project-state/v0.1/` and `schemas/project-state/v0.2/` remain preserved as historical contracts. v0.2 is now Superseded/Historical; v0.3 is Current.
 
-v0.2 remains Current until v0.3 completes P34, supersession, repository integration, and formal 08 rerun acceptance.
+## Accepted verification evidence
 
-## Verification design
+The implementation was developed RED-first and accepted only after focused history regressions, the existing project-state suite, declarative schema checks, Skill validation/package, and the real Aegis self-host oracle all passed.
 
-Implementation must first add RED regressions for at least:
-
-1. `integrated` + later all supporting Authority superseded -> VALID; occurrence remains integrated; applicability = historical;
-2. `integrated` + historical PASS Gate -> allowed;
-3. `integrated` + historical BLOCKED Gate -> rejected and old blocked verdict does not become a current blocker solely from history;
-4. `awaiting_integration` + stale/non-current-effective Gate -> rejected;
-5. historical stale Gate -> historical projection and no P34 routing;
-6. current Authority + stale Gate -> remains actionable and routes P34;
-7. mixed Current + Historical Gate Authorities -> `needs_review` + Authority/P21, not historical;
-8. missing/invalid integration occurrence evidence -> integrated provenance cannot be accepted;
-9. real Aegis self-host oracle:
+PR #8 final head:
 
 ```text
-PR #4 integrated + 07 v0.1 superseded
-PR #7 integrated + 07 v0.2 current
-OpenAI baseline = BLOCKED_ENVIRONMENT
-
-=> int-pr4 occurrence = integrated
-=> int-pr4 applicability = historical
-=> int-pr7 occurrence = integrated
-=> int-pr7 applicability = current
-=> gate-project-state-pr4 = historical / non-actionable
-=> blocking_gates = [gate-openai-real-baseline]
-=> earliest_untrusted_layer = verification
-=> recommended_next_stage = P34
-=> strict root check = STATE_OK
+9198ed45818f564456a3a807fb30db8dd2f8bf2d
 ```
 
-The real self-host oracle is mandatory acceptance evidence. Unit tests alone are insufficient.
-
-## Required lifecycle route
+GitHub Actions run `33025424144`, job `98365477644`, checked out the real PR merge ref `b152ed01160d1930c6dab9c6193b665b28b69a1e` and produced:
 
 ```text
-P35 Defect Classification
-→ P21 Authority Review
-→ P20 Verification Design
-→ written v0.3 spec approval
-→ P30 / P31 implementation package
-→ P32 TDD implementation
-→ P36 full regression
-→ P34
-→ P23 v0.2 supersession if accepted
-→ repository integration
-→ formal 08 rerun
+six v0.3 schemas parse = PASS
+minimal validate       = VALID
+minimal state check    = STATE_OK
+Ran 43 tests in 0.230s
+OK
 ```
 
-## Acceptance boundary
+Fresh local verification also produced 43/43 PASS, Skill Creator validation/package PASS, clean ZIP integrity, and R03-09 `STATE_OK`.
 
-v0.3 may supersede v0.2 only when all are true:
+R03-09 accepted state before v0.3 supersession/integration:
 
-- schema/validator/compute regressions pass;
-- historical Integration truth survives Authority supersession;
-- stale Gate tied to current Authority still blocks correctly;
-- mixed Current/Historical dependencies fail closed to Authority review;
-- historical `BLOCKED_*` verdicts do not reactivate current blockers solely from provenance;
-- stale Gate retained only as superseded-history provenance does not block current routing;
-- Aegis root self-host strict check returns `STATE_OK` under truthful PR #4 / PR #7 / OpenAI-baseline facts;
-- repository CI evidence passes the defined P34 gate;
-- Aegis Skill project-state reference is updated and validates/packages successfully.
+```text
+int-pr4 = integrated / historical
+int-pr6 = closed_unmerged / historical
+int-pr7 = integrated / current
+gate-project-state-pr4 = historical / non-actionable
+blocking_gates = [gate-openai-real-baseline]
+earliest_untrusted_layer = verification
+recommended_next_stage = P34
+strict root check = STATE_OK
+```
 
-Until then, v0.2 remains Current Authority and 08 remains `BLOCKED_AUTHORITY`.
+Production special-case scan found no PR #4, PR #4 merge SHA, or `Mostorm-Labs/aegis` special case under `tools/aegis_state`.
+
+## P34 / P23 / repository integration
+
+P34 verdict: **PASS**.
+
+P23 then superseded v0.2 with v0.3 in the Authority system. Repository integration was performed separately through PR #8, squash-merged at:
+
+```text
+be385b3549900ba5bc34170dbfa8b4e583631a1d
+```
+
+The next mandatory downstream evidence is the formal 08 Self-Hosting rerun on the integrated v0.3 baseline. That rerun must preserve the real OpenAI behavioral baseline as `BLOCKED_ENVIRONMENT -> verification/P34`; success means self-host semantic fidelity is correct, not that the entire Aegis project is globally unblocked.
