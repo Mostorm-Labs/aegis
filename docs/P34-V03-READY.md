@@ -1,1 +1,0 @@
-This file identifies the current feature-branch head as the Project State v0.3 P34 candidate. It has no semantic authority beyond the approved v0.3 design and evidence contract.
