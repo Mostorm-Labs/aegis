@@ -1,0 +1,4 @@
+[
+  {"id":"compat-001","prompt":"Only composite Aegis is installed; design a semantic schema.","expected_skill":"aegis","fallback_stage":"P12"},
+  {"id":"compat-002","prompt":"Only composite Aegis is installed; audit a Gate.","expected_skill":"aegis","fallback_stage":"P34"}
+]

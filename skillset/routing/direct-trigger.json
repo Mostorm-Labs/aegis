@@ -1,0 +1,7 @@
+[
+  {"id":"direct-001","prompt":"Design the canonical operation vocabulary.","expected_skill":"aegis-modeling","expected_stage_family":["P10","P11","P12","P13"],"must_stop":false},
+  {"id":"direct-002","prompt":"Review whether this authority should supersede the previous version.","expected_skill":"aegis-governance","expected_stage_family":["P21","P22","P23","P24"],"must_stop":false},
+  {"id":"direct-003","prompt":"Define the golden oracle and evidence threshold for this contract.","expected_skill":"aegis-verification","expected_stage_family":["P20"],"must_stop":false},
+  {"id":"direct-004","prompt":"Audit this PR against its Gate evidence.","expected_skill":"aegis-gate-review","expected_stage_family":["P34","P35","P36"],"must_stop":false},
+  {"id":"direct-005","prompt":"Validate this repository's .aegis project state.","expected_skill":"aegis-project-state","expected_stage_family":[],"must_stop":false}
+]

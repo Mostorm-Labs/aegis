@@ -1,0 +1,4 @@
+[
+  {"id":"blocker-001","prompt":"Design module architecture, but project authority is unresolved.","invoked_skill":"aegis-architecture","expected_skill":"aegis","must_stop":true,"reason":"earlier authority blocker"},
+  {"id":"blocker-002","prompt":"Review implementation plan while .aegis exists but deterministic state validation is unavailable.","invoked_skill":"aegis-implementation","expected_skill":"aegis","must_stop":true,"reason":"unverifiable project state"}
+]

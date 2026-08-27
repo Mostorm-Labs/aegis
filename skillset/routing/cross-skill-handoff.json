@@ -1,0 +1,9 @@
+{
+  "valid": [
+    {"id":"handoff-001","from":"aegis-architecture","to":"aegis-verification","completed_stage":"P14","next_stage":"P20"},
+    {"id":"handoff-002","from":"aegis-verification","to":"aegis-implementation","completed_stage":"P20","next_stage":"P30"}
+  ],
+  "forbidden_cycles": [
+    {"id":"cycle-001","edges":[["aegis-architecture","aegis-verification"],["aegis-verification","aegis-architecture"]]}
+  ]
+}
