@@ -5,8 +5,13 @@ on:
     paths:
       - ".aegis/**"
       - "docs/project-state-manifest-v*.md"
+      - "docs/self-hosting-manifest-adoption-v0.1.md"
+      - "docs/dogfood/**"
       - "docs/superpowers/specs/*project-state*.md"
+      - "docs/superpowers/specs/*self-hosting*.md"
       - "docs/superpowers/plans/*project-state*.md"
+      - "docs/superpowers/plans/*self-hosting*.md"
+      - "evals/cases/dogfood.json"
       - "schemas/project-state/**"
       - "tools/aegis_state/**"
       - "tests/project_state/**"
@@ -17,8 +22,13 @@ on:
     paths:
       - ".aegis/**"
       - "docs/project-state-manifest-v*.md"
+      - "docs/self-hosting-manifest-adoption-v0.1.md"
+      - "docs/dogfood/**"
       - "docs/superpowers/specs/*project-state*.md"
+      - "docs/superpowers/specs/*self-hosting*.md"
       - "docs/superpowers/plans/*project-state*.md"
+      - "docs/superpowers/plans/*self-hosting*.md"
+      - "evals/cases/dogfood.json"
       - "schemas/project-state/**"
       - "tools/aegis_state/**"
       - "tests/project_state/**"
@@ -31,7 +41,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
+  validate-tooling:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -49,3 +59,17 @@ jobs:
         run: python3 -m tools.aegis_state.cli check examples/project-state/minimal
       - name: Run project-state unit tests
         run: python3 -m unittest discover -s tests/project_state -v
+
+  self-host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate Aegis root v0.3 manifests
+        run: python3 -m tools.aegis_state.cli validate .
+      - name: Check Aegis root generated state
+        run: python3 -m tools.aegis_state.cli check .
+      - name: Validate Aegis evaluation corpus
+        run: python3 evals/scripts/validate_corpus.py

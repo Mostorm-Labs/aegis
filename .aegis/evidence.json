@@ -1,0 +1,19 @@
+{
+  "schema_version": "0.3",
+  "evidence": [
+    {"id":"ev-pr1-merged","type":"repository_integration","ref":"https://github.com/Mostorm-Labs/aegis/pull/1","status":"available","subject_ids":["gate-eval-framework-pr1"]},
+    {"id":"ev-pr1-ci","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/pull/1","status":"available","subject_ids":["gate-eval-framework-pr1"]},
+    {"id":"ev-pr2-merged","type":"repository_integration","ref":"https://github.com/Mostorm-Labs/aegis/pull/2","status":"available","subject_ids":["gate-eval-tooling-pr2"]},
+    {"id":"ev-pr2-ci","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/pull/2","status":"available","subject_ids":["gate-eval-tooling-pr2"]},
+    {"id":"ev-pr3-ci","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/pull/3","status":"available","subject_ids":["gate-openai-provider-tooling-pr3"]},
+    {"id":"ev-pr3-merged","type":"repository_integration","ref":"https://github.com/Mostorm-Labs/aegis/pull/3","status":"available","subject_ids":["gate-openai-provider-tooling-pr3"]},
+    {"id":"ev-openai-env-block","type":"environment_probe","ref":"06-02://2026-08-26/missing-OPENAI_API_KEY","status":"available","subject_ids":["gate-openai-real-baseline"]},
+    {"id":"ev-pr4-ci","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/32982765747","status":"available","subject_ids":["gate-project-state-pr4"]},
+    {"id":"ev-pr4-merged","type":"repository_integration","ref":"https://github.com/Mostorm-Labs/aegis/pull/4","status":"available","subject_ids":["gate-project-state-pr4"]},
+    {"id":"ev-pr6-closed","type":"integration_state","ref":"https://github.com/Mostorm-Labs/aegis/pull/6","status":"available","subject_ids":["gate-project-state-v02-pr7"]},
+    {"id":"ev-pr7-p34","type":"gate_review","ref":"https://github.com/Mostorm-Labs/aegis/pull/7","status":"available","subject_ids":["gate-project-state-v02-pr7"]},
+    {"id":"ev-pr7-merged","type":"repository_integration","ref":"https://github.com/Mostorm-Labs/aegis/pull/7","status":"available","subject_ids":["gate-project-state-v02-pr7"]},
+    {"id":"ev-pr8-p34","type":"gate_review","ref":"https://github.com/Mostorm-Labs/aegis/pull/8","status":"available","subject_ids":["gate-project-state-v03-pr8"]},
+    {"id":"ev-pr8-merged","type":"repository_integration","ref":"https://github.com/Mostorm-Labs/aegis/pull/8","status":"available","subject_ids":["gate-project-state-v03-pr8"]}
+  ]
+}
