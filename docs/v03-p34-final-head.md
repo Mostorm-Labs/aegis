@@ -1,1 +1,0 @@
-This is the final pre-PR Project State v0.3 review-head marker. P34 must inspect fresh repository CI from this or a later semantically identical head.
