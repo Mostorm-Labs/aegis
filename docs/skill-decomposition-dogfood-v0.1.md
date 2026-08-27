@@ -57,6 +57,12 @@ Classification:
 
 This does **not** invalidate the deterministic routing oracle; it proves that intended routing and real platform description-based selection are different evidence layers.
 
+## Trigger metadata inspection
+
+Current `aegis-project-state` description includes broad trigger language for `Authority/Gate/Evidence/Integration records`, `blocked Gate propagation`, and state drift. Current `aegis-gate-review` description explicitly owns review of a PR/implementation for Gate completion and PASS-versus-BLOCKED classification. The platform selected the broader Project State description for the protected Gate-evidence prompt.
+
+This is sufficient to classify the observed behavior as an implementation defect in trigger discrimination. Repair is deferred until the remaining probes have characterized the same installed version.
+
 ## Gate policy
 
 `Multi-Skill Behavioral Trigger = PASS` requires all four protected probes to have real installed-platform evidence with:
