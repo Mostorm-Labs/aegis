@@ -69,4 +69,9 @@ def validate_skillset(config: SkillSetConfig) -> list[str]:
     if unknown: errors.append('unknown stage owner: ' + ','.join(unknown))
     if config.ambiguity_router != 'aegis': errors.append('ambiguity router must be aegis')
     if config.cross_cutting_owners.get('project_state') != 'aegis-project-state': errors.append('project_state owner must be aegis-project-state')
+    unknown_support = sorted({name for name in config.supporting_skills if name not in owners})
+    if unknown_support: errors.append('unknown supporting skill: ' + ','.join(unknown_support))
+    if tuple(config.supporting_skills) != ('aegis-project-state',): errors.append('v0.2 supporting skills must be aegis-project-state only')
+    if config.compatibility_owner != 'aegis': errors.append('compatibility owner must be aegis')
+    if not config.compatibility_requires_unavailable_evidence: errors.append('compatibility requires unavailable evidence')
     return errors
