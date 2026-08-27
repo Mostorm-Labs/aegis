@@ -1,5 +1,7 @@
-import importlib.util
+import importlib
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,10 +14,7 @@ MANIFEST = ROOT / "skillset/dogfood/installed-platform-rerun-v0.2.json"
 class InstalledPlatformGateTests(unittest.TestCase):
     def _dogfood(self):
         self.assertTrue(MODULE.is_file(), "installed-platform evaluator module missing")
-        spec = importlib.util.spec_from_file_location("tools.aegis_skillset.dogfood", MODULE)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module
+        return importlib.import_module("tools.aegis_skillset.dogfood")
 
     def test_current_rerun_manifest_fails_closed_without_platform_evidence(self):
         self.assertTrue(MANIFEST.is_file(), "Task 6 rerun manifest missing")
@@ -148,6 +147,28 @@ class InstalledPlatformGateTests(unittest.TestCase):
         self.assertEqual("FAIL", result.verdict)
         first = next(case for case in result.cases if case.case_id == "09-01-direct-specialist")
         self.assertIn("ROUTER_OWNERSHIP_LEAK", first.violations)
+
+    def test_check_cli_accepts_structurally_valid_blocked_state(self):
+        proc = subprocess.run(
+            [sys.executable, "-m", "tools.aegis_skillset.cli", "installed-platform-check", str(ROOT)],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("BLOCKED_EVIDENCE", proc.stdout)
+
+    def test_gate_cli_rejects_blocked_state(self):
+        proc = subprocess.run(
+            [sys.executable, "-m", "tools.aegis_skillset.cli", "installed-platform-gate", str(ROOT)],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(2, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("BLOCKED_EVIDENCE", proc.stdout)
 
 
 if __name__ == "__main__":
