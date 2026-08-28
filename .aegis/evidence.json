@@ -28,6 +28,7 @@
     {"id":"ev-pr11-post-p34-project-state-ci-33163765563","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33163765563","status":"available","subject_ids":["aegis-project-state-v0.4"]},
     {"id":"ev-pr11-post-p34-skillset-ci-33163765578","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33163765578","status":"available","subject_ids":["aegis-project-state-v0.4"]},
     {"id":"ev-pr11-p23","type":"authority_supersession","ref":"docs/project-state-manifest-v0.4.md#p23-supersession","status":"available","subject_ids":["aegis-project-state-v0.4"]},
-    {"id":"ev-pr11-awaiting-integration","type":"integration_state","ref":"https://github.com/Mostorm-Labs/aegis/pull/11","status":"available","subject_ids":["int-pr11"]}
+    {"id":"ev-pr11-awaiting-integration","type":"integration_state","ref":"https://github.com/Mostorm-Labs/aegis/pull/11","status":"available","subject_ids":["int-pr11"]},
+    {"id":"ev-pr11-merged","type":"repository_integration","ref":"https://github.com/Mostorm-Labs/aegis/commit/5fde161ccf71f283e727a238c914506edf79e258","status":"available","subject_ids":["int-pr11"]}
   ]
 }
