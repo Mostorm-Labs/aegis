@@ -3,13 +3,11 @@
   "awaiting_integrations": [],
   "blocking_findings": [
     "gate gate-openai-real-baseline is currently BLOCKED_ENVIRONMENT",
-    "gate gate-project-state-v04-pr11 is currently BLOCKED_EVIDENCE",
     "gate gate-skill-decomposition-v02-pr9 is currently BLOCKED_EVIDENCE",
     "integration int-pr9 occurred under non-PASS gate gate-skill-decomposition-v02-pr9 (BLOCKED_EVIDENCE)"
   ],
   "blocking_gates": [
     "gate-openai-real-baseline",
-    "gate-project-state-v04-pr11",
     "gate-skill-decomposition-v02-pr9"
   ],
   "earliest_untrusted_layer": "verification",
@@ -82,7 +80,7 @@
       "integration_id": "int-pr9"
     }
   ],
-  "manifest_digest": "de0463bb38a31fc1c4d2168c2c1858102e1a5050e636ae88c5241c9a77061b59",
+  "manifest_digest": "2bd9f6858928387c1baf65932dfd99e9bdfac3149e529bbab4ac43efbd10668c",
   "needs_review_authorities": [],
   "needs_review_gates": [],
   "nonconforming_integrations": [
