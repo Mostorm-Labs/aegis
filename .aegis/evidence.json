@@ -21,6 +21,9 @@
     {"id":"ev-pr9-task6-ci-33053118456","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33053118456","status":"available","subject_ids":["gate-skill-decomposition-v02-pr9"]},
     {"id":"ev-pr9-merged","type":"repository_integration","ref":"https://github.com/Mostorm-Labs/aegis/commit/a0c6b0103b119f517c7adf9ec4a90b5963e5e1e3","status":"available","subject_ids":["int-pr9"]},
     {"id":"ev-f09-06-authority","type":"authority_review","ref":"docs/project-state-manifest-v0.4.md","status":"available","subject_ids":["gate-project-state-v04-pr11"]},
-    {"id":"ev-pr11-red-ci-33162821606","type":"automated_test_red","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33162821606","status":"available","subject_ids":["gate-project-state-v04-pr11"]}
+    {"id":"ev-pr11-red-ci-33162821606","type":"automated_test_red","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33162821606","status":"available","subject_ids":["gate-project-state-v04-pr11"]},
+    {"id":"ev-pr11-project-state-ci-33163536074","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33163536074","status":"available","subject_ids":["gate-project-state-v04-pr11"]},
+    {"id":"ev-pr11-skillset-ci-33163536133","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33163536133","status":"available","subject_ids":["gate-project-state-v04-pr11"]},
+    {"id":"ev-pr11-p34","type":"gate_review","ref":"docs/project-state-manifest-v0.4.md#p34-evidence--pass","status":"available","subject_ids":["gate-project-state-v04-pr11"]}
   ]
 }
