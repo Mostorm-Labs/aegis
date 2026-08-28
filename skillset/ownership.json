@@ -14,5 +14,27 @@
     "supporting_skills": ["aegis-project-state"],
     "compatibility_owner": "aegis",
     "compatibility_requires_unavailable_evidence": true
+  },
+  "execution_surfaces": {
+    "semantic_surfaces": ["CONTROL_REASONING", "CODE_EXECUTION", "CONTROL_REVIEW", "CODE_REVERIFY"],
+    "default_executor_profile": "openai",
+    "executor_profiles": {
+      "openai": {
+        "CONTROL_REASONING": "chatgpt",
+        "CODE_EXECUTION": "codex",
+        "CONTROL_REVIEW": "chatgpt",
+        "CODE_REVERIFY": "codex"
+      }
+    },
+    "surface_handoff_transfers_ownership": false,
+    "execution_surface_by_stage": {
+      "P30": "CONTROL_REASONING",
+      "P31": "CONTROL_REASONING",
+      "P32": "CODE_EXECUTION",
+      "P33": "CODE_EXECUTION",
+      "P34": "CONTROL_REVIEW",
+      "P35": "CONTROL_REVIEW",
+      "P36": "CODE_REVERIFY"
+    }
   }
 }
