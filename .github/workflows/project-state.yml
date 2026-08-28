@@ -16,6 +16,8 @@ on:
       - "tools/aegis_state/**"
       - "tests/project_state/**"
       - "examples/project-state/**"
+      - "skillset/skills/aegis-project-state/**"
+      - "skills/aegis-project-state/**"
       - "skills/aegis/**"
       - ".github/workflows/project-state.yml"
   pull_request:
@@ -33,6 +35,8 @@ on:
       - "tools/aegis_state/**"
       - "tests/project_state/**"
       - "examples/project-state/**"
+      - "skillset/skills/aegis-project-state/**"
+      - "skills/aegis-project-state/**"
       - "skills/aegis/**"
       - ".github/workflows/project-state.yml"
 
@@ -48,15 +52,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Parse project-state v0.3 schemas
+      - name: Parse project-state v0.3 and v0.4 schemas
         run: |
-          for schema in schemas/project-state/v0.3/*.json; do
-            python3 -m json.tool "$schema" >/dev/null
+          for version in v0.3 v0.4; do
+            for schema in schemas/project-state/$version/*.json; do
+              python3 -m json.tool "$schema" >/dev/null
+            done
           done
-      - name: Validate minimal v0.3 project manifests
+      - name: Validate minimal v0.4 project manifests
         run: python3 -m tools.aegis_state.cli validate examples/project-state/minimal
-      - name: Check generated minimal v0.3 project state
-        run: python3 -m tools.aegis_state.cli check examples/project-state/minimal
+      - name: Check generated minimal v0.4 project state
+        run: |
+          if ! python3 -m tools.aegis_state.cli check examples/project-state/minimal; then
+            python3 -m tools.aegis_state.cli recompute examples/project-state/minimal > /tmp/minimal-state.json
+            diff -u examples/project-state/minimal/.aegis/state.json /tmp/minimal-state.json || true
+            exit 1
+          fi
       - name: Run project-state unit tests
         run: python3 -m unittest discover -s tests/project_state -v
 
@@ -67,9 +78,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Validate Aegis root v0.3 manifests
+      - name: Validate Aegis root v0.4 manifests
         run: python3 -m tools.aegis_state.cli validate .
-      - name: Check Aegis root generated state
-        run: python3 -m tools.aegis_state.cli check .
+      - name: Check Aegis root generated v0.4 state
+        run: |
+          if ! python3 -m tools.aegis_state.cli check .; then
+            python3 -m tools.aegis_state.cli recompute . > /tmp/root-state.json
+            diff -u .aegis/state.json /tmp/root-state.json || true
+            exit 1
+          fi
       - name: Validate Aegis evaluation corpus
         run: python3 evals/scripts/validate_corpus.py
