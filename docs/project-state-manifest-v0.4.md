@@ -1,6 +1,8 @@
 # Aegis Project State Out-of-Gate Integration Semantics v0.4
 
-Status: **P34 PASS — Approved Replacement Authority candidate v0.4; P23 supersession and repository integration pending.**
+Status: **Current Replacement Authority v0.4 — P34 PASS; P23 supersession complete on PR #11 branch; repository integration pending.**
+
+Previous Authority: [Project State v0.3](project-state-manifest-v0.3.md), now Superseded.
 
 This document repairs F09-06, discovered when PR #9 was physically merged while its recorded Gate remained `BLOCKED_EVIDENCE`. v0.3 preserves historical integration occurrence only when a PASS/PASS_WITH_FINDINGS Gate exists, so it cannot truthfully represent a real repository merge that violated Gate policy.
 
@@ -113,7 +115,7 @@ The PR #9 merge is occurrence evidence only. It is not behavioral acceptance evi
 
 ## Versioning
 
-v0.4 is a replacement Project State semantic contract and introduces a new schema/generator version:
+v0.4 is the Current Project State semantic contract and schema/generator version:
 
 ```text
 schemas/project-state/v0.4/
@@ -157,8 +159,44 @@ Skill instruction/distribution parity   PASS
 Overall F09-06 repair                    PASS
 ```
 
-P23 supersession remains a separate step. v0.3 remains Current and v0.4 remains Proposed until that transition is explicitly persisted.
+Fresh post-P34 persistence verification on head `0cf6926ccc7c2601fab2229820ec9f52f6ca721a` also passed:
+
+- Project State Integrity `33163765563` = PASS;
+- Skillset Integrity `33163765578` = PASS.
+
+## P22 Five-Axis Drift Review
+
+1. **Product Drift:** none. Aegis still provides the same project-control value; the repair only makes repository truth representable.
+2. **Semantic Drift:** intentional and accepted. Integration occurrence is now explicitly separate from Gate conformance.
+3. **Architecture Drift:** none. Stage ownership, Gate ownership, Project State support role, manifest layout, and lifecycle routing topology remain unchanged.
+4. **Implementation Drift:** closed. Tooling, v0.4 schemas, root/minimal manifests, generated state, canonical Skill instructions, and generated distributions implement the accepted v0.4 contract.
+5. **Verification Drift:** closed. The RED oracle proves the old gap; v0.3 regression behavior remains protected; fresh v0.4 Project State and Skillset CI are green.
+
+Downstream impact review:
+
+```text
+aegis-self-hosting-v0.1          UNAFFECTED
+aegis-skill-decomposition-v0.1  UNAFFECTED
+aegis-skill-decomposition-v0.2  UNAFFECTED
+```
+
+Reason: v0.4 is version-aware and preserves v0.3 semantics for v0.3 manifests. It does not change the Project State support/ownership boundary consumed by the skill-decomposition authorities. The Project State and Skillset regression suites on the v0.4 branch provide executable evidence for these unaffected determinations.
+
+## P23 Supersession
+
+P23 is now authorized by the accepted P34 evidence and P22 impact review.
+
+```text
+aegis-project-state-v0.3 = Superseded
+aegis-project-state-v0.4 = Current
+supersedes                = aegis-project-state-v0.3
+change_class              = semantic
+```
+
+The v0.3 document and schema remain preserved as supported historical contracts. No historical Gate, Evidence, Integration occurrence, or v0.3 test result is rewritten.
+
+PR #11 repository integration remains a separate lifecycle action. Until it is merged, this Current Authority transition exists on the PR #11 candidate branch and has not yet entered the `main` repository baseline.
 
 ## Non-goals
 
-v0.4 does not automatically revert an out-of-Gate merge, change GitHub branch protection, modify Gate verdict taxonomy, promote PR #9 Authority, infer missing behavioral evidence, or authorize PR #10 merely because its repository dependency was merged.
+v0.4 does not automatically revert an out-of-Gate merge, change GitHub branch protection, modify Gate verdict taxonomy, promote PR #9 skill-decomposition Authority, infer missing behavioral evidence, or authorize PR #10 merely because its repository dependency was merged.
