@@ -93,6 +93,9 @@ def evaluate_catalog_snapshot(root: Path, snapshot: dict) -> CatalogEvaluation:
     if snapshot.get("schema_version") != "0.1": gaps.append("schema_version 0.1")
     if snapshot.get("fresh_platform_event") is not True: gaps.append("fresh_platform_event")
     if snapshot.get("complete_catalog_capture") is not True: gaps.append("complete_catalog_capture")
+    surface = snapshot.get("surface")
+    if not isinstance(surface, dict) or surface.get("product") != "chatgpt" or surface.get("surface") not in {"web", "desktop", "mobile", "other"}:
+        gaps.append("platform surface")
     if not isinstance(snapshot.get("observed_distributions"), list) or not snapshot.get("observed_distributions"): gaps.append("observed_distributions")
     installed = snapshot.get("installed_skills")
     if not isinstance(installed, list): gaps.append("installed_skills")
