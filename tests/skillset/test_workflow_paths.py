@@ -34,6 +34,19 @@ class SkillsetWorkflowPathTests(unittest.TestCase):
             with self.subTest(path=required):
                 self.assertIn(f'"{required}"', paths)
 
+    def test_workflow_builds_and_uploads_plugin_distribution(self):
+        workflow = WORKFLOW.read_text(encoding='utf-8')
+        required = (
+            'python3 -m tools.aegis_skillset.cli distribution-check .',
+            'python3 scripts/build_aegis_distributions.py --check',
+            'python3 scripts/build_aegis_distributions.py --package-dir /tmp/aegis-plugin-dist',
+            'actions/upload-artifact@v4',
+            'name: aegis-distributions-0.1.0-task6.1',
+        )
+        for needle in required:
+            with self.subTest(needle=needle):
+                self.assertIn(needle, workflow)
+
 
 if __name__ == '__main__':
     unittest.main()
