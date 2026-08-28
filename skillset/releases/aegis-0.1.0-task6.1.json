@@ -1,0 +1,56 @@
+{
+  "distribution_contract_ref": "skillset/distribution.json",
+  "plugin": {
+    "id": "aegis",
+    "skills": [
+      {
+        "name": "aegis",
+        "tree_sha256": "e847a089a36709a85359ed3b80ac8d298397df098576744fdc0ec42de9e5620e"
+      },
+      {
+        "name": "aegis-project-state",
+        "tree_sha256": "3857ec76f279bbb289cc8307def539d4aa379974bdff0c70425011fc2f2874d5"
+      },
+      {
+        "name": "aegis-discovery",
+        "tree_sha256": "bc13d1f7f44079ad6ddbcc846383b50ed50e1319052b80c6e54f69142b34ea9f"
+      },
+      {
+        "name": "aegis-modeling",
+        "tree_sha256": "5b8dfe954e1106b8c2f6feb89553a38ebe48b9f553f8a6d20e79601d6f58aad9"
+      },
+      {
+        "name": "aegis-architecture",
+        "tree_sha256": "7ea125999a6f46f9e10842f953cfbbda55bde97038c4b9ed67f751c01c324a54"
+      },
+      {
+        "name": "aegis-verification",
+        "tree_sha256": "7bacea3fa0f7ea9f5c8ec54403984ff0bae75694d94023b24358a73ab831acbb"
+      },
+      {
+        "name": "aegis-governance",
+        "tree_sha256": "93aefde9a88158ce39b68d28a173ae8e467fe683100d70901ba06aa469079a00"
+      },
+      {
+        "name": "aegis-implementation",
+        "tree_sha256": "54d7114932cb0f195db729b68d831ce7f83ddca97ad6a750d044862b86f87d3e"
+      },
+      {
+        "name": "aegis-gate-review",
+        "tree_sha256": "6f752cbc7836c14ca6fc87c65776efdcc4563e3fbbd504d0f91302954df1d0ce"
+      }
+    ]
+  },
+  "product_id": "aegis",
+  "release_version": "0.1.0-task6.1",
+  "schema_version": "0.1",
+  "standalone": {
+    "id": "aegis-standalone",
+    "skills": [
+      {
+        "name": "aegis",
+        "tree_sha256": "e847a089a36709a85359ed3b80ac8d298397df098576744fdc0ec42de9e5620e"
+      }
+    ]
+  }
+}
