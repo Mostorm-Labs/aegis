@@ -1,6 +1,8 @@
 # Aegis Project State Historical Integration Durability + Gate History Semantics v0.3
 
-Status: **Current Replacement Authority v0.3 — P34 PASS; integrated in `main`.**
+Status: **Superseded by [Project State v0.4](project-state-manifest-v0.4.md). Historical P34 PASS; integrated in `main`.**
+
+Supersession reason: F09-06 proved that v0.3 cannot truthfully represent a repository Integration that physically occurred while its Gate remained `BLOCKED_*`. v0.4 preserves v0.3 history/applicability semantics while separating Integration occurrence from Gate conformance. v0.3 remains an immutable supported historical schema; v0.4 does not reinterpret v0.3 manifests.
 
 This document is the repository companion to the Notion authority `07 v0.3 Aegis Project State Historical Integration Durability + Gate History Semantics` and supersedes `docs/project-state-manifest-v0.2.md`.
 
@@ -117,7 +119,7 @@ SCHEMA_VERSION = "0.3"
 GENERATOR_VERSION = "0.3"
 ```
 
-v0.1 and v0.2 schema trees remain immutable historical contracts. v0.2 is Superseded/Historical; v0.3 is Current.
+v0.1, v0.2, and v0.3 schema trees are immutable historical contracts. v0.3 is Superseded as Current Authority but remains supported for projects whose authored manifests declare schema `0.3`.
 
 ## Accepted verification evidence
 
@@ -152,12 +154,14 @@ No PR #4, its merge SHA, or Aegis repository-specific special case exists in `to
 
 ## P34 / P23 / repository integration
 
-P34 verdict: **PASS**.
+Historical P34 verdict: **PASS**.
 
-P23 then superseded v0.2 with v0.3. Repository integration was a separate action: PR #8 was squash-merged at:
+P23 originally superseded v0.2 with v0.3. Repository integration was a separate action: PR #8 was squash-merged at:
 
 ```text
 be385b3549900ba5bc34170dbfa8b4e583631a1d
 ```
 
-The mandatory downstream handoff is the formal 08 Self-Hosting rerun on the integrated v0.3 baseline. The real OpenAI behavioral baseline remains `BLOCKED_ENVIRONMENT -> verification/P34`; 08 success is semantic fidelity, not global project unblocking.
+F09-06 later triggered a second P23 transition from v0.3 to v0.4. The original v0.3 evidence remains historical and is not rewritten.
+
+The real OpenAI behavioral baseline remains separately `BLOCKED_ENVIRONMENT -> verification/P34`; Project State supersession does not alter that independent Gate.
