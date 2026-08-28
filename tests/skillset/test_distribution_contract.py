@@ -1,11 +1,8 @@
-import json
-import tempfile
 import unittest
 from dataclasses import replace
 from pathlib import Path
 
 from tools.aegis_skillset.distribution import (
-    DistributionSpec,
     evaluate_catalog_snapshot,
     load_distribution_contract,
     validate_distribution_contract,
@@ -13,6 +10,7 @@ from tools.aegis_skillset.distribution import (
 from tools.aegis_skillset.model import load_skillset
 
 ROOT = Path(__file__).resolve().parents[2]
+RELEASE = "0.1.0-task6.1"
 
 
 class DistributionContractTests(unittest.TestCase):
@@ -28,49 +26,132 @@ class DistributionContractTests(unittest.TestCase):
         self.assertNotIn("aegis-plugin", set(load_skillset(ROOT).primary_owner_by_stage.values()))
 
     def test_negative_contract_shapes(self):
-        c = load_distribution_contract(ROOT)
+        contract = load_distribution_contract(ROOT)
         cases = [
-            replace(c, plugin=replace(c.plugin, skills=c.plugin.skills + ("extra",))),
-            replace(c, plugin=replace(c.plugin, skills=c.plugin.skills[:-1])),
-            replace(c, standalone=replace(c.standalone, skills=("aegis", "aegis-modeling"))),
-            replace(c, plugin=replace(c.plugin, required_apps=("github",))),
+            replace(contract, plugin=replace(contract.plugin, skills=contract.plugin.skills + ("extra",))),
+            replace(contract, plugin=replace(contract.plugin, skills=contract.plugin.skills[:-1])),
+            replace(contract, standalone=replace(contract.standalone, skills=("aegis", "aegis-modeling"))),
+            replace(contract, plugin=replace(contract.plugin, required_apps=("github",))),
         ]
         for bad in cases:
             self.assertTrue(validate_distribution_contract(ROOT, bad))
 
-    def _manifest(self):
-        return json.loads((ROOT / "skillset/releases/aegis-0.1.0-task6.1.json").read_text())
+    def _all_skills(self):
+        return list(load_distribution_contract(ROOT).plugin.skills)
 
-    def _snapshot(self, kind="plugin", skills=None, version="0.1.0-task6.1", observations=None):
+    def _observation(self, kind, version=RELEASE):
+        ids = {
+            "plugin": "aegis",
+            "standalone": "aegis-standalone",
+            "individual_skills": "aegis-individual",
+        }
+        return {"kind": kind, "id": ids.get(kind, "unknown"), "release_version": version}
+
+    def _snapshot(self, kind="plugin", skills=None, version=RELEASE, observations=None):
+        if skills is None:
+            skills = ["aegis"] if kind == "standalone" else self._all_skills()
         return {
-            "schema_version": "0.1", "fresh_platform_event": True,
-            "complete_catalog_capture": True, "platform_event_id": "synthetic",
+            "schema_version": "0.1",
+            "fresh_platform_event": True,
+            "complete_catalog_capture": True,
+            "platform_event_id": "synthetic",
             "surface": {"product": "chatgpt", "surface": "web"},
-            "observed_distributions": observations or [{"kind": kind, "id": "aegis" if kind == "plugin" else "aegis-standalone", "release_version": version}],
-            "installed_skills": skills if skills is not None else list(load_distribution_contract(ROOT).plugin.skills if kind == "plugin" else ("aegis",)),
+            "observed_distributions": observations or [self._observation(kind, version)],
+            "installed_skills": skills,
             "component_release_versions": {},
             "release_manifest_ref": "skillset/releases/aegis-0.1.0-task6.1.json",
             "materialization_ref": "https://example.test/materialization",
         }
 
-    def test_catalog_states(self):
-        full = evaluate_catalog_snapshot(ROOT, self._snapshot())
-        self.assertEqual(("PASS", "FULL_SPECIALIST", "multi_skill"), (full.verdict, full.catalog_state, full.runtime_mode))
+    def test_catalog_state_and_distribution_provenance_are_orthogonal(self):
+        plugin = evaluate_catalog_snapshot(ROOT, self._snapshot("plugin"))
+        self.assertEqual(
+            ("PASS", "FULL_SPECIALIST", "PLUGIN", "multi_skill"),
+            (plugin.verdict, plugin.catalog_state, plugin.distribution_provenance, plugin.runtime_mode),
+        )
+
         standalone = evaluate_catalog_snapshot(ROOT, self._snapshot("standalone"))
-        self.assertEqual(("PASS", "COMPOSITE_ONLY", "compatibility"), (standalone.verdict, standalone.catalog_state, standalone.runtime_mode))
-        partial = evaluate_catalog_snapshot(ROOT, self._snapshot(skills=["aegis"]))
-        self.assertEqual(("BLOCKED_ENVIRONMENT", "PARTIAL_CATALOG"), (partial.verdict, partial.catalog_state))
-        mixed = evaluate_catalog_snapshot(ROOT, self._snapshot(version="0.9.9"))
-        self.assertEqual(("BLOCKED_ENVIRONMENT", "MIXED_REVISION"), (mixed.verdict, mixed.catalog_state))
-        duplicate = evaluate_catalog_snapshot(ROOT, self._snapshot(observations=[{"kind":"plugin","id":"aegis","release_version":"0.1.0-task6.1"},{"kind":"standalone","id":"aegis-standalone","release_version":"0.1.0-task6.1"}]))
-        self.assertEqual(("BLOCKED_ENVIRONMENT", "DUPLICATE_DISTRIBUTION"), (duplicate.verdict, duplicate.catalog_state))
+        self.assertEqual(
+            ("PASS", "COMPOSITE_ONLY", "STANDALONE", "compatibility"),
+            (standalone.verdict, standalone.catalog_state, standalone.distribution_provenance, standalone.runtime_mode),
+        )
+
+        manual_full = evaluate_catalog_snapshot(
+            ROOT,
+            self._snapshot("individual_skills", skills=list(reversed(self._all_skills()))),
+        )
+        self.assertEqual(
+            ("PASS", "FULL_SPECIALIST", "INDIVIDUAL_SKILLS", "multi_skill"),
+            (manual_full.verdict, manual_full.catalog_state, manual_full.distribution_provenance, manual_full.runtime_mode),
+        )
+
+        manual_composite = evaluate_catalog_snapshot(
+            ROOT,
+            self._snapshot("individual_skills", skills=["aegis"]),
+        )
+        self.assertEqual(
+            ("PASS", "COMPOSITE_ONLY", "INDIVIDUAL_SKILLS", "compatibility"),
+            (manual_composite.verdict, manual_composite.catalog_state, manual_composite.distribution_provenance, manual_composite.runtime_mode),
+        )
+
+    def test_product_provenance_mismatch_fails_closed_without_faking_compatibility(self):
+        broken_plugin = evaluate_catalog_snapshot(ROOT, self._snapshot("plugin", skills=["aegis"]))
+        self.assertEqual(
+            ("BLOCKED_ENVIRONMENT", "COMPOSITE_ONLY", "PLUGIN", None),
+            (broken_plugin.verdict, broken_plugin.catalog_state, broken_plugin.distribution_provenance, broken_plugin.runtime_mode),
+        )
+
+        impossible_standalone = evaluate_catalog_snapshot(ROOT, self._snapshot("standalone", skills=self._all_skills()))
+        self.assertEqual(
+            ("BLOCKED_ENVIRONMENT", "FULL_SPECIALIST", "STANDALONE", None),
+            (impossible_standalone.verdict, impossible_standalone.catalog_state, impossible_standalone.distribution_provenance, impossible_standalone.runtime_mode),
+        )
+
+    def test_partial_mixed_duplicate_and_unknown_states_fail_closed(self):
+        partial = evaluate_catalog_snapshot(
+            ROOT,
+            self._snapshot("individual_skills", skills=["aegis", "aegis-project-state"]),
+        )
+        self.assertEqual(
+            ("BLOCKED_ENVIRONMENT", "PARTIAL_CATALOG", "INDIVIDUAL_SKILLS"),
+            (partial.verdict, partial.catalog_state, partial.distribution_provenance),
+        )
+
+        mixed = evaluate_catalog_snapshot(ROOT, self._snapshot("individual_skills", version="0.9.9"))
+        self.assertEqual(
+            ("BLOCKED_ENVIRONMENT", "MIXED_REVISION", "INDIVIDUAL_SKILLS"),
+            (mixed.verdict, mixed.catalog_state, mixed.distribution_provenance),
+        )
+
+        duplicate = evaluate_catalog_snapshot(
+            ROOT,
+            self._snapshot(
+                observations=[self._observation("plugin"), self._observation("standalone")],
+                skills=self._all_skills(),
+            ),
+        )
+        self.assertEqual(
+            ("BLOCKED_ENVIRONMENT", "FULL_SPECIALIST", "DUPLICATE_DISTRIBUTION"),
+            (duplicate.verdict, duplicate.catalog_state, duplicate.distribution_provenance),
+        )
+
+        unknown = evaluate_catalog_snapshot(
+            ROOT,
+            self._snapshot(observations=[{"kind": "mystery", "id": "mystery", "release_version": RELEASE}]),
+        )
+        self.assertEqual(
+            ("BLOCKED_EVIDENCE", "FULL_SPECIALIST", "UNKNOWN"),
+            (unknown.verdict, unknown.catalog_state, unknown.distribution_provenance),
+        )
 
     def test_missing_evidence_envelope_is_blocked_evidence(self):
         for key in ("materialization_ref", "platform_event_id"):
-            snapshot = self._snapshot(); snapshot.pop(key)
+            snapshot = self._snapshot()
+            snapshot.pop(key)
             result = evaluate_catalog_snapshot(ROOT, snapshot)
             self.assertEqual(("BLOCKED_EVIDENCE", None), (result.verdict, result.catalog_state))
-        snapshot = self._snapshot(); snapshot["complete_catalog_capture"] = False
+        snapshot = self._snapshot()
+        snapshot["complete_catalog_capture"] = False
         result = evaluate_catalog_snapshot(ROOT, snapshot)
         self.assertEqual(("BLOCKED_EVIDENCE", None), (result.verdict, result.catalog_state))
 
