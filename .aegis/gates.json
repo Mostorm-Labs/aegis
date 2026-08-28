@@ -9,6 +9,6 @@
     {"id":"gate-project-state-v02-pr7","stage":"P34","verdict":"PASS_WITH_FINDINGS","validity":"stale","authority_ids":["aegis-project-state-v0.2"],"evidence_ids":["ev-pr7-p34","ev-pr7-merged"]},
     {"id":"gate-project-state-v03-pr8","stage":"P34","verdict":"PASS","validity":"current","authority_ids":["aegis-project-state-v0.3"],"evidence_ids":["ev-pr8-p34","ev-pr8-merged"]},
     {"id":"gate-skill-decomposition-v02-pr9","stage":"P34","verdict":"BLOCKED_EVIDENCE","validity":"current","authority_ids":["aegis-skill-decomposition-v0.2"],"evidence_ids":["ev-pr9-task6-preflight","ev-pr9-task6-rerun-state","ev-pr9-f09-05","ev-pr9-task6-ci-33053118456"]},
-    {"id":"gate-project-state-v04-pr11","stage":"P34","verdict":"BLOCKED_EVIDENCE","validity":"current","authority_ids":["aegis-project-state-v0.4"],"evidence_ids":["ev-f09-06-authority","ev-pr11-red-ci-33162821606"]}
+    {"id":"gate-project-state-v04-pr11","stage":"P34","verdict":"PASS","validity":"current","authority_ids":["aegis-project-state-v0.4"],"evidence_ids":["ev-f09-06-authority","ev-pr11-project-state-ci-33163536074","ev-pr11-skillset-ci-33163536133","ev-pr11-p34"]}
   ]
 }
