@@ -17,7 +17,8 @@ def _print_installed_platform(result):
         if case.evidence_gaps:
             detail.append("evidence_gaps=" + ",".join(case.evidence_gaps))
         suffix = " " + " ".join(detail) if detail else ""
-        print(f"{case.case_id}: {case.verdict}{suffix}")
+        catalog = f" catalog_state={case.catalog_state}" if case.catalog_state else ""
+        print(f"{case.case_id}: {case.verdict}{catalog}{suffix}")
     print("INSTALLED_PLATFORM_STATE", result.verdict)
 
 
