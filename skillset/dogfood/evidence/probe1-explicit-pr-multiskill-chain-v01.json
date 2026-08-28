@@ -1,0 +1,21 @@
+{
+  "schema_version": "0.1",
+  "evidence_id": "09-01-direct-specialist-explicit-pr-multiskill-chain-v01",
+  "probe_id": "09-01-direct-specialist",
+  "platform": "ChatGPT web",
+  "prompt": "Audit Mostorm-Labs/aegis PR #9 against its Gate evidence.",
+  "screenshot_sha256": "4f7eb79acc35e1fe19dd1030850febefe8ccaf0ee07e97b1a7268847bbef71cd",
+  "observed_skill_sequence": ["aegis-project-state", "aegis-gate-review"],
+  "observed_behavior": "The platform first invoked the cross-cutting Project State specialist to inspect PR/state/evidence manifests, then invoked the P34-P36 Gate Review specialist in the same response.",
+  "finding_id": "F09-04",
+  "classification": {
+    "primary": "MISSING_CONTRACT",
+    "secondary": "TEST_DEFECT",
+    "earliest_untrusted_layer": "authority",
+    "start_stage": "P21"
+  },
+  "authority_gap": "09 defines Specific Skill Wins, cross-cutting Project State preflight, and specialist primary ownership, but does not define whether a supporting cross-cutting Skill may execute before the primary owning specialist in one platform turn. The protected probe encoded a single-initial-winner assumption that is not explicitly established by authority.",
+  "safety_observation": "The owning Gate Review specialist was actually invoked in the same response; this evidence therefore does not prove loss of P34-P36 ownership, only an unresolved composition-order contract.",
+  "verdict": "BLOCKED_AUTHORITY",
+  "next_action": "Clarify Primary Owning Skill vs Supporting Skill composition semantics before further trigger-metadata repair."
+}

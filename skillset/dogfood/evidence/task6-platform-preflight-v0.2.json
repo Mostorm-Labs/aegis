@@ -1,0 +1,57 @@
+{
+  "schema_version": "0.2",
+  "evidence_id": "09-01-v0.2-task6-platform-preflight-2026-08-27",
+  "purpose": "Record whether the current assistant execution environment can produce admissible installed-platform evidence for P31 Task Package 6.",
+  "target_repository": "Mostorm-Labs/aegis",
+  "pull_request": 9,
+  "target_head": "17043a3a2fb0c81db78a6d166456bd1f1b2a84a7",
+  "head_binding_semantics": "observation_origin_only",
+  "applicability_review": {
+    "reviewed_pr_head": "c5f17398d837bf613f2c651be71e4f2eb8ef1c76",
+    "outcome": "LIMITED_APPLICABILITY",
+    "applies_to": "The environment limitation observed in this assistant execution context and the need for independent fresh installed-platform reruns.",
+    "does_not_support": [
+      "current-head installed-platform behavioral PASS",
+      "a claim about the user's target installed Skill catalog",
+      "P34 acceptance or P23 supersession"
+    ],
+    "reason": "The preflight observed assistant-environment Skill-resource exposure at its origin head. Later repository commits change implementation/evidence state but do not turn this environment observation into current-head behavioral evidence. Fresh platform events remain required."
+  },
+  "platform_context": "current ChatGPT assistant execution environment",
+  "observed_capability": {
+    "aegis_skill_resources_exposed_to_this_session": [
+      "aegis",
+      "aegis-project-state"
+    ],
+    "required_specialist_resources_not_exposed_to_this_session": [
+      "aegis-gate-review",
+      "aegis-architecture",
+      "aegis-modeling"
+    ],
+    "can_create_fresh_independent_platform_selection_event_from_inside_this_turn": false,
+    "can_switch_to_a_composite_only_catalog_from_inside_this_turn": false
+  },
+  "required_protected_reruns": [
+    "09-01-direct-specialist",
+    "09-01-ambiguous-router",
+    "09-01-upstream-blocker-reroute",
+    "09-01-composite-fallback"
+  ],
+  "admissibility": {
+    "eligible_for_behavioral_pass": false,
+    "reason": "Task Package 6 requires fresh installed-platform selection events with complete terminal traces under controlled catalog preconditions. This execution environment cannot expose the full multi-skill specialist set or create the required independent/composite-only catalogs from within the current turn.",
+    "protected_case_results_recorded": 0
+  },
+  "classification": {
+    "primary": "ENVIRONMENT_DEFECT",
+    "status": "BLOCKED_ENVIRONMENT",
+    "p34_consequence": "BLOCKED_EVIDENCE",
+    "supersession_authorized": false
+  },
+  "non_claims": [
+    "This does not prove that the user's target ChatGPT installation lacks the specialist Skills.",
+    "This is not a substitute for the four protected reruns.",
+    "This does not change any historical v0.1 platform verdict."
+  ],
+  "next_action": "Run the four protected v0.2 probes as fresh platform requests in environments satisfying their catalog preconditions, capture complete terminal traces, normalize them through terminal_trace_v0.2, then perform P34."
+}

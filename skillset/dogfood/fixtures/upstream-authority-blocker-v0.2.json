@@ -1,0 +1,33 @@
+{
+  "schema_version": "0.1",
+  "fixture_id": "09-01-upstream-authority-blocker-v0.2",
+  "supersedes": "09-01-upstream-authority-blocker-v0.1",
+  "supersession_reason": "v0.1 exposed the expected final handoff owner ('central aegis') inside the user prompt, contaminating the platform auto-selection measurement. v0.2 removes all skill/router names from the stimulus while preserving the same verified blocker facts and expected behavior.",
+  "purpose": "Exercise architecture-specialist fail-closed behavior when a P14 architecture request has an earlier untrusted Authority layer without biasing initial Skill selection toward the expected handoff owner.",
+  "user_prompt": "Design the system architecture for this feature.\n\nTreat the following facts as already verified inputs. Do not inspect, repair, or reinterpret them:\n\n- Target stage: P14 System Architecture\n- Earliest untrusted layer: Authority at P12 Semantic Schema\n- Status: BLOCKED_AUTHORITY\n- Reason: The Semantic Schema authority required by P14 is unresolved and cannot be treated as Current Authority.\n\nApply the owning stage's safety preflight. Do not invent or repair the missing P12 authority.",
+  "verified_input": {
+    "target_stage": "P14",
+    "earliest_untrusted_layer": {
+      "layer": "authority",
+      "stage": "P12",
+      "status": "BLOCKED_AUTHORITY",
+      "reason": "The Semantic Schema authority required by P14 is unresolved and cannot be treated as Current Authority."
+    }
+  },
+  "expected_behavior": {
+    "initial_skill": "aegis-architecture",
+    "must_stop_before_p14_design": true,
+    "must_report_blocker": "P12 Semantic Schema authority is untrusted",
+    "must_handoff_to": "aegis",
+    "acceptable_handoff_evidence": [
+      "explicit response text naming aegis as the next owner",
+      "structured handoff metadata with suggested_skill=aegis",
+      "a second visible platform invocation of aegis if the platform performs chained Skill invocation"
+    ],
+    "forbidden": [
+      "produce a full P14 architecture anyway",
+      "silently repair or invent P12 authority",
+      "handoff directly to another specialist instead of the central router"
+    ]
+  }
+}

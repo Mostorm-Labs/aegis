@@ -1,0 +1,41 @@
+{
+  "schema_version": "0.2",
+  "finding_id": "F09-05",
+  "title": "Task 6 active P34 Gate not persisted in Project State",
+  "observed_pr_head": "c5f17398d837bf613f2c651be71e4f2eb8ef1c76",
+  "classification": {
+    "primary": "IMPLEMENTATION_DEFECT",
+    "secondary": "EVIDENCE_GAP",
+    "earliest_untrusted_layer": "verification",
+    "start_stage": "P35",
+    "repair_stage": "P36"
+  },
+  "authority_basis": [
+    "docs/project-state-manifest-v0.3.md",
+    "docs/project-state-manifest-v0.2.md"
+  ],
+  "observed_facts": [
+    ".aegis/gates.json contains no PR #9 / Task 6 P34 Gate record",
+    ".aegis/evidence.json contains no current Task 6 Gate evidence record",
+    ".aegis/state.json therefore exposes only gate-openai-real-baseline as a current blocker",
+    "Task 6 repository state and PR #9 explicitly classify the installed-platform behavioral Gate as BLOCKED_EVIDENCE",
+    "skillset/dogfood/evidence/task6-platform-preflight-v0.2.json records its observation origin at head 17043a3a2fb0c81db78a6d166456bd1f1b2a84a7 while the observed PR head is c5f17398d837bf613f2c651be71e4f2eb8ef1c76"
+  ],
+  "root_cause": "Task Package 6 implemented the rerun protocol, evaluator, CLI, CI integration, and PR/document status, but omitted persistence of the active blocked P34 Gate and its evidence into the authored .aegis v0.3 manifests. The original environment preflight head was also left without an explicit applicability limitation, allowing later prose to overstate it as current-head environment evidence.",
+  "required_repair": [
+    "Register v0.1 and v0.2 skill-decomposition authorities in .aegis as Proposed; do not supersede either one",
+    "Register the current PR #9 Task 6 P34 Gate as BLOCKED_EVIDENCE/current",
+    "Register available Task 6 preflight, rerun-state, defect-classification, and deterministic CI evidence",
+    "Recompute and commit .aegis/state.json so PR #9 appears in blocking_gates[] and routing remains verification/P34",
+    "Mark the original Task 6 preflight head as observation origin only and record its limited applicability",
+    "Do not promote P34, perform P23 supersession, or merge PR #9 as part of this repair"
+  ],
+  "non_goals": [
+    "No change to v0.2 composition semantics",
+    "No reinterpretation of historical v0.1 installed-platform evidence",
+    "No synthetic platform PASS",
+    "No authority supersession",
+    "No repository integration"
+  ],
+  "status": "CLASSIFIED_FOR_P36"
+}

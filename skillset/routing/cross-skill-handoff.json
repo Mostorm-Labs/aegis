@@ -1,0 +1,17 @@
+{
+  "valid_support_returns": [
+    {"id": "support-return-001", "type": "support_return", "supporting_skill": "aegis-project-state", "to_owner": "aegis-gate-review"},
+    {"id": "support-return-002", "type": "support_return", "supporting_skill": "aegis-project-state", "to_owner": "aegis-architecture"}
+  ],
+  "valid_ownership_handoffs": [
+    {"id": "ownership-handoff-001", "type": "ownership_handoff", "from_owner": "aegis-architecture", "to": "aegis", "reason": "earlier_untrusted_layer"},
+    {"id": "ownership-handoff-002", "type": "ownership_handoff", "from_owner": "aegis-implementation", "to": "aegis", "reason": "unverifiable_project_state"}
+  ],
+  "forbidden_primary_chains": [
+    {"id": "primary-chain-001", "edges": [["aegis-architecture", "aegis-verification"]]},
+    {"id": "primary-chain-002", "edges": [["aegis-verification", "aegis-implementation"]]}
+  ],
+  "forbidden_cycles": [
+    {"id": "cycle-001", "edges": [["aegis-architecture", "aegis"], ["aegis", "aegis-architecture"]]}
+  ]
+}

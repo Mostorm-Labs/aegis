@@ -1,0 +1,22 @@
+[
+  {
+    "id": "blocker-001",
+    "prompt": "Design module architecture, but project authority is unresolved.",
+    "requested_primary_owner": "aegis-architecture",
+    "allowed_supporting_skills": ["aegis-project-state"],
+    "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker",
+    "short_circuit": {"allowed": true, "condition": "earlier_blocker_conclusively_established", "terminal_owner": "aegis"},
+    "must_stop": true,
+    "reason": "earlier authority blocker"
+  },
+  {
+    "id": "blocker-002",
+    "prompt": "Review implementation plan while .aegis exists but deterministic state validation is unavailable.",
+    "requested_primary_owner": "aegis-implementation",
+    "allowed_supporting_skills": ["aegis-project-state"],
+    "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker",
+    "short_circuit": {"allowed": true, "condition": "earlier_blocker_conclusively_established", "terminal_owner": "aegis"},
+    "must_stop": true,
+    "reason": "unverifiable project state"
+  }
+]

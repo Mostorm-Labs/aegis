@@ -1,0 +1,56 @@
+[
+  {
+    "id": "direct-001",
+    "prompt": "Design the canonical operation vocabulary.",
+    "required_primary_owner": "aegis-modeling",
+    "allowed_supporting_skills": ["aegis-project-state"],
+    "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker",
+    "normal_terminal_owner": "aegis-modeling",
+    "expected_stage_family": ["P10", "P11", "P12", "P13"],
+    "short_circuit": {"allowed": true, "condition": "earlier_blocker_conclusively_established", "terminal_owner": "aegis"},
+    "must_stop": false
+  },
+  {
+    "id": "direct-002",
+    "prompt": "Review whether this authority should supersede the previous version.",
+    "required_primary_owner": "aegis-governance",
+    "allowed_supporting_skills": ["aegis-project-state"],
+    "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker",
+    "normal_terminal_owner": "aegis-governance",
+    "expected_stage_family": ["P21", "P22", "P23", "P24"],
+    "short_circuit": {"allowed": true, "condition": "earlier_blocker_conclusively_established", "terminal_owner": "aegis"},
+    "must_stop": false
+  },
+  {
+    "id": "direct-003",
+    "prompt": "Define the golden oracle and evidence threshold for this contract.",
+    "required_primary_owner": "aegis-verification",
+    "allowed_supporting_skills": ["aegis-project-state"],
+    "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker",
+    "normal_terminal_owner": "aegis-verification",
+    "expected_stage_family": ["P20"],
+    "short_circuit": {"allowed": true, "condition": "earlier_blocker_conclusively_established", "terminal_owner": "aegis"},
+    "must_stop": false
+  },
+  {
+    "id": "direct-004",
+    "prompt": "Audit this PR against its Gate evidence.",
+    "required_primary_owner": "aegis-gate-review",
+    "allowed_supporting_skills": ["aegis-project-state"],
+    "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker",
+    "normal_terminal_owner": "aegis-gate-review",
+    "expected_stage_family": ["P34", "P35", "P36"],
+    "short_circuit": {"allowed": true, "condition": "earlier_blocker_conclusively_established", "terminal_owner": "aegis"},
+    "must_stop": false
+  },
+  {
+    "id": "direct-005",
+    "prompt": "Validate this repository's .aegis project state.",
+    "required_primary_owner": "aegis-project-state",
+    "allowed_supporting_skills": [],
+    "router_policy": "not_applicable",
+    "normal_terminal_owner": "aegis-project-state",
+    "expected_stage_family": [],
+    "must_stop": false
+  }
+]

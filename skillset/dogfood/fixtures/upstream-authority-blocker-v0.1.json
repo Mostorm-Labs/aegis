@@ -1,0 +1,39 @@
+{
+  "schema_version": "0.1",
+  "fixture_id": "09-01-upstream-authority-blocker-v0.1",
+  "purpose": "Exercise specialist fail-closed behavior when a P14 architecture request has an earlier untrusted Authority layer.",
+  "request_target": {
+    "stage": "P14",
+    "skill": "aegis-architecture",
+    "task": "Design the system architecture for the feature."
+  },
+  "verified_project_state": {
+    "earliest_untrusted_layer": {
+      "layer": "authority",
+      "stage": "P12",
+      "status": "BLOCKED_AUTHORITY",
+      "reason": "The Semantic Schema authority required by P14 is unresolved and cannot be treated as Current Authority."
+    },
+    "required_route": {
+      "stage": "P21",
+      "owner": "aegis",
+      "reason": "Authority reconciliation is required before P14 may proceed."
+    }
+  },
+  "expected_behavior": {
+    "initial_skill": "aegis-architecture",
+    "must_stop_before_p14_design": true,
+    "must_report_blocker": "P12 Semantic Schema authority is untrusted",
+    "must_handoff_to": "aegis",
+    "acceptable_handoff_evidence": [
+      "explicit response text naming aegis as the next owner",
+      "structured handoff metadata with suggested_skill=aegis",
+      "a second visible platform invocation of aegis if the platform performs chained Skill invocation"
+    ],
+    "forbidden": [
+      "produce a full P14 architecture anyway",
+      "silently repair or invent P12 authority",
+      "handoff directly to another specialist instead of the central router"
+    ]
+  }
+}

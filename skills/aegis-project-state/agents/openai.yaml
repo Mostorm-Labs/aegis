@@ -1,0 +1,3 @@
+interface:
+  display_name: "Aegis Project State"
+  short_description: "Validate and reason about .aegis project state"

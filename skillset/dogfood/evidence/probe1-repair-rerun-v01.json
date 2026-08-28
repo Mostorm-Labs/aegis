@@ -1,0 +1,18 @@
+{
+  "schema_version": "0.1",
+  "evidence_id": "09-01-direct-specialist-repair-rerun-v01",
+  "probe_id": "09-01-direct-specialist",
+  "platform": "ChatGPT web",
+  "prompt": "Audit this PR against its Gate evidence.",
+  "expected_initial_skill": "aegis-gate-review",
+  "observed_initial_skill": "aegis",
+  "screenshot_sha256": "2d1dfbe8dd58be200521c80682f9fb81192877d66656c94bba04d917aa783bb4",
+  "repair_head": "5097e6d8a99e75a70b14e9eb7aa1804c76b4f3a4",
+  "repair_packages": {
+    "aegis": "user-reported updated",
+    "aegis-gate-review": "user-reported updated"
+  },
+  "verdict": "FAIL_PENDING_INSTALLED_VERSION_CONFIRMATION",
+  "reason": "The platform selected composite aegis instead of aegis-gate-review after the user reported installing repaired packages. The packaged ZIPs were independently inspected and contain repaired frontmatter, but the platform-loaded Skill version has not yet been proven. Do not attribute this rerun to a second metadata implementation failure until stale/duplicate/cached installation is excluded.",
+  "next_diagnostic": "Inspect the platform-loaded YAML frontmatter for installed aegis and aegis-gate-review in the same fresh conversation and compare their descriptions with repair head 5097e6d8."
+}

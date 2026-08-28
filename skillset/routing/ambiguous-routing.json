@@ -1,0 +1,20 @@
+[
+  {
+    "id": "ambiguous-001",
+    "prompt": "What should this project do next?",
+    "allowed_supporting_skills": ["aegis-project-state"],
+    "router_policy": "required",
+    "normal_terminal_owner": "aegis",
+    "expected_stage_family": [],
+    "must_stop": false
+  },
+  {
+    "id": "ambiguous-002",
+    "prompt": "Continue this software project from its current state.",
+    "allowed_supporting_skills": ["aegis-project-state"],
+    "router_policy": "required",
+    "normal_terminal_owner": "aegis",
+    "expected_stage_family": [],
+    "must_stop": false
+  }
+]

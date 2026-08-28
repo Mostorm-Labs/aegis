@@ -1,0 +1,18 @@
+{
+  "schema_version": "0.1",
+  "evidence_id": "09-01-direct-specialist-repair-rerun-v02",
+  "probe_id": "09-01-direct-specialist",
+  "platform": "ChatGPT web",
+  "prompt": "Audit this PR against its Gate evidence.",
+  "expected_initial_skill": "aegis-gate-review",
+  "observed_initial_skill": "aegis",
+  "screenshot_sha256": "0add51cea726c22b7a59056d865cbd271b1a7f9a3d2c4c2c0be5eecc342c630b",
+  "repair_code_head": "4abc5c056174aa58017dc6692f97810cd402ffa8",
+  "environment_fact": "Prior same-environment metadata inspection visibly invoked aegis-gate-review and returned repaired frontmatter for both aegis and aegis-gate-review, so stale package/cache is not the primary explanation.",
+  "verdict": "FAIL",
+  "hypothesis_result": "The v0.2 single-variable hypothesis that a pure-router composite description would stop direct Gate-audit capture is falsified by installed-platform evidence.",
+  "next_diagnostics": [
+    "A/B-1: keep the installed set unchanged but replace only the unresolved referent 'this PR' with explicit target 'Mostorm-Labs/aegis PR #9'.",
+    "A/B-2: if needed, temporarily disable composite aegis and rerun the original direct Gate-audit prompt to test whether co-installed composite facade competition is the causal boundary."
+  ]
+}

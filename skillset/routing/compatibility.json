@@ -1,0 +1,20 @@
+[
+  {
+    "id": "compat-001",
+    "prompt": "Only composite Aegis is installed; design a semantic schema.",
+    "requested_primary_owner": "aegis-modeling",
+    "compatibility_owner": "aegis",
+    "requires_specialist_unavailable_evidence": true,
+    "normal_terminal_owner": "aegis",
+    "fallback_stage": "P12"
+  },
+  {
+    "id": "compat-002",
+    "prompt": "Only composite Aegis is installed; audit a Gate.",
+    "requested_primary_owner": "aegis-gate-review",
+    "compatibility_owner": "aegis",
+    "requires_specialist_unavailable_evidence": true,
+    "normal_terminal_owner": "aegis",
+    "fallback_stage": "P34"
+  }
+]

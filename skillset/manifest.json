@@ -1,0 +1,14 @@
+{
+  "version": "0.1",
+  "skills": [
+    {"name":"aegis","role":"facade","source_path":"skillset/skills/aegis","distribution_path":"skills/aegis","shared_refs":["core-invariants","stage-vocabulary","authority-contract","status-contract","handoff-contract"]},
+    {"name":"aegis-project-state","role":"specialist","source_path":"skillset/skills/aegis-project-state","distribution_path":"skills/aegis-project-state","shared_refs":["core-invariants","authority-contract","status-contract","handoff-contract"]},
+    {"name":"aegis-discovery","role":"specialist","source_path":"skillset/skills/aegis-discovery","distribution_path":"skills/aegis-discovery","shared_refs":["core-invariants","stage-vocabulary","authority-contract","status-contract","handoff-contract"]},
+    {"name":"aegis-modeling","role":"specialist","source_path":"skillset/skills/aegis-modeling","distribution_path":"skills/aegis-modeling","shared_refs":["core-invariants","stage-vocabulary","authority-contract","status-contract","handoff-contract"]},
+    {"name":"aegis-architecture","role":"specialist","source_path":"skillset/skills/aegis-architecture","distribution_path":"skills/aegis-architecture","shared_refs":["core-invariants","stage-vocabulary","authority-contract","status-contract","handoff-contract"]},
+    {"name":"aegis-verification","role":"specialist","source_path":"skillset/skills/aegis-verification","distribution_path":"skills/aegis-verification","shared_refs":["core-invariants","stage-vocabulary","authority-contract","status-contract","handoff-contract"]},
+    {"name":"aegis-governance","role":"specialist","source_path":"skillset/skills/aegis-governance","distribution_path":"skills/aegis-governance","shared_refs":["core-invariants","stage-vocabulary","authority-contract","status-contract","handoff-contract"]},
+    {"name":"aegis-implementation","role":"specialist","source_path":"skillset/skills/aegis-implementation","distribution_path":"skills/aegis-implementation","shared_refs":["core-invariants","stage-vocabulary","authority-contract","status-contract","handoff-contract"]},
+    {"name":"aegis-gate-review","role":"specialist","source_path":"skillset/skills/aegis-gate-review","distribution_path":"skills/aegis-gate-review","shared_refs":["core-invariants","stage-vocabulary","authority-contract","status-contract","handoff-contract"]}
+  ]
+}

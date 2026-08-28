@@ -1,0 +1,74 @@
+[
+  {
+    "id": "trace-valid-support-first-gate-review",
+    "case": {"required_primary_owner": "aegis-gate-review", "allowed_supporting_skills": ["aegis-project-state"], "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker", "normal_terminal_owner": "aegis-gate-review", "short_circuit": {"allowed": true, "condition": "earlier_blocker_conclusively_established", "terminal_owner": "aegis"}},
+    "trace": {"terminal": true, "mode": "multi_skill", "invocations": [{"skill": "aegis-project-state", "role": "support"}, {"skill": "aegis-gate-review", "role": "primary"}], "final_answer_owner": "aegis-gate-review", "genuine_ambiguity": false, "earlier_blocker_conclusively_established": false, "specialist_availability": {"aegis-gate-review": "available"}, "ownership_edges": [], "handoff_edges": [], "forbidden_downstream_substantive_execution": 0, "primary_substantive_result_emitted": true},
+    "expected_verdict": "PASS"
+  },
+  {
+    "id": "trace-valid-primary-support-primary",
+    "case": {"required_primary_owner": "aegis-gate-review", "allowed_supporting_skills": ["aegis-project-state"], "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker", "normal_terminal_owner": "aegis-gate-review"},
+    "trace": {"terminal": true, "mode": "multi_skill", "invocations": [{"skill": "aegis-gate-review", "role": "primary"}, {"skill": "aegis-project-state", "role": "support"}, {"skill": "aegis-gate-review", "role": "primary"}], "final_answer_owner": "aegis-gate-review", "genuine_ambiguity": false, "earlier_blocker_conclusively_established": false, "specialist_availability": {"aegis-gate-review": "available"}, "ownership_edges": [], "handoff_edges": [], "forbidden_downstream_substantive_execution": 0, "primary_substantive_result_emitted": true},
+    "expected_verdict": "PASS"
+  },
+  {
+    "id": "trace-valid-earlier-blocker-short-circuit",
+    "case": {"requested_primary_owner": "aegis-architecture", "allowed_supporting_skills": ["aegis-project-state"], "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker", "short_circuit": {"allowed": true, "condition": "earlier_blocker_conclusively_established", "terminal_owner": "aegis"}, "must_stop": true},
+    "trace": {"terminal": true, "mode": "multi_skill", "invocations": [{"skill": "aegis-project-state", "role": "support"}, {"skill": "aegis", "role": "router"}], "final_answer_owner": "aegis", "genuine_ambiguity": false, "earlier_blocker_conclusively_established": true, "specialist_availability": {"aegis-architecture": "available"}, "ownership_edges": [], "handoff_edges": [], "forbidden_downstream_substantive_execution": 0, "primary_substantive_result_emitted": false},
+    "expected_verdict": "PASS"
+  },
+  {
+    "id": "trace-valid-bounded-router-reentry",
+    "case": {"required_primary_owner": "aegis-architecture", "allowed_supporting_skills": ["aegis-project-state"], "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker", "normal_terminal_owner": "aegis-architecture", "short_circuit": {"allowed": true, "condition": "earlier_blocker_conclusively_established", "terminal_owner": "aegis"}},
+    "trace": {"terminal": true, "mode": "multi_skill", "invocations": [{"skill": "aegis", "role": "router"}, {"skill": "aegis-architecture", "role": "primary"}, {"skill": "aegis", "role": "router"}], "final_answer_owner": "aegis", "genuine_ambiguity": false, "earlier_blocker_conclusively_established": true, "specialist_availability": {"aegis-architecture": "available"}, "ownership_edges": [["aegis", "aegis-architecture"], ["aegis-architecture", "aegis"]], "handoff_edges": [["aegis-architecture", "aegis"]], "forbidden_downstream_substantive_execution": 0, "primary_substantive_result_emitted": false},
+    "expected_verdict": "PASS"
+  },
+  {
+    "id": "trace-valid-composite-fallback",
+    "case": {"requested_primary_owner": "aegis-modeling", "compatibility_owner": "aegis", "requires_specialist_unavailable_evidence": true, "normal_terminal_owner": "aegis"},
+    "trace": {"terminal": true, "mode": "compatibility", "invocations": [{"skill": "aegis", "role": "compatibility"}], "final_answer_owner": "aegis", "genuine_ambiguity": false, "earlier_blocker_conclusively_established": false, "specialist_availability": {"aegis-modeling": "unavailable"}, "ownership_edges": [], "handoff_edges": [], "forbidden_downstream_substantive_execution": 0, "primary_substantive_result_emitted": true},
+    "expected_verdict": "PASS"
+  },
+  {
+    "id": "trace-fail-multiple-primary-owners",
+    "case": {"required_primary_owner": "aegis-architecture", "allowed_supporting_skills": ["aegis-project-state"], "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker", "normal_terminal_owner": "aegis-architecture"},
+    "trace": {"terminal": true, "mode": "multi_skill", "invocations": [{"skill": "aegis-architecture", "role": "primary"}, {"skill": "aegis-verification", "role": "primary"}], "final_answer_owner": "aegis-architecture", "genuine_ambiguity": false, "earlier_blocker_conclusively_established": false, "specialist_availability": {"aegis-architecture": "available", "aegis-verification": "available"}, "ownership_edges": [], "handoff_edges": [], "forbidden_downstream_substantive_execution": 0, "primary_substantive_result_emitted": true},
+    "expected_verdict": "FAIL",
+    "expected_violations": ["MULTIPLE_PRIMARY_OWNERS"]
+  },
+  {
+    "id": "trace-fail-support-ownership-leak",
+    "case": {"required_primary_owner": "aegis-gate-review", "allowed_supporting_skills": ["aegis-project-state"], "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker", "normal_terminal_owner": "aegis-gate-review"},
+    "trace": {"terminal": true, "mode": "multi_skill", "invocations": [{"skill": "aegis-project-state", "role": "support"}], "final_answer_owner": "aegis-project-state", "genuine_ambiguity": false, "earlier_blocker_conclusively_established": false, "specialist_availability": {"aegis-gate-review": "available"}, "ownership_edges": [], "handoff_edges": [], "forbidden_downstream_substantive_execution": 0, "primary_substantive_result_emitted": false},
+    "expected_verdict": "FAIL",
+    "expected_violations": ["SUPPORT_OWNERSHIP_LEAK"]
+  },
+  {
+    "id": "trace-fail-router-ownership-leak",
+    "case": {"required_primary_owner": "aegis-gate-review", "allowed_supporting_skills": ["aegis-project-state"], "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker", "normal_terminal_owner": "aegis-gate-review"},
+    "trace": {"terminal": true, "mode": "multi_skill", "invocations": [{"skill": "aegis", "role": "router"}], "final_answer_owner": "aegis", "genuine_ambiguity": false, "earlier_blocker_conclusively_established": false, "specialist_availability": {"aegis-gate-review": "available"}, "ownership_edges": [], "handoff_edges": [], "forbidden_downstream_substantive_execution": 0, "primary_substantive_result_emitted": false},
+    "expected_verdict": "FAIL",
+    "expected_violations": ["ROUTER_OWNERSHIP_LEAK"]
+  },
+  {
+    "id": "trace-fail-direct-primary-chain",
+    "case": {"required_primary_owner": "aegis-architecture", "allowed_supporting_skills": ["aegis-project-state"], "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker", "normal_terminal_owner": "aegis-architecture"},
+    "trace": {"terminal": true, "mode": "multi_skill", "invocations": [{"skill": "aegis-architecture", "role": "primary"}, {"skill": "aegis-verification", "role": "primary"}], "final_answer_owner": "aegis-verification", "genuine_ambiguity": false, "earlier_blocker_conclusively_established": false, "specialist_availability": {"aegis-architecture": "available", "aegis-verification": "available"}, "ownership_edges": [["aegis-architecture", "aegis-verification"]], "handoff_edges": [], "forbidden_downstream_substantive_execution": 0, "primary_substantive_result_emitted": true},
+    "expected_verdict": "FAIL",
+    "expected_violations": ["DIRECT_PRIMARY_CHAIN", "MULTIPLE_PRIMARY_OWNERS"]
+  },
+  {
+    "id": "trace-fail-ownership-loop",
+    "case": {"required_primary_owner": "aegis-architecture", "allowed_supporting_skills": ["aegis-project-state"], "router_policy": "only_for_genuine_ambiguity_or_accepted_earlier_blocker", "normal_terminal_owner": "aegis-architecture", "short_circuit": {"allowed": true, "condition": "earlier_blocker_conclusively_established", "terminal_owner": "aegis"}},
+    "trace": {"terminal": true, "mode": "multi_skill", "invocations": [{"skill": "aegis-architecture", "role": "primary"}, {"skill": "aegis", "role": "router"}, {"skill": "aegis-architecture", "role": "primary"}, {"skill": "aegis", "role": "router"}], "final_answer_owner": "aegis", "genuine_ambiguity": false, "earlier_blocker_conclusively_established": true, "specialist_availability": {"aegis-architecture": "available"}, "ownership_edges": [["aegis-architecture", "aegis"], ["aegis", "aegis-architecture"], ["aegis-architecture", "aegis"]], "handoff_edges": [["aegis-architecture", "aegis"], ["aegis", "aegis-architecture"]], "forbidden_downstream_substantive_execution": 0, "primary_substantive_result_emitted": false},
+    "expected_verdict": "FAIL",
+    "expected_violations": ["OWNERSHIP_LOOP"]
+  },
+  {
+    "id": "trace-blocked-evidence-incomplete-terminal",
+    "case": {"allowed_supporting_skills": ["aegis-project-state"], "router_policy": "required", "normal_terminal_owner": "aegis"},
+    "trace": {"terminal": false, "mode": "multi_skill", "invocations": [{"skill": "aegis", "role": "router"}], "final_answer_owner": null, "genuine_ambiguity": true, "earlier_blocker_conclusively_established": false, "specialist_availability": {}, "ownership_edges": [], "handoff_edges": [], "forbidden_downstream_substantive_execution": 0, "primary_substantive_result_emitted": false},
+    "expected_verdict": "BLOCKED_EVIDENCE",
+    "expected_evidence_gaps": ["terminal response", "final answer owner"]
+  }
+]
