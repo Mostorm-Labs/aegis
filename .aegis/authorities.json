@@ -8,11 +8,15 @@
     {"id":"aegis-openai-baseline-v0.1","scope":"aegis/evaluation/openai-baseline","kind":"verification","version":"v0.1","status":"Current","ref":"docs/openai-hosted-skill-baseline-v0.1.md","depends_on":["aegis-evaluation-tooling-v0.1","aegis-skill-v0.1"]},
     {"id":"aegis-project-state-v0.1","scope":"aegis/project-state","kind":"system_architecture","version":"v0.1","status":"Superseded","ref":"docs/project-state-manifest-v0.1.md","depends_on":["aegis-method-v0.1","aegis-skill-v0.1"]},
     {"id":"aegis-project-state-v0.2","scope":"aegis/project-state","kind":"system_architecture","version":"v0.2","status":"Superseded","ref":"docs/project-state-manifest-v0.2.md","depends_on":["aegis-method-v0.1","aegis-skill-v0.1"],"supersedes":"aegis-project-state-v0.1","change_class":"semantic"},
-    {"id":"aegis-project-state-v0.3","scope":"aegis/project-state","kind":"system_architecture","version":"v0.3","status":"Current","ref":"docs/project-state-manifest-v0.3.md","depends_on":["aegis-method-v0.1","aegis-skill-v0.1"],"supersedes":"aegis-project-state-v0.2","change_class":"semantic"},
-    {"id":"aegis-project-state-v0.4","scope":"aegis/project-state","kind":"system_architecture","version":"v0.4","status":"Proposed","ref":"docs/project-state-manifest-v0.4.md","depends_on":["aegis-method-v0.1","aegis-skill-v0.1"]},
+    {"id":"aegis-project-state-v0.3","scope":"aegis/project-state","kind":"system_architecture","version":"v0.3","status":"Superseded","ref":"docs/project-state-manifest-v0.3.md","depends_on":["aegis-method-v0.1","aegis-skill-v0.1"],"supersedes":"aegis-project-state-v0.2","change_class":"semantic"},
+    {"id":"aegis-project-state-v0.4","scope":"aegis/project-state","kind":"system_architecture","version":"v0.4","status":"Current","ref":"docs/project-state-manifest-v0.4.md","depends_on":["aegis-method-v0.1","aegis-skill-v0.1"],"supersedes":"aegis-project-state-v0.3","change_class":"semantic"},
     {"id":"aegis-self-hosting-v0.1","scope":"aegis/self-hosting","kind":"verification","version":"v0.1","status":"Current","ref":"docs/self-hosting-manifest-adoption-v0.1.md","depends_on":["aegis-project-state-v0.3","aegis-evaluation-framework-v0.1"]},
     {"id":"aegis-skill-decomposition-v0.1","scope":"aegis/skill/decomposition","kind":"skill_contract","version":"v0.1","status":"Proposed","ref":"docs/skill-decomposition-v0.1.md","depends_on":["aegis-method-v0.1","aegis-skill-v0.1","aegis-project-state-v0.3"]},
     {"id":"aegis-skill-decomposition-v0.2","scope":"aegis/skill/decomposition","kind":"skill_contract","version":"v0.2","status":"Proposed","ref":"docs/skill-decomposition-v0.2.md","depends_on":["aegis-method-v0.1","aegis-skill-v0.1","aegis-project-state-v0.3"]}
   ],
-  "impact_reviews": []
+  "impact_reviews": [
+    {"id":"impact-v04-self-hosting-v01","source_authority":"aegis-project-state-v0.4","dependent_authority":"aegis-self-hosting-v0.1","outcome":"unaffected","evidence_ids":["ev-pr11-post-p34-project-state-ci-33163765563","ev-pr11-p23"]},
+    {"id":"impact-v04-skill-decomposition-v01","source_authority":"aegis-project-state-v0.4","dependent_authority":"aegis-skill-decomposition-v0.1","outcome":"unaffected","evidence_ids":["ev-pr11-post-p34-skillset-ci-33163765578","ev-pr11-p23"]},
+    {"id":"impact-v04-skill-decomposition-v02","source_authority":"aegis-project-state-v0.4","dependent_authority":"aegis-skill-decomposition-v0.2","outcome":"unaffected","evidence_ids":["ev-pr11-post-p34-skillset-ci-33163765578","ev-pr11-p23"]}
+  ]
 }
