@@ -1,6 +1,6 @@
 # Aegis Plugin Distribution v0.1 Design
 
-Status: **Proposed Design Authority v0.1 — conceptual design approved in chat; written-spec human review pending; implementation not authorized.**
+Status: **Proposed Design Authority v0.1 — written spec human-approved 2026-08-29; P30/P31 complete; P32 implementation authorized only for the test/evidence scope in the frozen plan; not Gate-accepted.**
 
 Companion authority: `docs/plugin-distribution-contract-v0.1.md`.
 
