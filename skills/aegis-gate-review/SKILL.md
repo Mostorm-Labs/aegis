@@ -17,6 +17,15 @@ Own `P34` Gate Review, `P35` Defect Classification, and `P36` Fix / Reverificati
 
 Read [references/gate-review.md](references/gate-review.md) and the shared status/Authority contracts.
 
+## Execution-surface boundary
+
+- `P34` Gate Review and `P35` Defect Classification default to `CONTROL_REVIEW`.
+- `P36` repository repair and reverification may execute on `CODE_REVERIFY` only after P35 classification has identified an implementation-owned repair and the repair scope/evidence obligations are explicit.
+- A `CONTROL_REVIEW -> CODE_REVERIFY` surface handoff changes execution location only; it does not transfer this Skill's P34-P36 Primary Owner semantics.
+- If classification identifies an upstream Authority/spec defect, do not hand repair to the code surface; route the owning upstream layer instead.
+
+Default OpenAI profile: `CONTROL_REVIEW -> ChatGPT`, `CODE_REVERIFY -> Codex`.
+
 ## Composition boundary
 
 Once substantive execution begins in this Skill's owned stage family, this Skill is the unique Primary Owner for that substantive result. It may consume Project State support from `aegis-project-state`; Project State support does not transfer ownership.
