@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3",
+  "schema_version": "0.4",
   "evidence": [
     {"id":"ev-pr1-merged","type":"repository_integration","ref":"https://github.com/Mostorm-Labs/aegis/pull/1","status":"available","subject_ids":["gate-eval-framework-pr1"]},
     {"id":"ev-pr1-ci","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/pull/1","status":"available","subject_ids":["gate-eval-framework-pr1"]},
@@ -18,6 +18,9 @@
     {"id":"ev-pr9-task6-preflight","type":"environment_probe","ref":"skillset/dogfood/evidence/task6-platform-preflight-v0.2.json","status":"available","subject_ids":["gate-skill-decomposition-v02-pr9"]},
     {"id":"ev-pr9-task6-rerun-state","type":"behavioral_gate_state","ref":"skillset/dogfood/installed-platform-rerun-v0.2.json","status":"available","subject_ids":["gate-skill-decomposition-v02-pr9"]},
     {"id":"ev-pr9-f09-05","type":"defect_classification","ref":"skillset/dogfood/evidence/f09-05-project-state-persistence-v0.2.json","status":"available","subject_ids":["gate-skill-decomposition-v02-pr9"]},
-    {"id":"ev-pr9-task6-ci-33053118456","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33053118456","status":"available","subject_ids":["gate-skill-decomposition-v02-pr9"]}
+    {"id":"ev-pr9-task6-ci-33053118456","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33053118456","status":"available","subject_ids":["gate-skill-decomposition-v02-pr9"]},
+    {"id":"ev-pr9-merged","type":"repository_integration","ref":"https://github.com/Mostorm-Labs/aegis/commit/a0c6b0103b119f517c7adf9ec4a90b5963e5e1e3","status":"available","subject_ids":["int-pr9"]},
+    {"id":"ev-f09-06-authority","type":"authority_review","ref":"docs/project-state-manifest-v0.4.md","status":"available","subject_ids":["gate-project-state-v04-pr11"]},
+    {"id":"ev-pr11-red-ci-33162821606","type":"automated_test_red","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33162821606","status":"available","subject_ids":["gate-project-state-v04-pr11"]}
   ]
 }
