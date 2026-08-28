@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - `Product != Plugin != Skill != App`.
-- The normal Aegis Plugin catalog is exactly the nine Skills already declared by `skillset/manifest.json`.
+- The normal Aegis Plugin catalog is exactly the nine Skills declared by `skillset/manifest.json`.
 - Standalone Aegis contains only central `aegis` and is the only distribution allowed to enter Composite Compatibility Mode.
 - Only `FULL_SPECIALIST` and `COMPOSITE_ONLY` are valid runtime catalog states.
 - `PARTIAL_CATALOG`, `MIXED_REVISION`, and `DUPLICATE_DISTRIBUTION` fail closed as `BLOCKED_ENVIRONMENT`.
@@ -21,13 +21,28 @@
 - Apps remain orthogonal capabilities. Plugin v0.1 requires no Apps.
 - Preserve `skillset/ownership.json` stage ownership/composition/execution-surface semantics unless a later classified defect explicitly requires change.
 - Preserve `tools/aegis_skillset/routing.py::evaluate_terminal_trace()` semantics and the four protected PR #9 case IDs unchanged.
-- Do not modify `skillset/dogfood/installed-platform-rerun-v0.2.json`; create a v0.2.1 companion for the evidence-layer migration.
+- Preserve `skillset/dogfood/installed-platform-rerun-v0.2.json` byte-for-byte and create a v0.2.1 companion for the evidence-layer migration.
 - Task 6 remains 4/4 PASS. `BLOCKED_EVIDENCE` and `BLOCKED_ENVIRONMENT` are not PASS substitutes.
 - Use test release `0.1.0-task6.1`. It is a pre-release evidence artifact, not a production Aegis release or Authority promotion.
-- The public OpenAI platform guarantees that a Plugin may contain multiple Skills, but this plan does not invent an undocumented ChatGPT local-plugin archive schema. Repository ZIPs are deterministic **source bundles**. Platform materialization uses the actual supported Plugin UI/import path available at test time.
+- The public OpenAI platform supports Plugins containing multiple Skills, but this plan does not invent an undocumented ChatGPT local-plugin archive schema. Repository ZIPs are deterministic **source bundles**. Platform materialization uses the actual supported Plugin UI/import path available at test time.
 - If ChatGPT cannot materialize one local/test Plugin containing all nine Skills on the required surface, return `BLOCKED_ENVIRONMENT`; do not substitute nine independent personal Skill installs for final Task 6 acceptance.
 - Do not rewrite the historical fact that `int-pr9` integrated under a non-PASS Gate.
 - No P23 promotion of Skill Decomposition v0.2, Execution Surface v0.1, or Plugin Distribution v0.1 occurs during P32.
+
+### Protected pre-P32 semantic baselines
+
+Before any code edit, verify these Git blob SHAs exactly:
+
+```text
+tools/aegis_skillset/routing.py                         5d7dc81ff9de84ff0facaa08c0dcdaf047bf7180
+skillset/routing/direct-trigger.json                    3f2452c625226c6b90fd73cf018feeef6a86cc00
+skillset/routing/ambiguous-routing.json                 3e3d0e24ac5afc012923efc08a3a1a38392f4293
+skillset/routing/upstream-blocker.json                  e19589284639b689c51768e245f31a27c9342d6e
+skillset/routing/compatibility.json                     ac204c7225719371db195d299d085e2947a5b0e4
+skillset/dogfood/installed-platform-rerun-v0.2.json     0944a95aca2f6c565ee5835efc5adaaf67abd480
+```
+
+If any differs before P32 starts, stop and return to P31 review; do not silently rebase the semantic acceptance target.
 
 ---
 
@@ -101,7 +116,7 @@ class PluginDistributionAuthorityTests(unittest.TestCase):
         self.assertEqual("docs/plugin-distribution-contract-v0.1.md", authority["ref"])
         self.assertEqual(["aegis-skill-decomposition-v0.2"], authority["depends_on"])
 
-    def test_registration_does_not_hide_existing_skill_decomposition_blocker(self):
+    def test_registration_preserves_existing_project_blockers(self):
         state = json.loads((ROOT / ".aegis/state.json").read_text(encoding="utf-8"))
         self.assertIn("gate-skill-decomposition-v02-pr9", state["blocking_gates"])
         self.assertIn("int-pr9", state["nonconforming_integrations"])
@@ -121,9 +136,9 @@ python3 -m unittest tests.project_state.test_plugin_distribution_authority -v
 
 Expected: FAIL because `aegis-plugin-distribution-v0.1` is not registered.
 
-- [ ] **Step 3: Record written-spec approval in the two authority documents**
+- [ ] **Step 3: Record written-spec approval in the two Authority documents**
 
-Change only each document's status line so it says the written spec was human-approved on 2026-08-29, P30/P31 is authorized, and implementation remains not yet Gate-accepted. Do not mark the Authority Current.
+Change only each document's status line so it records: written spec human-approved on 2026-08-29; P30/P31 complete; P32 implementation authorized only for the test/evidence scope in this plan; Authority remains Proposed and not Gate-accepted.
 
 - [ ] **Step 4: Add the exact Proposed Authority record**
 
@@ -227,7 +242,7 @@ class DistributionContractTests(unittest.TestCase):
         self.assertEqual((), contract.plugin.required_apps)
         self.assertEqual((), contract.plugin.optional_apps)
 
-    def test_plugin_is_not_a_stage_owner_object(self):
+    def test_distribution_does_not_create_a_new_stage_owner(self):
         config = load_skillset(ROOT)
         self.assertNotIn("aegis-plugin", set(config.primary_owner_by_stage.values()))
 ```
@@ -246,7 +261,7 @@ MIXED_REVISION         -> BLOCKED_ENVIRONMENT
 DUPLICATE_DISTRIBUTION -> BLOCKED_ENVIRONMENT
 ```
 
-Also require missing `materialization_ref`, missing `platform_event_id`, or `complete_catalog_capture != true` to return `BLOCKED_EVIDENCE` rather than invent a catalog state.
+Also require missing `materialization_ref`, missing `platform_event_id`, or `complete_catalog_capture != true` to return `BLOCKED_EVIDENCE` with `catalog_state = None`.
 
 - [ ] **Step 3: Run RED tests**
 
@@ -299,7 +314,6 @@ Use these public types in `tools/aegis_skillset/distribution.py`:
 
 ```python
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Literal
 
 CatalogState = Literal[
@@ -338,26 +352,25 @@ class CatalogEvaluation:
     errors: tuple[str, ...]
 ```
 
-`evaluate_catalog_snapshot()` must validate this evidence shape:
+- [ ] **Step 6: Implement exact catalog-evidence validation and state derivation**
 
-```json
-{
-  "schema_version": "0.1",
-  "fresh_platform_event": true,
-  "complete_catalog_capture": true,
-  "platform_event_id": "plugin-catalog-test-001",
-  "surface": {"product": "chatgpt", "surface": "web"},
-  "observed_distributions": [
-    {"kind": "plugin", "id": "aegis", "release_version": "0.1.0-task6.1"}
-  ],
-  "installed_skills": ["aegis"],
-  "component_release_versions": {},
-  "release_manifest_ref": "skillset/releases/aegis-0.1.0-task6.1.json",
-  "materialization_ref": "https://github.com/Mostorm-Labs/aegis/pull/13"
-}
+A catalog snapshot must carry these fields:
+
+```text
+schema_version = 0.1
+fresh_platform_event = true
+complete_catalog_capture = true
+platform_event_id = non-empty real/synthetic event ID
+surface.product = chatgpt
+surface.surface = web | desktop | mobile | other
+observed_distributions = non-empty list of distribution observations
+installed_skills = complete observed Aegis Skill inventory
+component_release_versions = optional explicit per-Skill release observations
+release_manifest_ref = readable repository-relative release manifest
+materialization_ref = non-empty reviewer-accessible durable ref
 ```
 
-The test fixture above intentionally has an incomplete Plugin inventory and must derive `PARTIAL_CATALOG`; it is not a valid FULL_SPECIALIST fixture.
+Each distribution observation has exactly `kind`, `id`, and `release_version`.
 
 State derivation rules:
 
@@ -366,12 +379,12 @@ State derivation rules:
 3. Plugin provenance + wrong/incomplete Skill set -> `PARTIAL_CATALOG` / `BLOCKED_ENVIRONMENT`.
 4. Standalone provenance + anything other than `("aegis",)` -> `PARTIAL_CATALOG` / `BLOCKED_ENVIRONMENT`.
 5. Any explicitly observed component release version differing from the selected distribution release -> `MIXED_REVISION` / `BLOCKED_ENVIRONMENT`.
-6. Plugin provenance + exact nine Skills + release matching the durable release manifest -> `FULL_SPECIALIST`, `PASS`, runtime mode `multi_skill`.
-7. Standalone provenance + only `aegis` + release matching the durable release manifest -> `COMPOSITE_ONLY`, `PASS`, runtime mode `compatibility`.
-8. `FULL_SPECIALIST` availability maps every specialist in `skillset/manifest.json` to `available`.
+6. Plugin provenance + exact nine Skills + selected release matching the durable release manifest -> `FULL_SPECIALIST`, `PASS`, runtime mode `multi_skill`.
+7. Standalone provenance + only `aegis` + selected release matching the durable release manifest -> `COMPOSITE_ONLY`, `PASS`, runtime mode `compatibility`.
+8. `FULL_SPECIALIST` maps every non-router specialist in `skillset/manifest.json` to `available`.
 9. `COMPOSITE_ONLY` maps every specialist except central `aegis` to `unavailable`.
 
-- [ ] **Step 6: Add contract validation**
+- [ ] **Step 7: Validate the source contract**
 
 `validate_distribution_contract()` must reject:
 
@@ -382,17 +395,17 @@ State derivation rules:
 - any required/optional App in v0.1;
 - unknown distribution kind/id.
 
-- [ ] **Step 7: Add `distribution-check` CLI command**
+- [ ] **Step 8: Add `distribution-check` CLI command**
 
-Extend the existing command list in `tools/aegis_skillset/cli.py`. `distribution-check` loads and validates the contract and prints exactly:
+Extend the existing command list in `tools/aegis_skillset/cli.py`. On success print exactly:
 
 ```text
 DISTRIBUTION_VALID
 ```
 
-on success; print `INVALID: ...` lines and exit 1 on failure.
+On validation failure print `INVALID: ...` lines and exit 1.
 
-- [ ] **Step 8: Run GREEN tests and existing ownership regressions**
+- [ ] **Step 9: Run GREEN tests and ownership regressions**
 
 Run:
 
@@ -405,7 +418,7 @@ python3 -m tools.aegis_skillset.cli validate .
 
 Expected: PASS, `DISTRIBUTION_VALID`, `SKILLSET_VALID`.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
 git add skillset/distribution.json \
@@ -460,7 +473,7 @@ Expected: FAIL because package tooling does not exist.
 
 - [ ] **Step 3: Implement deterministic tree digests**
 
-Use this algorithm, including relative path bytes so filename changes affect the digest:
+Use:
 
 ```python
 def tree_sha256(directory: Path) -> str:
@@ -477,34 +490,31 @@ def tree_sha256(directory: Path) -> str:
     return digest.hexdigest()
 ```
 
-Digest generated `skills/*`, not canonical `skillset/skills/*`, because generated distributions are what the Plugin source bundle carries.
+Digest generated `skills/*`, not canonical `skillset/skills/*`, because generated distributions are what the source bundle carries.
 
-- [ ] **Step 4: Implement the exact release manifest shape**
+- [ ] **Step 4: Implement the release manifest without synthetic digest literals**
 
-`render_release_manifest(ROOT, "0.1.0-task6.1")` must produce:
+`render_release_manifest()` must build the Skill entries programmatically:
 
-```json
-{
-  "schema_version": "0.1",
-  "product_id": "aegis",
-  "release_version": "0.1.0-task6.1",
-  "distribution_contract_ref": "skillset/distribution.json",
-  "plugin": {
-    "id": "aegis",
-    "skills": [
-      {"name": "aegis", "tree_sha256": "computed-at-build-time"}
-    ]
-  },
-  "standalone": {
-    "id": "aegis-standalone",
-    "skills": [
-      {"name": "aegis", "tree_sha256": "same-computed-aegis-digest"}
-    ]
-  }
+```python
+plugin_skills = [
+    {"name": name, "tree_sha256": tree_sha256(root / "skills" / name)}
+    for name in contract.plugin.skills
+]
+standalone_skills = [
+    {"name": "aegis", "tree_sha256": tree_sha256(root / "skills" / "aegis")}
+]
+manifest = {
+    "schema_version": "0.1",
+    "product_id": "aegis",
+    "release_version": release_version,
+    "distribution_contract_ref": "skillset/distribution.json",
+    "plugin": {"id": "aegis", "skills": plugin_skills},
+    "standalone": {"id": "aegis-standalone", "skills": standalone_skills},
 }
 ```
 
-The real generated JSON must list all nine Plugin entries; `computed-at-build-time` and `same-computed-aegis-digest` above are explanatory prose for this plan and must never appear in the committed manifest.
+The generated manifest must be serialized with sorted keys and stable indentation/newline rules.
 
 - [ ] **Step 5: Implement deterministic source ZIP layout**
 
@@ -604,9 +614,7 @@ git commit -m "feat: build deterministic aegis distributions"
 - Consumes: `evaluate_catalog_snapshot()` and existing `evaluate_terminal_trace()`.
 - Produces: a v0.2.1 installed-platform Gate where catalog provenance/availability is independently auditable.
 
-- [ ] **Step 1: Write a historical-byte preservation test before modifying Task 6**
-
-Pin the existing v0.2 rerun manifest by Git blob SHA. The current blob SHA is `0944a95aca2f6c565ee5835efc5adaaf67abd480`.
+- [ ] **Step 1: Write the historical-byte preservation test**
 
 Use:
 
@@ -627,18 +635,18 @@ def test_v02_rerun_manifest_is_preserved_byte_for_byte():
     )
 ```
 
-This must PASS before and after the migration.
+This test must PASS before and after the migration.
 
 - [ ] **Step 2: Write RED v0.2.1 tests**
 
-Require all of the following:
+Require:
 
 1. missing `catalog_evidence_ref` -> `BLOCKED_EVIDENCE`;
 2. Plugin partial catalog -> `BLOCKED_ENVIRONMENT` even if behavior trace claims the specialist is unavailable;
 3. FULL_SPECIALIST + direct Gate trace with `aegis-gate-review` owner -> PASS;
 4. FULL_SPECIALIST + central router substantive Gate result -> FAIL / `ROUTER_OWNERSHIP_LEAK`;
 5. COMPOSITE_ONLY + composite modeling trace -> PASS when catalog evidence proves `aegis-modeling` unavailable;
-6. COMPOSITE_ONLY must not require prompt text to prove unavailability;
+6. prompt text is never read as availability evidence;
 7. trace/catalog mode conflict -> `BLOCKED_EVIDENCE`;
 8. trace/catalog specialist-availability conflict -> `BLOCKED_EVIDENCE`;
 9. aggregate precedence: any semantic FAIL -> `FAIL`; otherwise any environment blocker -> `BLOCKED_ENVIRONMENT`; otherwise any evidence gap -> `BLOCKED_EVIDENCE`; otherwise 4/4 -> `PASS`.
@@ -653,9 +661,9 @@ python3 -m unittest tests.skillset.test_installed_platform_distribution_gate -v
 
 Expected: FAIL because v0.2.1 orchestration/evidence composition does not exist.
 
-- [ ] **Step 4: Create the v0.2.1 rerun manifest**
+- [ ] **Step 4: Create the exact v0.2.1 rerun manifest**
 
-Create exactly four cases and preserve their routing case sources:
+Create:
 
 ```json
 {
@@ -700,7 +708,7 @@ Create exactly four cases and preserve their routing case sources:
 
 `evaluate_installed_platform_rerun(root, manifest_path=None)` must default to `installed-platform-rerun-v0.2.1.json`.
 
-If an explicit manifest has schema `0.2`, keep the current evaluation behavior so historical tests remain meaningful.
+If an explicit manifest has schema `0.2`, keep the current evaluation behavior.
 
 For schema `0.2.1`:
 
@@ -708,55 +716,41 @@ For schema `0.2.1`:
 2. if catalog verdict is `BLOCKED_EVIDENCE`, do not invoke terminal-trace semantics for that case;
 3. if catalog verdict is `BLOCKED_ENVIRONMENT`, do not convert it into a routing violation;
 4. load Behavior Evidence only after a valid `FULL_SPECIALIST` or `COMPOSITE_ONLY` catalog;
-5. derive runtime mode and relevant specialist availability from the Catalog Evaluation;
+5. derive runtime mode and relevant specialist availability from Catalog Evaluation;
 6. if Behavior Evidence contains conflicting `mode` or `specialist_availability`, record an evidence conflict and return `BLOCKED_EVIDENCE`;
-7. copy the trace, set the catalog-derived mode/availability, then call the unchanged `evaluate_terminal_trace()`.
+7. copy the trace, set catalog-derived mode/availability, then call the unchanged `evaluate_terminal_trace()`.
 
-Do not change `tools/aegis_skillset/routing.py` in this task.
+Do not change `tools/aegis_skillset/routing.py`.
 
-- [ ] **Step 6: Use this Behavior Evidence envelope**
+- [ ] **Step 6: Freeze the Behavior Evidence envelope**
 
-Synthetic tests and later real evidence use:
+Behavior artifacts retain schema version `0.2` and must include:
 
-```json
-{
-  "schema_version": "0.2",
-  "case_id": "09-01-direct-specialist",
-  "fresh_platform_event": true,
-  "complete_response_captured": true,
-  "platform_event_id": "behavior-direct-test-001",
-  "trace": {
-    "terminal": true,
-    "invocations": [
-      {"skill": "aegis-project-state", "role": "support"},
-      {"skill": "aegis-gate-review", "role": "primary"}
-    ],
-    "final_answer_owner": "aegis-gate-review",
-    "genuine_ambiguity": false,
-    "earlier_blocker_conclusively_established": false,
-    "ownership_edges": [],
-    "handoff_edges": [],
-    "forbidden_downstream_substantive_execution": 0,
-    "primary_substantive_result_emitted": true
-  }
-}
+```text
+case_id
+fresh_platform_event = true
+complete_response_captured = true
+platform_event_id
+trace.terminal
+trace.invocations
+trace.final_answer_owner
+trace.genuine_ambiguity
+trace.earlier_blocker_conclusively_established
+trace.ownership_edges
+trace.handoff_edges
+trace.forbidden_downstream_substantive_execution
+trace.primary_substantive_result_emitted
 ```
 
-Do not require `trace.mode` or `trace.specialist_availability` from the behavior capture; catalog truth supplies those fields. If present, they are consistency assertions only.
+Do not require `trace.mode` or `trace.specialist_availability`; catalog truth supplies those fields. If present, they are consistency assertions only.
 
 - [ ] **Step 7: Extend printed Gate state without changing CLI exit policy**
 
-For v0.2.1 print each case as:
-
-```text
-09-01-direct-specialist: BLOCKED_EVIDENCE catalog_state=UNKNOWN evidence_gaps=catalog evidence
-```
-
-Use the actual derived catalog state when available.
+For v0.2.1 include `catalog_state=` and evidence gaps/violations in case output.
 
 Keep existing semantics:
 
-- `installed-platform-check` exits 0 for structurally valid non-PASS state;
+- `installed-platform-check` exits 0 for a structurally valid non-PASS state;
 - `installed-platform-gate` exits 2 unless aggregate verdict is `PASS`;
 - malformed manifests/evidence exit 1.
 
@@ -771,9 +765,13 @@ python3 -m unittest tests.skillset.test_routing -v
 python3 -m tools.aegis_skillset.cli installed-platform-check .
 ```
 
-Expected: tests PASS; current real Gate state remains blocked because the new evidence refs are null.
+Expected: tests PASS; current real Gate state remains blocked because the v0.2.1 evidence refs are null.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 9: Re-verify protected blobs**
+
+Run `git hash-object` for all six protected files listed in Global Constraints. Every hash must still match exactly.
+
+- [ ] **Step 10: Commit**
 
 ```bash
 git add skillset/dogfood/installed-platform-rerun-v0.2.1.json \
@@ -782,7 +780,7 @@ git add skillset/dogfood/installed-platform-rerun-v0.2.1.json \
 git commit -m "feat: separate task6 catalog and behavior evidence"
 ```
 
-**Exit Criteria:** Old Task 6 orchestration bytes are preserved; new Task 6 evidence derives availability from distribution truth; `terminal_trace_v0.2` remains untouched.
+**Exit Criteria:** Old Task 6 orchestration bytes are preserved; new Task 6 evidence derives availability from distribution truth; `terminal_trace_v0.2` and protected routing cases remain byte-identical.
 
 ---
 
@@ -792,24 +790,24 @@ git commit -m "feat: separate task6 catalog and behavior evidence"
 
 **Files:**
 - Modify: `.github/workflows/skillset.yml`
-- Existing/new tests from Task Packages 2-4
-- No Skill instruction change expected.
+- Modify the existing workflow contract test that already checks `installed-platform-check`, or add assertions to `tests/skillset/test_installed_platform_distribution_gate.py` if no narrower workflow test exists.
 
 **Interfaces:**
 - Consumes: distribution contract, release builder, v0.2.1 Task 6 evaluator.
 - Produces: green deterministic Gate plus GitHub Actions source-bundle artifact for platform materialization.
 
-- [ ] **Step 1: Write/extend workflow text-contract tests before editing the workflow**
+- [ ] **Step 1: Write RED workflow assertions**
 
-Add assertions to the most relevant existing workflow test file so CI must contain:
+Require the workflow to contain:
 
 ```text
 python3 -m tools.aegis_skillset.cli distribution-check .
 python3 scripts/build_aegis_distributions.py --check
 python3 scripts/build_aegis_distributions.py --package-dir /tmp/aegis-plugin-dist
+actions/upload-artifact@v4
 ```
 
-and an `actions/upload-artifact@v4` step for `/tmp/aegis-plugin-dist/*.zip`.
+and artifact name `aegis-distributions-0.1.0-task6.1`.
 
 - [ ] **Step 2: Run RED workflow test**
 
@@ -817,7 +815,7 @@ Expected: FAIL because the workflow does not yet build/attach distributions.
 
 - [ ] **Step 3: Extend Skillset workflow path coverage**
 
-Add:
+Add to both `push.paths` and `pull_request.paths`:
 
 ```yaml
       - "docs/plugin-distribution-contract-v*.md"
@@ -828,9 +826,9 @@ Add:
 
 `skillset/**`, `tools/aegis_skillset/**`, and `tests/skillset/**` are already covered.
 
-- [ ] **Step 4: Add deterministic distribution steps before the full test suite**
+- [ ] **Step 4: Add deterministic distribution steps**
 
-Add:
+Add before the full test suite:
 
 ```yaml
       - name: Validate Aegis distribution contract
@@ -869,15 +867,9 @@ python3 -m unittest discover -s evals/tests -v
 
 Expected: all deterministic checks PASS while `installed-platform-check` truthfully prints a blocked Task 6 state due to missing fresh external evidence.
 
-- [ ] **Step 6: Verify protected semantics were not changed**
+- [ ] **Step 6: Re-verify all six protected blob SHAs again**
 
-Run:
-
-```bash
-git diff --exit-code HEAD~1 -- tools/aegis_skillset/routing.py skillset/routing
-```
-
-If Task Packages 1-5 span multiple commits, compare against the pre-P32 package commit instead of `HEAD~1`. Expected: no semantic diff to the terminal-trace oracle or protected routing cases.
+Use `git hash-object` and compare to Global Constraints. Any mismatch blocks this package.
 
 - [ ] **Step 7: Commit workflow closure**
 
@@ -897,24 +889,24 @@ Capture the exact branch-head SHA and the two run URLs/IDs.
 
 - [ ] **Step 9: Return the P32 materialization block**
 
-Return:
+Return actual observed values in this shape:
 
 ```yaml
 stage: P32
 owner: aegis-implementation
 surface: CODE_EXECUTION
-result_revision: exact_remote_branch_head_sha
-materialized_ref: exact_github_commit_or_pr_ref
+result_revision: <actual exact remote branch head SHA>
+materialized_ref: <actual exact GitHub commit or PR ref>
 verification:
-  skillset_ci: exact_fresh_run_ref
-  project_state_ci: exact_fresh_run_ref
+  skillset_ci: <actual fresh run ref>
+  project_state_ci: <actual fresh run ref>
 test_distribution_artifact: aegis-distributions-0.1.0-task6.1
 return_surface: CONTROL_REVIEW
 ```
 
-The real values are captured from GitHub at execution time; do not prefill them from an earlier commit/run.
+Angle-bracket fields above are schema notation only; the returned evidence block must contain concrete observed values and no angle-bracket text.
 
-**Exit Criteria:** Repository implementation is materialized and deterministically green; real installed-platform evidence is still separate and pending P34.
+**Exit Criteria:** Repository implementation is materialized and deterministically green; real installed-platform evidence is separate and pending P34.
 
 ---
 
@@ -929,17 +921,17 @@ These are not Codex repository-implementation tasks. After Task Package 5 return
 **Files created only after real observations exist:**
 - `skillset/dogfood/evidence/task6-catalog-full-plugin-v0.2.1.json`
 - `skillset/dogfood/evidence/task6-catalog-standalone-v0.2.1.json`
-- Modify: `skillset/dogfood/installed-platform-rerun-v0.2.1.json` to reference the real catalog artifacts after they are committed.
+- Modify: `skillset/dogfood/installed-platform-rerun-v0.2.1.json` to reference real catalog artifacts after they are committed.
 
-- [ ] **Step 1: Use the fresh CI source bundle artifact from Task Package 5**
+- [ ] **Step 1: Use the fresh CI source-bundle artifact from Task Package 5**
 
-Do not use an older local bundle. Verify its workflow run belongs to the exact P32 result revision.
+Verify the workflow run belongs to the exact P32 result revision. Do not use an older local bundle.
 
 - [ ] **Step 2: Materialize Environment A as one test Aegis Plugin**
 
 Use the actual supported ChatGPT Plugin creation/import UI available to the test account to create one test Plugin whose included Skills are the nine Skill bundles from release `0.1.0-task6.1`.
 
-If the platform cannot create/import a local/test multi-Skill Plugin on the required ChatGPT surface, stop and record:
+If the platform cannot create/import a local/test multi-Skill Plugin on the required ChatGPT surface, stop with:
 
 ```text
 BLOCKED_ENVIRONMENT
@@ -950,78 +942,40 @@ Do **not** substitute nine separately installed personal Skills for final accept
 
 - [ ] **Step 3: Capture durable Environment A evidence**
 
-The reviewer-accessible evidence must show, from the platform/plugin detail state rather than prompt prose:
+The reviewer-accessible evidence must show, from platform/plugin detail state rather than prompt prose:
 
 - one Aegis Plugin distribution;
 - exact nine included Skills;
-- the test release/build identity used;
+- test release/build identity used;
 - ChatGPT surface/account/workspace context sufficient to reproduce the run;
 - no simultaneous Standalone Aegis distribution.
 
-Materialize the screenshots/export/details at a durable reviewer-accessible ref (for example a GitHub PR/issue attachment or another stable platform artifact). The JSON evidence points to that real ref.
+Materialize screenshots/export/details at a durable reviewer-accessible ref such as a GitHub PR/issue attachment or another stable platform artifact.
 
-- [ ] **Step 4: Write the Environment A catalog JSON from the observation**
+- [ ] **Step 4: Write the Environment A catalog JSON using only observed values**
 
-Use schema:
-
-```json
-{
-  "schema_version": "0.1",
-  "fresh_platform_event": true,
-  "complete_catalog_capture": true,
-  "platform_event_id": "copy-the-real-platform-event-or-observation-id",
-  "surface": {"product": "chatgpt", "surface": "web"},
-  "observed_distributions": [
-    {"kind": "plugin", "id": "aegis", "release_version": "0.1.0-task6.1"}
-  ],
-  "installed_skills": [
-    "aegis",
-    "aegis-project-state",
-    "aegis-discovery",
-    "aegis-modeling",
-    "aegis-architecture",
-    "aegis-verification",
-    "aegis-governance",
-    "aegis-implementation",
-    "aegis-gate-review"
-  ],
-  "component_release_versions": {},
-  "release_manifest_ref": "skillset/releases/aegis-0.1.0-task6.1.json",
-  "materialization_ref": "copy-the-real-reviewer-accessible-observation-ref"
-}
-```
-
-At execution time replace the two `copy-the-real-...` strings with the real observed IDs/refs. They are instructions, not admissible final evidence values.
+Populate schema version `0.1`, `fresh_platform_event=true`, `complete_catalog_capture=true`, the actual platform event/observation ID from Step 3, `surface={product: chatgpt, surface: web}`, one observed Plugin distribution with id `aegis` and release `0.1.0-task6.1`, the exact nine installed Skill names, an empty `component_release_versions` map unless the platform exposes per-component versions, `release_manifest_ref=skillset/releases/aegis-0.1.0-task6.1.json`, and the actual durable `materialization_ref` from Step 3.
 
 - [ ] **Step 5: Materialize Environment B as Standalone Aegis only**
 
 Use a clean installation context with only the Standalone `aegis` distribution from release `0.1.0-task6.1`. No Plugin and no individually installed Aegis specialists may be present.
 
-- [ ] **Step 6: Capture and write the Environment B catalog evidence**
+- [ ] **Step 6: Capture and write Environment B catalog evidence**
 
-Use the same evidence envelope with:
-
-```json
-"observed_distributions": [
-  {"kind": "standalone", "id": "aegis-standalone", "release_version": "0.1.0-task6.1"}
-],
-"installed_skills": ["aegis"]
-```
-
-and a real reviewer-accessible materialization ref.
+Use the same envelope with one observed distribution `{kind: standalone, id: aegis-standalone, release_version: 0.1.0-task6.1}` and `installed_skills=[aegis]`, using the actual event/observation ID and durable materialization ref.
 
 - [ ] **Step 7: Evaluate both catalog artifacts before any behavioral PASS claim**
 
-Run the focused catalog evaluator/tests. Expected:
+Expected:
 
 ```text
 Environment A -> FULL_SPECIALIST / PASS
 Environment B -> COMPOSITE_ONLY / PASS
 ```
 
-Any `PARTIAL_CATALOG`, `MIXED_REVISION`, `DUPLICATE_DISTRIBUTION`, missing ref, or incomplete capture stops the behavioral Gate with the exact blocker.
+Any `PARTIAL_CATALOG`, `MIXED_REVISION`, `DUPLICATE_DISTRIBUTION`, missing durable ref, or incomplete capture stops the behavioral Gate with the exact blocker.
 
-**Exit Criteria:** The two legal runtime modes are independently proven by platform evidence; no behavior trace is being used to infer Skill availability.
+**Exit Criteria:** The two legal runtime modes are independently proven by platform evidence; no behavior trace is used to infer Skill availability.
 
 ---
 
@@ -1038,7 +992,7 @@ Any `PARTIAL_CATALOG`, `MIXED_REVISION`, `DUPLICATE_DISTRIBUTION`, missing ref, 
 
 - [ ] **Step 1: Run `09-01-direct-specialist` in Environment A**
 
-Use the protected prompt/case without adding expected-owner hints. Capture the complete terminal response and platform invocation evidence. Normal PASS requires `aegis-gate-review` to own the substantive/final P34 result; Project State support may appear first.
+Use the protected prompt/case without expected-owner hints. Capture the complete terminal response and platform invocation evidence. Normal PASS requires `aegis-gate-review` to own the substantive/final P34 result; Project State support may appear first.
 
 - [ ] **Step 2: Run `09-01-ambiguous-router` in Environment A**
 
@@ -1054,11 +1008,11 @@ Run the unchanged protected case. Do not count prompt prose as unavailability ev
 
 - [ ] **Step 5: Normalize four Behavior Evidence JSON artifacts**
 
-Each artifact must use the v0.2 Behavior Evidence envelope from Task Package 4 and carry the real fresh platform event ID plus complete normalized terminal trace. Do not synthesize unseen invocation events.
+Each artifact must use the v0.2 Behavior Evidence envelope from Task Package 4 and carry the actual fresh platform event ID plus complete normalized terminal trace. Do not synthesize unseen invocation events.
 
 - [ ] **Step 6: Populate v0.2.1 evidence refs**
 
-Cases 1-3 point to the same accepted Environment A catalog artifact and their own behavior artifacts. Case 4 points to Environment B catalog evidence and its own behavior artifact.
+Cases 1-3 point to the accepted Environment A catalog artifact and their own behavior artifacts. Case 4 points to Environment B catalog evidence and its own behavior artifact.
 
 - [ ] **Step 7: Run the strict installed-platform Gate**
 
@@ -1124,7 +1078,7 @@ Plugin Distribution v0.1 does not become Current merely because its test bundle 
 
 ## P31 Surface Handoff Package
 
-Repository implementation Tasks 1-5 are now packageable as:
+Repository implementation Task Packages 1-5 are packageable as:
 
 ```yaml
 type: surface_handoff
@@ -1140,13 +1094,12 @@ return_surface: CONTROL_REVIEW
 
 Required P32 start preflight:
 
-1. confirm branch `aegis/plugin-distribution-contract-v0.1` is based on current `main` or explicitly synchronize before editing;
+1. confirm branch `aegis/plugin-distribution-contract-v0.1` is synchronized with current `main` without silently changing the protected semantic files;
 2. inspect `git status`, `git diff`, and current PR #13 head;
-3. verify the two reviewed Authority/spec files are present;
-4. verify `skillset/dogfood/installed-platform-rerun-v0.2.json` still has Git blob SHA `0944a95aca2f6c565ee5835efc5adaaf67abd480`;
-5. verify `tools/aegis_skillset/routing.py` and protected routing corpora have no unreviewed semantic drift;
-6. execute Task Packages 1-5 in order with RED -> GREEN evidence and small commits;
-7. return an exact remote `materialized_ref`; local-only completion is insufficient P34 evidence.
+3. verify the two reviewed Authority/spec files and this plan are present;
+4. run `git hash-object` on all six protected files and compare to Global Constraints;
+5. execute Task Packages 1-5 in order with RED -> GREEN evidence and small commits;
+6. return an exact remote `materialized_ref`; local-only completion is insufficient P34 evidence.
 
 ---
 
@@ -1162,12 +1115,12 @@ Required P32 start preflight:
 - Whole-catalog upgrade safety represented by partial/mixed state rejection -> Task Package 2; no updater is built in v0.1.
 - Apps orthogonal / no required Apps -> Task Package 2.
 - Task 6 evidence-layer migration -> Task Package 4.
-- Existing semantic oracle/cases preserved -> Global Constraints, Task Package 4 preservation test, Task Package 5 diff check.
+- Existing semantic oracle/cases preserved -> protected blob pins + Task Package 4/5 re-verification.
 - Reviewer-accessible source bundle + catalog evidence -> Task Package 5 and Evidence Package 6.
 - 4/4 installed-platform acceptance -> Evidence Package 7.
 - Historical PR #9 nonconforming integration truth preserved -> Task Package 1 regression + conditional P34/P23 handoff.
 
-**Placeholder scan:** No implementation step relies on `TBD`, `TODO`, “similar to”, or an unspecified code path. Real platform-generated event IDs/refs cannot be known in P30; the evidence packages explicitly require copying the actual values observed at execution time and forbid the instructional strings from becoming final evidence.
+**Placeholder scan:** No implementation step uses `TBD`, `TODO`, “similar to”, synthetic digest literals, or pre-filled fake platform evidence. Runtime-generated platform IDs/refs are explicitly copied from real observations during Evidence Packages 6-7.
 
 **Type/name consistency:** `DistributionSpec`, `DistributionContract`, `CatalogEvaluation`, `FULL_SPECIALIST`, `COMPOSITE_ONLY`, `PARTIAL_CATALOG`, `MIXED_REVISION`, `DUPLICATE_DISTRIBUTION`, `0.1.0-task6.1`, `installed-platform-rerun-v0.2.1.json`, `catalog_evidence_ref`, and `behavior_evidence_ref` are used consistently across all packages.
 
