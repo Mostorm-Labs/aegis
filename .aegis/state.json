@@ -1,35 +1,102 @@
 {
   "active_stage": "verification",
-  "awaiting_integrations": [],
+  "awaiting_integrations": [
+    "int-pr11"
+  ],
   "blocking_findings": [
     "gate gate-openai-real-baseline is currently BLOCKED_ENVIRONMENT",
-    "gate gate-skill-decomposition-v02-pr9 is currently BLOCKED_EVIDENCE"
+    "gate gate-skill-decomposition-v02-pr9 is currently BLOCKED_EVIDENCE",
+    "integration int-pr11 is awaiting integration into main after Gate PASS",
+    "integration int-pr9 occurred under non-PASS gate gate-skill-decomposition-v02-pr9 (BLOCKED_EVIDENCE)"
   ],
   "blocking_gates": [
     "gate-openai-real-baseline",
     "gate-skill-decomposition-v02-pr9"
   ],
   "earliest_untrusted_layer": "verification",
-  "generator_version": "0.3",
+  "generator_version": "0.4",
   "historical_gates": [
     "gate-project-state-pr4",
-    "gate-project-state-v02-pr7"
+    "gate-project-state-v02-pr7",
+    "gate-project-state-v03-pr8"
   ],
   "integration_applicability": [
-    {"applicability":"current","integration_id":"int-pr1"},
-    {"applicability":"current","integration_id":"int-pr2"},
-    {"applicability":"current","integration_id":"int-pr3"},
-    {"applicability":"historical","integration_id":"int-pr4"},
-    {"applicability":"historical","integration_id":"int-pr6"},
-    {"applicability":"historical","integration_id":"int-pr7"},
-    {"applicability":"current","integration_id":"int-pr8"}
+    {
+      "applicability": "current",
+      "integration_id": "int-pr1"
+    },
+    {
+      "applicability": "current",
+      "integration_id": "int-pr11"
+    },
+    {
+      "applicability": "current",
+      "integration_id": "int-pr2"
+    },
+    {
+      "applicability": "current",
+      "integration_id": "int-pr3"
+    },
+    {
+      "applicability": "historical",
+      "integration_id": "int-pr4"
+    },
+    {
+      "applicability": "historical",
+      "integration_id": "int-pr6"
+    },
+    {
+      "applicability": "historical",
+      "integration_id": "int-pr7"
+    },
+    {
+      "applicability": "historical",
+      "integration_id": "int-pr8"
+    },
+    {
+      "applicability": "current",
+      "integration_id": "int-pr9"
+    }
   ],
-  "manifest_digest": "c9ad008b4c9e5a5495d298363ee54452220257ec3e09e978a66a7d88fbc3bd14",
+  "integration_conformance": [
+    {
+      "conformance": "conforming",
+      "integration_id": "int-pr1"
+    },
+    {
+      "conformance": "conforming",
+      "integration_id": "int-pr2"
+    },
+    {
+      "conformance": "conforming",
+      "integration_id": "int-pr3"
+    },
+    {
+      "conformance": "conforming",
+      "integration_id": "int-pr4"
+    },
+    {
+      "conformance": "conforming",
+      "integration_id": "int-pr7"
+    },
+    {
+      "conformance": "conforming",
+      "integration_id": "int-pr8"
+    },
+    {
+      "conformance": "nonconforming",
+      "integration_id": "int-pr9"
+    }
+  ],
+  "manifest_digest": "9814b4b156675dd917b6b406ca218b9294995cad7bda7083398f68c1db822bb7",
   "needs_review_authorities": [],
   "needs_review_gates": [],
+  "nonconforming_integrations": [
+    "int-pr9"
+  ],
   "recommended_handoff": null,
   "recommended_next_stage": "P34",
-  "schema_version": "0.3",
+  "schema_version": "0.4",
   "stale_authorities": [],
   "stale_gates": []
 }

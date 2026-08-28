@@ -30,16 +30,16 @@ Read [references/bootstrap-routing.md](references/bootstrap-routing.md) for rout
 
 When the project contains a `.aegis/` directory, inspect project-control state before ordinary routing:
 
-1. Read `project.json`, `authorities.json`, `gates.json`, `evidence.json`, and `integrations.json` for the current v0.3 contract.
+1. Read `project.json`, `authorities.json`, `gates.json`, `evidence.json`, and `integrations.json`; determine their consistent schema version before applying version-specific rules. v0.4 is current tooling semantics; v0.3 remains backward-compatible for v0.3 manifests.
 2. Treat `state.json` as a generated cache, never as independent authority.
 3. Validate IDs, current-authority uniqueness, dependency/supersession graphs, Gate evidence references, Integration occurrence evidence, and declared Gate validity.
-4. Recompute derived validity, Gate actionability, and Integration applicability when project tooling is available; compare them with committed `state.json`.
-5. If manifest metadata conflicts with actual Current Authority, route to `P21`/`P22`; do not let `.aegis/` silently override authoritative documents.
-6. Include active `BLOCKED_*` Gate verdicts and current awaiting repository integrations in derived routing. Preserve historical Gate/Integration occurrence without reactivating completed history as current work.
-7. Keep Authority status, Gate verdict/validity, Integration occurrence, current applicability, and current actionability separate. Mixed Current/Historical Gate Authority fails closed to Authority review.
+4. Recompute derived validity, Gate actionability, Integration applicability, and for v0.4 Integration Gate conformance; compare them with committed `state.json`.
+5. If manifest metadata conflicts with actual Current Authority or repository reality, route to `P21`/`P22`; do not let `.aegis/` silently override authoritative documents or erase a proven repository occurrence.
+6. Include active `BLOCKED_*` Gate verdicts and current awaiting repository integrations in derived routing. Preserve completed Gate/Integration occurrence history without reactivating it solely from provenance.
+7. Keep Authority status, Gate verdict/validity, Integration occurrence, Gate conformance, current applicability, and current actionability separate. A real merge under a blocked Gate is an occurrence plus `nonconforming` conformance, not implicit Gate PASS. Mixed Current/Historical Gate Authority fails closed to Authority review.
 8. If only current Gate/Evidence validity is stale or a current Gate is blocked, route from the mapped Gate layer; if an upstream authority dependency is stale or needs review, route from that earlier layer.
 
-Read [references/project-state.md](references/project-state.md) for the v0.3 manifest, historical occurrence/applicability/actionability split, blocked-Gate propagation, Integration lifecycle, invalidation, and routing contract.
+Read [references/project-state.md](references/project-state.md) for the version-aware v0.4/v0.3 manifest, occurrence/conformance/applicability/actionability split, blocked-Gate propagation, Integration lifecycle, invalidation, and routing contract.
 
 ## Stage map
 
