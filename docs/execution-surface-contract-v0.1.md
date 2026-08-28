@@ -1,6 +1,6 @@
 # Aegis Execution Surface Contract v0.1
 
-Status: **Approved Design Authority — implementation pending.**
+Status: **Proposed Additive Authority v0.1 — human-approved; deterministic implementation and hosted CI PASS; integration remains stacked behind PR #9.**
 
 This contract adds execution-surface routing to Aegis without changing lifecycle-stage ownership. It formalizes the control-plane / execution-plane split validated in real Axiom development: reasoning-heavy planning and review stay on a conversational control surface, while repository-heavy implementation and reverification move to a coding execution surface.
 
@@ -200,3 +200,14 @@ v0.1 does not:
 - automatically launch an external coding agent;
 - permit autonomous multi-stage substantive chaining;
 - change Project State Authority/Gate/Evidence semantics.
+
+## 14. Verification Evidence
+
+Deterministic implementation evidence on stacked PR #10:
+
+- focused metadata RED observed before implementation; final focused metadata suite: 13/13 PASS;
+- focused surface-handoff/instruction RED observed before canonical contract changes; final focused suite: 3/3 PASS;
+- GitHub Actions `Aegis Skillset Integrity` run `33139045503`, job `98745523977`: PASS, including ownership validation, generated-distribution drift check, routing/handoff validation, installed-platform state, standalone Skill validation, skillset tests, Project State regressions, corpus validation, and evaluation regressions;
+- GitHub Actions `Aegis Project State Integrity` run `33139045493`: PASS for both `self-host` and `validate-tooling` jobs.
+
+These results satisfy the deterministic acceptance criteria of this contract. They do not supersede or bypass the unresolved installed-platform/P34 authority state of PR #9, which remains the base dependency for this stacked change.
