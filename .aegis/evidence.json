@@ -24,6 +24,10 @@
     {"id":"ev-pr11-red-ci-33162821606","type":"automated_test_red","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33162821606","status":"available","subject_ids":["gate-project-state-v04-pr11"]},
     {"id":"ev-pr11-project-state-ci-33163536074","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33163536074","status":"available","subject_ids":["gate-project-state-v04-pr11"]},
     {"id":"ev-pr11-skillset-ci-33163536133","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33163536133","status":"available","subject_ids":["gate-project-state-v04-pr11"]},
-    {"id":"ev-pr11-p34","type":"gate_review","ref":"docs/project-state-manifest-v0.4.md#p34-evidence--pass","status":"available","subject_ids":["gate-project-state-v04-pr11"]}
+    {"id":"ev-pr11-p34","type":"gate_review","ref":"docs/project-state-manifest-v0.4.md#p34-evidence--pass","status":"available","subject_ids":["gate-project-state-v04-pr11"]},
+    {"id":"ev-pr11-post-p34-project-state-ci-33163765563","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33163765563","status":"available","subject_ids":["aegis-project-state-v0.4"]},
+    {"id":"ev-pr11-post-p34-skillset-ci-33163765578","type":"automated_test","ref":"https://github.com/Mostorm-Labs/aegis/actions/runs/33163765578","status":"available","subject_ids":["aegis-project-state-v0.4"]},
+    {"id":"ev-pr11-p23","type":"authority_supersession","ref":"docs/project-state-manifest-v0.4.md#p23-supersession","status":"available","subject_ids":["aegis-project-state-v0.4"]},
+    {"id":"ev-pr11-awaiting-integration","type":"integration_state","ref":"https://github.com/Mostorm-Labs/aegis/pull/11","status":"available","subject_ids":["int-pr11"]}
   ]
 }
