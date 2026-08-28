@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mostorm-labs.github.io/aegis/schemas/project-state/v0.4/integrations.schema.json",
+  "title": "Aegis Repository Integration Registry v0.4",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "integrations"],
+  "properties": {
+    "schema_version": {"const": "0.4"},
+    "integrations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "ref", "gate_id", "status", "target_ref", "evidence_ids"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "kind": {"type": "string", "minLength": 1},
+          "ref": {"type": "string", "minLength": 1},
+          "gate_id": {"type": "string", "minLength": 1},
+          "status": {"enum": ["awaiting_integration", "integrated", "closed_unmerged"]},
+          "target_ref": {"type": "string", "minLength": 1},
+          "evidence_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "integrated_revision": {"type": "string", "minLength": 1}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"status": {"const": "integrated"}}, "required": ["status"]},
+            "then": {"required": ["integrated_revision"]},
+            "else": {"not": {"required": ["integrated_revision"]}}
+          }
+        ]
+      }
+    }
+  }
+}

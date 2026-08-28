@@ -1,6 +1,6 @@
 ---
 name: aegis-project-state
-description: Inspect, validate, recompute, and compare Aegis .aegis project-control manifests and Project State v0.3. Use when the user explicitly asks to read, validate, repair, persist, or diagnose .aegis manifests, state.json drift, current versus historical integration applicability, or deterministic project-state recomputation.
+description: Inspect, validate, recompute, and compare Aegis .aegis project-control manifests and Project State v0.4, while preserving v0.3 compatibility. Use when the user explicitly asks to read, validate, repair, persist, or diagnose .aegis manifests, state.json drift, Integration occurrence versus Gate conformance, current versus historical applicability, or deterministic project-state recomputation.
 ---
 
 # Aegis Project State
@@ -9,11 +9,15 @@ Own deterministic Project State inspection, validation, recomputation, and state
 
 ## Safety preflight
 
-If deterministic project-state tooling is present, prefer it over conversational reimplementation. Treat `state.json` as generated cache, never Authority. If authored manifests conflict with Current Authority or repository evidence, return to the central `aegis` router for reconciliation.
+If deterministic project-state tooling is present, prefer it over conversational reimplementation. Treat `state.json` as generated cache, never Authority. Determine the manifest schema version before applying Integration rules: v0.4 separates Integration occurrence from Gate conformance; v0.3 retains its historical stricter integrated-Gate rule.
+
+Repository occurrence and Gate acceptance are different facts. If repository evidence proves an Integration happened under a blocked Gate, preserve the occurrence, preserve the blocked Gate, and classify v0.4 conformance as `nonconforming`; never manufacture PASS evidence from the merge itself.
+
+If authored manifests conflict with Current Authority or repository evidence, return to the central `aegis` router for reconciliation.
 
 **Earlier untrusted layer:** when Project State reveals an earlier Authority or Gate blocker, report it and hand back to `aegis`; do not repair unrelated lifecycle stages here.
 
-Read [references/project-state.md](references/project-state.md) for the v0.3 contract and [references/shared/authority-contract.md](references/shared/authority-contract.md) for global Authority semantics.
+Read [references/project-state.md](references/project-state.md) for the version-aware v0.4/v0.3 contract and [references/shared/authority-contract.md](references/shared/authority-contract.md) for global Authority semantics.
 
 ## Composition boundary
 

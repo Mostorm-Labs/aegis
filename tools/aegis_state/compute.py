@@ -94,6 +94,7 @@ def manifest_digest(manifests: ManifestSet) -> str:
 
 
 def compute_state(manifests: ManifestSet) -> dict:
+    schema_version = manifests.schema_version or "0.3"
     authorities = manifests.authority_items
     gates = manifests.gate_items
     evidence = manifests.evidence_items
@@ -250,10 +251,13 @@ def compute_state(manifests: ManifestSet) -> dict:
 
     awaiting_integrations: list[str] = []
     integration_applicability: list[dict[str, str]] = []
+    integration_conformance: list[dict[str, str]] = []
+    nonconforming_integrations: list[str] = []
     for integration in integrations:
         iid = str(integration.get("id"))
         status = str(integration.get("status"))
         gate_id = str(integration.get("gate_id"))
+        gate = gate_by_id.get(gate_id)
         membership = gate_membership.get(gate_id, "unknown")
         effective = gate_effective.get(gate_id, "stale")
         if status == "closed_unmerged":
@@ -270,12 +274,20 @@ def compute_state(manifests: ManifestSet) -> dict:
             applicability = "current"
         integration_applicability.append({"integration_id": iid, "applicability": applicability})
 
+        if status == "integrated" and schema_version == "0.4":
+            verdict = gate.get("verdict") if gate else None
+            conformance = "conforming" if verdict in PASS_VERDICTS else "nonconforming"
+            integration_conformance.append({"integration_id": iid, "conformance": conformance})
+            if conformance == "nonconforming":
+                nonconforming_integrations.append(iid)
+                if applicability != "historical":
+                    findings.append(f"integration {iid} occurred under non-PASS gate {gate_id} ({verdict})")
+
         if status != "awaiting_integration":
             continue
         awaiting_integrations.append(iid)
         target = str(integration.get("target_ref"))
         findings.append(f"integration {iid} is awaiting integration into {target} after Gate PASS")
-        gate = gate_by_id.get(integration.get("gate_id"))
         if gate and gate.get("verdict") in PASS_VERDICTS and gate.get("validity") == "current" and effective == "current":
             route_candidates.append(("implementation", None, "superpowers:finishing-a-development-branch"))
 
@@ -288,9 +300,9 @@ def compute_state(manifests: ManifestSet) -> dict:
         handoff = None
 
     project = manifests.project.get("project") or {}
-    return {
-        "schema_version": "0.3",
-        "generator_version": GENERATOR_VERSION,
+    state = {
+        "schema_version": schema_version,
+        "generator_version": GENERATOR_VERSION if schema_version == "0.4" else "0.3",
         "manifest_digest": manifest_digest(manifests),
         "active_stage": project.get("lifecycle_hint"),
         "earliest_untrusted_layer": earliest,
@@ -306,3 +318,7 @@ def compute_state(manifests: ManifestSet) -> dict:
         "recommended_next_stage": recommended,
         "recommended_handoff": handoff,
     }
+    if schema_version == "0.4":
+        state["integration_conformance"] = sorted(integration_conformance, key=lambda item: item["integration_id"])
+        state["nonconforming_integrations"] = sorted(nonconforming_integrations)
+    return state

@@ -4,7 +4,8 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-SCHEMA_VERSION = "0.3"
+SCHEMA_VERSION = "0.4"
+SUPPORTED_SCHEMA_VERSIONS = {"0.3", "0.4"}
 AUTHORITY_STATUSES = {"Proposed", "Current", "Superseded", "Historical"}
 GATE_VERDICTS = {
     "PASS", "PASS_WITH_FINDINGS", "BLOCKED_IMPLEMENTATION",
@@ -48,6 +49,17 @@ class ManifestSet:
     @property
     def integration_items(self) -> list[dict]:
         return list(self.integrations.get("integrations", []))
+
+    @property
+    def schema_version(self) -> str | None:
+        versions = {
+            data.get("schema_version")
+            for data in (self.project, self.authorities, self.gates, self.evidence, self.integrations)
+            if isinstance(data.get("schema_version"), str)
+        }
+        if len(versions) == 1:
+            return next(iter(versions))
+        return None
 
 
 def _read_json(path: Path) -> dict:
@@ -121,13 +133,21 @@ def _cycle(graph: dict[str, list[str]]) -> list[str] | None:
 def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = True) -> list[str]:
     errors: list[str] = []
 
-    for name, data in [
+    manifest_docs = [
         ("project", manifests.project), ("authorities", manifests.authorities),
         ("gates", manifests.gates), ("evidence", manifests.evidence),
         ("integrations", manifests.integrations),
-    ]:
-        if data.get("schema_version") != SCHEMA_VERSION:
-            errors.append(f"{name}: schema_version must be {SCHEMA_VERSION}")
+    ]
+    versions: set[str] = set()
+    for name, data in manifest_docs:
+        version = data.get("schema_version")
+        if version not in SUPPORTED_SCHEMA_VERSIONS:
+            errors.append(f"{name}: unsupported schema_version {version!r}; expected one of {', '.join(sorted(SUPPORTED_SCHEMA_VERSIONS))}")
+        elif isinstance(version, str):
+            versions.add(version)
+    if len(versions) > 1:
+        errors.append("manifest schema_version values must match")
+    schema_version = next(iter(versions)) if len(versions) == 1 else None
 
     project = manifests.project.get("project")
     if not isinstance(project, dict):
@@ -292,7 +312,7 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
         if status != "integrated" and revision is not None:
             errors.append(f"integration {iid}: integrated_revision is only allowed when status=integrated")
         if strict_gate_validity and status == "integrated" and gate:
-            if gate.get("verdict") not in PASS_VERDICTS:
+            if schema_version == "0.3" and gate.get("verdict") not in PASS_VERDICTS:
                 errors.append(f"integration {iid}: requires historical PASS/PASS_WITH_FINDINGS gate {gate_id}")
             for eid in evidence_ids:
                 ev = evidence_by_id.get(eid)

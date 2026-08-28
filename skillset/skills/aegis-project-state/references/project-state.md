@@ -1,6 +1,6 @@
-# Project State Manifest v0.3
+# Project State Manifest v0.4
 
-Use this reference when a project contains `.aegis/` or when the user asks to persist, inspect, validate, supersede, resume, or integrate machine-readable project state.
+Use this reference when a project contains `.aegis/` or when the user asks to persist, inspect, validate, supersede, resume, or integrate machine-readable project state. Project State tooling is version-aware: apply v0.4 semantics only to v0.4 manifests and preserve v0.3 semantics for v0.3 projects.
 
 ## Canonical layout
 
@@ -14,65 +14,66 @@ Use this reference when a project contains `.aegis/` or when the user asks to pe
 └── state.json
 ```
 
-The first five files are authored project-control manifests. `state.json` is generated and reproducible. Do not treat `.aegis/` as a replacement for PRDs, ADRs, architecture docs, schemas, tests, CI, release evidence, or repository truth.
+The first five files are authored project-control manifests. `state.json` is generated and reproducible. Repository truth, Current Authority, Gate decisions, Evidence, and Integration occurrence remain distinct sources of truth.
 
 ## Startup sequence
 
 ```text
 Read authored manifests
+→ determine one consistent supported schema version
 → validate structure and cross-references
 → validate Authority/supersession DAGs
-→ validate Gate/Evidence/Integration invariants
+→ validate Gate/Evidence/Integration invariants for that version
 → recompute derived state when tooling exists
 → compare committed state.json
+→ compare manifests with repository reality
 → identify earliest untrusted layer
 → route or hand off
 ```
 
-If the repository provides `tools.aegis_state`, prefer its deterministic `validate`, `recompute`, and `check` commands over reimplementing the algorithm conversationally.
+If `tools.aegis_state` exists, prefer its deterministic `validate`, `recompute`, and `check` commands over conversational reimplementation.
 
-## Core v0.3 semantic split
+## Core v0.4 semantic split
 
 Keep these dimensions independent:
 
 ```text
-Historical Occurrence
+Integration Occurrence
+!=
+Gate Conformance
 !=
 Current Applicability
 !=
 Current Actionability
 ```
 
-A later Authority supersession may change whether an old result is still applicable or actionable. It must not erase a repository integration, Gate verdict, or other occurrence that actually happened and is supported by durable evidence.
+- **Occurrence** asks what actually happened in the repository.
+- **Gate Conformance** asks whether that occurrence was authorized by its Gate verdict.
+- **Applicability** asks whether the occurrence still applies to the current Authority/baseline.
+- **Actionability** asks what Aegis should route or block now.
+
+A real repository occurrence must never be erased, renamed, or converted into PASS merely because it violated governance.
 
 ## Authority registry
 
-Each Authority has stable `id`, `scope`, `kind`, `version`, `status`, `ref`, and `depends_on[]`. Optional `supersedes` records replacement; optional `change_class` is:
+Each Authority has stable `id`, `scope`, `kind`, `version`, `status`, `ref`, and `depends_on[]`. Optional `supersedes` records an accepted replacement; optional `change_class` is:
 
 `clarification | compatible | semantic | breaking | ownership`
 
-Keep at most one `Current` Authority per `(scope, kind)`. Reject dangling dependencies, dependency cycles, and supersession cycles. Only validity-bearing relationships belong in `depends_on`; ordinary references do not.
+Keep at most one `Current` Authority per `(scope, kind)`. A Proposed replacement does not supersede Current Authority merely because it exists. P23 must explicitly perform promotion/supersession.
 
-When a dependency still points at a superseded Authority, determine impact from the replacement:
-
-```text
-semantic / breaking / ownership → stale
-clarification / compatible       → needs_review
-missing/unknown impact           → needs_review
-```
-
-An explicit impact review may mark one dependent `unaffected` only when it cites available evidence. Missing review evidence fails closed.
+When a dependency still points at a Superseded/Historical Authority, derive impact from the accepted replacement. Missing impact information fails closed to review.
 
 ## Gate history, validity, and actionability
 
-Keep historical Gate verdict separate from current validity:
+Gate verdict and Gate validity remain separate:
 
 ```text
-Gate verdict = what the Gate decided at the time
-Gate validity = whether that decision still supports current work
+Gate verdict = what the Gate decided
+Gate validity = whether that decision currently supports work
 ```
 
-Only a current-actionable Gate whose effective validity is `current` may contribute an active `BLOCKED_*` verdict. Use:
+Only a current-actionable, effective-current blocked Gate contributes an active blocker:
 
 ```text
 BLOCKED_AUTHORITY      → authority / P21
@@ -81,35 +82,9 @@ BLOCKED_IMPLEMENTATION → implementation / P35
 BLOCKED_ENVIRONMENT    → verification / P34
 ```
 
-`PASS` and `PASS_WITH_FINDINGS` do not create a blocker from verdict alone.
+A repository merge never changes a blocked verdict into PASS. Missing Gate acceptance evidence stays missing after integration.
 
-### Historical Gate
-
-A Gate becomes historical/non-actionable only when both are true:
-
-1. all validity-bearing `authority_ids` are `Superseded/Historical`; and
-2. the Gate is retained as provenance for a completed Integration (`integrated` or `closed_unmerged`).
-
-Such a Gate is emitted in `historical_gates[]`. It does not enter current `stale_gates[]`, `needs_review_gates[]`, `blocking_gates[]`, or current routing solely because its old Authority was superseded.
-
-A historical `BLOCKED_*` verdict remains audit history. It cannot support an `integrated` occurrence and must not reactivate a current blocker solely because the record still exists.
-
-### Mixed Authority Gate
-
-If a Gate's validity-bearing Authority set mixes `Current/Proposed` and `Superseded/Historical`, do not silently classify it as history.
-
-```text
-mixed Current + Historical
-→ needs_review
-→ current actionable Authority uncertainty
-→ authority / P21
-```
-
-If the complete validity-bearing Authority set cannot be determined, fail closed the same way.
-
-### Current stale Gate
-
-If the Gate still belongs to current Authority and its Gate/evidence validity is stale or needs review, it remains actionable and routes under existing Gate validity semantics, normally `verification / P34`.
+Historical/non-actionable Gate provenance remains durable after Authority supersession and completed Integration. Mixed current/historical validity-bearing Authority fails closed to P21.
 
 ## Evidence registry
 
@@ -117,13 +92,13 @@ Evidence status is:
 
 `available | missing | invalid | superseded`
 
-A current PASS/PASS_WITH_FINDINGS must cite available evidence. Integration occurrence evidence for an `integrated` record must also be available; later Authority supersession does not waive proof that the integration actually happened.
+Current PASS/PASS_WITH_FINDINGS must cite available Gate evidence. Every `integrated` occurrence must independently cite available occurrence evidence and a non-empty `integrated_revision`.
+
+Do not reuse repository integration evidence as Gate acceptance evidence unless the Gate contract explicitly defines it as such.
 
 ## Repository Integration lifecycle
 
-`integrations.json` records repository/change lifecycle facts. It does not perform Git operations.
-
-Status remains:
+Authored statuses remain:
 
 ```text
 awaiting_integration
@@ -133,96 +108,85 @@ closed_unmerged
 
 ### `awaiting_integration`
 
-This represents a current proposed action. It requires:
+This is a future/current action candidate. It still requires:
 
 - Gate verdict `PASS` or `PASS_WITH_FINDINGS`;
-- Gate declared and effective-current;
-- Gate not historical/stale/needs-review;
-- integration evidence exists and is available.
+- declared and effective-current Gate;
+- available integration evidence;
+- no historical/stale/needs-review Gate condition.
 
-If no earlier blocker exists, route to:
+A blocked Gate must never produce an integration recommendation.
 
-```text
-earliest_untrusted_layer = implementation
-recommended_next_stage = null
-recommended_handoff = superpowers:finishing-a-development-branch
-```
+### `integrated` in v0.4
 
-### `integrated`
-
-This is durable occurrence history. It requires:
+This records an occurrence that repository evidence proves actually entered the target baseline. It requires:
 
 - referenced Gate exists;
-- historical Gate verdict is `PASS` or `PASS_WITH_FINDINGS`;
 - non-empty `integrated_revision`;
-- integration occurrence evidence exists and is available.
+- available occurrence evidence.
 
-It does **not** require the Gate to remain current-valid forever after later Authority supersession.
+Unlike v0.3, the referenced Gate does **not** have to be PASS/PASS_WITH_FINDINGS. If the Gate was blocked, the occurrence is still recorded and its Gate conformance is derived as `nonconforming`.
 
-Never rewrite a real historical merge as `closed_unmerged` merely because its Authority later becomes historical.
+Example:
+
+```text
+Integration.status      = integrated
+Gate.verdict            = BLOCKED_EVIDENCE
+Gate conformance        = nonconforming
+Integration occurrence  = preserved
+Gate blocker            = preserved
+```
 
 ### `closed_unmerged`
 
-This records that the candidate did not enter the target baseline. It is a completed repository lifecycle occurrence: no current integration action remains, so its Integration applicability is always `historical`. It never enters `awaiting_integrations[]` and never creates a finishing-development-branch handoff.
+This records a completed candidate that did not enter the target baseline. It is historical for Integration applicability and has no integration-occurrence conformance classification.
 
-This does not make the supporting Gate historical by itself. Gate history/actionability is still derived independently from the Gate's Authority set.
+## Derived Gate conformance
 
-## Derived Integration applicability
-
-Applicability is generated into `state.json`, never authored into `integrations.json`.
-
-Values:
+For v0.4 `integrated` occurrences:
 
 ```text
-current
-needs_review
-stale
-historical
+PASS / PASS_WITH_FINDINGS → conforming
+BLOCKED_*                  → nonconforming
 ```
 
-Rules:
-
-- `closed_unmerged` → `historical` because the candidate lifecycle is complete and no integration action remains;
-- `integrated` + all Gate Authorities current + effective-current Gate/evidence → `current`;
-- `integrated` + mixed Current/Historical Authority or unresolved membership → `needs_review`;
-- `integrated` + still-current Authority with stale/invalid Gate/evidence → `stale`;
-- `integrated` + all validity-bearing Gate Authorities Superseded/Historical → `historical`.
-
-Generated projection is deterministic and ordered by Integration ID:
+Generated state exposes:
 
 ```json
 {
-  "integration_applicability": [
-    {"integration_id":"int-old","applicability":"historical"},
-    {"integration_id":"int-current","applicability":"current"}
-  ]
+  "integration_conformance": [
+    {"integration_id":"int-pr9","conformance":"nonconforming"}
+  ],
+  "nonconforming_integrations": ["int-pr9"]
 }
 ```
 
-## Generated state
+Conformance is derived historical truth; it is never authored into `integrations.json` and never silently rewrites the Gate verdict.
 
-`state.json` v0.3 includes deterministic project-control projections such as:
+## Derived Integration applicability
 
-- manifest digest;
-- active stage hint;
-- earliest untrusted layer;
-- blocking findings;
-- stale / needs-review authorities;
-- actionable `stale_gates[]` / `needs_review_gates[]`;
-- `historical_gates[]`;
-- `blocking_gates[]`;
-- `awaiting_integrations[]`;
-- `integration_applicability[]`;
-- recommended next stage;
-- `recommended_handoff`.
+Applicability remains independent of conformance:
 
-Do not add timestamps that prevent byte-stable recomputation. If committed `state.json` differs from fresh recomputation, treat it as state drift and do not trust the cache.
+`current | needs_review | stale | historical`
 
-The manifest digest covers project, authorities, gates, evidence, and integrations.
+A nonconforming integration can be `current` when the merged revision is in the active baseline and its validity-bearing Authority/Gate are still current. The active blocked Gate continues to determine routing.
+
+Rules for mixed/historical/stale Authority and Gate validity remain the same as v0.3.
+
+## Generated state v0.4
+
+`state.json` adds:
+
+- `integration_conformance[]`;
+- `nonconforming_integrations[]`.
+
+It continues to include manifest digest, active stage, earliest untrusted layer, findings, Authority/Gate validity projections, blocking Gates, awaiting Integrations, Integration applicability, recommended stage, and handoff.
+
+Do not add nondeterministic timestamps. `state.json` is cache, not Authority. Any mismatch with fresh recomputation is state drift.
 
 ## Routing precedence
 
-Choose the earliest open/untrusted layer across Authority validity, Gate validity/actionability, active blocked verdicts, and Integration candidates using:
+Choose the earliest open/untrusted layer across Authority validity, Gate validity/actionability, active blocked verdicts, and Integration candidates:
 
 ```text
 problem → requirement → object → behavior → schema → operation
@@ -230,14 +194,18 @@ problem → requirement → object → behavior → schema → operation
 → verification → authority → implementation → release
 ```
 
-Examples:
+A nonconforming integration does not create a competing route when its still-current blocked Gate already supplies the correct route. Surface the nonconformance as a finding and route from the Gate.
 
-- `BLOCKED_ENVIRONMENT` plus an awaiting PR → primary `verification / P34`; preserve integration as secondary.
-- mixed Current/Historical Gate Authority → `authority / P21` rather than silently treating it as historical.
-- historical Gate retained only for completed provenance → no route solely from that history.
-- current stale Gate/evidence → `verification / P34`.
-- no earlier blocker + current awaiting integration → finishing-development-branch handoff.
-- `closed_unmerged` → historical Integration projection, never an integration handoff.
-- manifest/source Authority conflict → `P21`/`P22`.
+## v0.3 backward compatibility
 
-The manifest tells Aegis where to look and what project-control state is recorded; it never outranks contradictory Current Authority or repository evidence.
+When all authored manifests declare `schema_version = "0.3"`, preserve v0.3 semantics and generated shape. In particular:
+
+- `integrated` still requires a historical PASS/PASS_WITH_FINDINGS Gate;
+- no v0.4 conformance fields are generated;
+- v0.4 permissiveness must not reinterpret historical v0.3 projects.
+
+Reject mixed schema versions within one Project State manifest set.
+
+## Safety boundary
+
+The manifest tells Aegis where to look and what project-control state is recorded; it never outranks contradictory Current Authority or repository evidence. If GitHub/repository evidence proves an occurrence that the authored state cannot represent, route to Authority review rather than falsifying repository truth.
