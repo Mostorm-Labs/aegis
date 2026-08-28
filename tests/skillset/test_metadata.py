@@ -1,5 +1,6 @@
 import json
 import unittest
+from dataclasses import replace
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -8,6 +9,19 @@ EXPECTED_STAGES = {
     'P10','P11','P12','P13','P14','P15','P16','P17','P18',
     'P20','P21','P22','P23','P24',
     'P30','P31','P32','P33','P34','P35','P36',
+}
+EXPECTED_SURFACES = ('CONTROL_REASONING','CODE_EXECUTION','CONTROL_REVIEW','CODE_REVERIFY')
+EXPECTED_OPENAI_PROFILE = {
+    'CONTROL_REASONING': 'chatgpt',
+    'CODE_EXECUTION': 'codex',
+    'CONTROL_REVIEW': 'chatgpt',
+    'CODE_REVERIFY': 'codex',
+}
+EXPECTED_SURFACE_BY_STAGE = {
+    'P30':'CONTROL_REASONING','P31':'CONTROL_REASONING',
+    'P32':'CODE_EXECUTION','P33':'CODE_EXECUTION',
+    'P34':'CONTROL_REVIEW','P35':'CONTROL_REVIEW',
+    'P36':'CODE_REVERIFY',
 }
 
 class MetadataTests(unittest.TestCase):
@@ -39,6 +53,15 @@ class MetadataTests(unittest.TestCase):
         self.assertEqual('aegis', getattr(config, 'compatibility_owner', None))
         self.assertIs(True, getattr(config, 'compatibility_requires_unavailable_evidence', None))
 
+    def test_execution_surface_contract_is_frozen(self):
+        load_skillset, _ = self._load()
+        config = load_skillset(ROOT)
+        self.assertEqual(EXPECTED_SURFACES, config.semantic_surfaces)
+        self.assertEqual('openai', config.default_executor_profile)
+        self.assertEqual(EXPECTED_OPENAI_PROFILE, config.executor_profiles['openai'])
+        self.assertEqual(EXPECTED_SURFACE_BY_STAGE, config.execution_surface_by_stage)
+        self.assertIs(False, config.surface_handoff_transfers_ownership)
+
 if __name__ == '__main__':
     unittest.main()
 
@@ -56,19 +79,37 @@ class MetadataNegativeTests(unittest.TestCase):
         self.assertTrue(any('missing stage ownership' in e for e in validate_skillset(config)))
 
     def test_unknown_supporting_skill_is_rejected(self):
-        from dataclasses import replace
-        from tools.aegis_skillset.model import load_skillset, validate_skillset
-        config = replace(load_skillset(ROOT), supporting_skills=('aegis-project-state', 'aegis-unknown'))
-        self.assertTrue(any('unknown supporting skill' in e for e in validate_skillset(config)))
+        config = replace(self._config(), supporting_skills=('aegis-project-state', 'aegis-unknown'))
+        self.assertTrue(any('unknown supporting skill' in e for e in self._validate(config)))
 
     def test_non_aegis_compatibility_owner_is_rejected(self):
-        from dataclasses import replace
-        from tools.aegis_skillset.model import load_skillset, validate_skillset
-        config = replace(load_skillset(ROOT), compatibility_owner='aegis-gate-review')
-        self.assertTrue(any('compatibility owner must be aegis' in e for e in validate_skillset(config)))
+        config = replace(self._config(), compatibility_owner='aegis-gate-review')
+        self.assertTrue(any('compatibility owner must be aegis' in e for e in self._validate(config)))
 
     def test_compatibility_without_unavailability_evidence_is_rejected(self):
-        from dataclasses import replace
-        from tools.aegis_skillset.model import load_skillset, validate_skillset
-        config = replace(load_skillset(ROOT), compatibility_requires_unavailable_evidence=False)
-        self.assertTrue(any('compatibility requires unavailable evidence' in e for e in validate_skillset(config)))
+        config = replace(self._config(), compatibility_requires_unavailable_evidence=False)
+        self.assertTrue(any('compatibility requires unavailable evidence' in e for e in self._validate(config)))
+
+    def test_unknown_execution_surface_is_rejected(self):
+        mapping = dict(self._config().execution_surface_by_stage)
+        mapping['P32'] = 'UNKNOWN_SURFACE'
+        config = replace(self._config(), execution_surface_by_stage=mapping)
+        self.assertTrue(any('unknown execution surface' in e for e in self._validate(config)))
+
+    def test_missing_execution_stage_is_rejected(self):
+        mapping = dict(self._config().execution_surface_by_stage)
+        del mapping['P36']
+        config = replace(self._config(), execution_surface_by_stage=mapping)
+        self.assertTrue(any('missing execution surface stage' in e for e in self._validate(config)))
+
+    def test_surface_handoff_cannot_transfer_ownership(self):
+        config = replace(self._config(), surface_handoff_transfers_ownership=True)
+        self.assertTrue(any('surface handoff must not transfer ownership' in e for e in self._validate(config)))
+
+    def _config(self):
+        from tools.aegis_skillset.model import load_skillset
+        return load_skillset(ROOT)
+
+    def _validate(self, config):
+        from tools.aegis_skillset.model import validate_skillset
+        return validate_skillset(config)

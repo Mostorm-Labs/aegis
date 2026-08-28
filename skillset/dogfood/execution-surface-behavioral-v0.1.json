@@ -1,0 +1,48 @@
+{
+  "schema_version": "0.1",
+  "scenario_id": "ES-BD-001",
+  "purpose": "real_control_to_code_surface_handoff",
+  "authority_refs": [
+    "docs/execution-surface-contract-v0.1.md",
+    "skillset/ownership.json",
+    "skillset/shared/handoff-contract.md",
+    "skills/aegis-implementation/SKILL.md"
+  ],
+  "surface_handoff": {
+    "type": "surface_handoff",
+    "stage": "P32",
+    "stage_owner": "aegis-implementation",
+    "from_surface": "CONTROL_REASONING",
+    "to_surface": "CODE_EXECUTION",
+    "preferred_executor": "codex",
+    "reason": "behavioral_dogfood_repository_execution",
+    "package_ref": "docs/superpowers/plans/2026-08-28-execution-surface-behavioral-dogfood-v0.1.md",
+    "return_surface": "CONTROL_REVIEW"
+  },
+  "executor_observation": {
+    "executor": "codex",
+    "surface": "CODE_EXECUTION",
+    "starting_revision": "310e862b95d746bddb9290b0fcd74d14d7613ac3",
+    "status": "READY_FOR_REVIEW",
+    "changed_files": [
+      "skillset/dogfood/execution-surface-behavioral-v0.1.json",
+      "tests/skillset/test_execution_surface_behavioral_dogfood.py"
+    ],
+    "verification_commands": [
+      "python3 -m unittest tests.skillset.test_execution_surface_behavioral_dogfood -v",
+      "python3 -m unittest tests.skillset.test_execution_surface_contract tests.skillset.test_metadata -v"
+    ]
+  },
+  "review_materialization": {
+    "stage": "P36",
+    "surface": "CODE_REVERIFY",
+    "result_revision": "6d614ab6ee297171d2ed5e9c0d487fd3b66f313f",
+    "materialized_ref": "https://github.com/Mostorm-Labs/aegis/commit/6d614ab6ee297171d2ed5e9c0d487fd3b66f313f",
+    "return_surface": "CONTROL_REVIEW",
+    "p34_rerun_verdict": "PASS",
+    "hosted_ci": {
+      "project_state_integrity": "33182902314",
+      "skillset_integrity": "33182902328"
+    }
+  }
+}

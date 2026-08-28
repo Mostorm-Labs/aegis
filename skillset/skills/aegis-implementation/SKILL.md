@@ -17,6 +17,21 @@ Use Superpowers when available for coding mechanics such as brainstorming, writi
 
 Read [references/implementation-control.md](references/implementation-control.md) and shared handoff/Authority contracts.
 
+## Execution-surface boundary
+
+`Stage Ownership != Execution Surface`.
+
+- `P30` Implementation Planning and `P31` Task Packaging default to `CONTROL_REASONING`.
+- `P32` Implementation and `P33` Resume Interrupted Work default to `CODE_EXECUTION` when a suitable coding surface is available.
+- Before a `CONTROL_REASONING -> CODE_EXECUTION` transfer, produce an approved task package and carry it as `package_ref` in a `surface_handoff`.
+- The coding surface still inspects current repository state and must return a blocker rather than invent missing Authority or semantic decisions.
+- Before returning P32/P33 results to `CONTROL_REVIEW`, materialize the exact result into a reviewer-accessible durable evidence boundary and return its `materialized_ref`. A local-only commit/worktree/test transcript is not sufficient `CONTROL_REVIEW` evidence.
+- If the result cannot be materialized for independent review, return `BLOCKED_EVIDENCE` with the exact blocker instead of claiming review readiness.
+
+A surface handoff changes where work executes; it does not transfer Primary Owner semantics. This Skill remains the P30-P33 owner while the authorized repository-heavy work executes on the code surface.
+
+Default OpenAI profile: `CONTROL_REASONING -> ChatGPT`, `CODE_EXECUTION -> Codex`. Treat these product names as profile metadata, not lifecycle Authority.
+
 ## Composition boundary
 
 Once substantive execution begins in this Skill's owned stage family, this Skill is the unique Primary Owner for that substantive result. It may consume Project State support from `aegis-project-state`; Project State support does not transfer ownership.
