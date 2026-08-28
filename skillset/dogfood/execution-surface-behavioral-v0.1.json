@@ -32,5 +32,17 @@
       "python3 -m unittest tests.skillset.test_execution_surface_behavioral_dogfood -v",
       "python3 -m unittest tests.skillset.test_execution_surface_contract tests.skillset.test_metadata -v"
     ]
+  },
+  "review_materialization": {
+    "stage": "P36",
+    "surface": "CODE_REVERIFY",
+    "result_revision": "6d614ab6ee297171d2ed5e9c0d487fd3b66f313f",
+    "materialized_ref": "https://github.com/Mostorm-Labs/aegis/commit/6d614ab6ee297171d2ed5e9c0d487fd3b66f313f",
+    "return_surface": "CONTROL_REVIEW",
+    "p34_rerun_verdict": "PASS",
+    "hosted_ci": {
+      "project_state_integrity": "33182902314",
+      "skillset_integrity": "33182902328"
+    }
   }
 }

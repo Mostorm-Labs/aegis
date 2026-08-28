@@ -60,3 +60,11 @@ Composite fallback requires explicit specialist-unavailability evidence; absence
 A bounded `Router -> Primary -> Router` blocker return is allowed only when the Primary emits no substantive result, discovers an earlier blocker not already conclusively established, and returns once to `aegis`. Other ownership cycles are invalid.
 
 Superpowers owns coding-agent mechanics; Aegis owns authority, lifecycle routing, evidence obligations, task boundaries, Gate review, and release readiness.
+
+## Evidence materialization before review return
+
+Before an execution surface returns result evidence to a review surface, the exact result must be materialized into a reviewer-accessible durable evidence boundary. Repository execution normally materializes the exact result commit/ref on a remote branch or pull request that the reviewer can independently resolve; non-repository environments may use an equivalent durable artifact or immutable ref.
+
+The evidence return must carry `materialized_ref` identifying that reviewer-accessible result. A local-only commit SHA, worktree path/state, test transcript, or executor message is context only and is insufficient for P34 corroboration.
+
+If the executor cannot produce a reviewer-accessible `materialized_ref`, return `BLOCKED_EVIDENCE` with the exact materialization blocker instead of claiming review readiness. The review surface resolves `materialized_ref` independently before relying on executor claims.

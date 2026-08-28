@@ -9,9 +9,10 @@ Own `P34` Gate Review, `P35` Defect Classification, and `P36` Fix / Reverificati
 
 ## Gate loop
 
-- At `P34`, audit Authority conformance, semantics/contracts, scope, automated tests, oracle/golden/differential evidence, performance/platform evidence when required, and downstream safety. Agent claims are not evidence.
+- At `P34`, audit Authority conformance, semantics/contracts, scope, automated tests, oracle/golden/differential evidence, performance/platform evidence when required, and downstream safety. Agent claims are not evidence. Resolve the returned `materialized_ref` at a reviewer-accessible durable evidence boundary before relying on executor claims; a local-only result is `BLOCKED_EVIDENCE`.
 - At `P35`, classify the owning defect layer before proposing a fix.
 - At `P36`, repair at the owning layer and rerun the failed evidence plus relevant regression evidence.
+- Before P36 returns to `CONTROL_REVIEW`, materialize the exact repair/reverification result and return its `materialized_ref`; if that cannot be independently resolved, classify the remaining gap as `EVIDENCE_GAP` instead of claiming closure.
 
 **Earlier untrusted layer:** if review discovers a spec or Authority defect upstream of implementation, stop downstream repair and hand back to `aegis`; do not silently rewrite Authority inside Gate review.
 

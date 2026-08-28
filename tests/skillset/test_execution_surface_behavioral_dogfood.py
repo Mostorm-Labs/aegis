@@ -51,6 +51,18 @@ class ExecutionSurfaceBehavioralDogfoodTests(unittest.TestCase):
             ],
         )
 
+    def test_review_materialization_closes_f10_01(self):
+        materialization = self.trace["review_materialization"]
+        self.assertEqual(materialization["stage"], "P36")
+        self.assertEqual(materialization["surface"], "CODE_REVERIFY")
+        self.assertEqual(materialization["return_surface"], self.config.execution_surface_by_stage["P34"])
+        self.assertRegex(materialization["result_revision"], re.compile(r"^[0-9a-f]{40}$"))
+        self.assertEqual(
+            materialization["materialized_ref"],
+            f"https://github.com/Mostorm-Labs/aegis/commit/{materialization['result_revision']}",
+        )
+        self.assertEqual(materialization["p34_rerun_verdict"], "PASS")
+
 
 if __name__ == "__main__":
     unittest.main()

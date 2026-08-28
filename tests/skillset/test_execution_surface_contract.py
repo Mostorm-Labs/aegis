@@ -3,6 +3,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
+
 class ExecutionSurfaceContractTests(unittest.TestCase):
     def _read(self, path):
         return (ROOT / path).read_text(encoding='utf-8')
@@ -26,6 +27,34 @@ class ExecutionSurfaceContractTests(unittest.TestCase):
             self.assertIn(required, text)
         self.assertIn('after', text.lower())
         self.assertIn('classif', text.lower())
+
+    def test_shared_handoff_requires_materialized_review_evidence(self):
+        text = self._read('skillset/shared/handoff-contract.md')
+        self.assertIn('materialized_ref', text)
+        self.assertIn('reviewer-accessible', text.lower())
+        self.assertIn('local-only', text.lower())
+
+    def test_implementation_requires_materialization_before_control_review(self):
+        text = self._read('skillset/skills/aegis-implementation/SKILL.md')
+        self.assertIn('materialized_ref', text)
+        self.assertIn('reviewer-accessible', text.lower())
+        self.assertIn('local-only', text.lower())
+        self.assertIn('CONTROL_REVIEW', text)
+
+    def test_authority_requires_evidence_materialization_boundary(self):
+        text = self._read('docs/execution-surface-contract-v0.1.md')
+        self.assertIn('materialized_ref', text)
+        self.assertIn('reviewer-accessible', text.lower())
+        self.assertIn('local-only', text.lower())
+        self.assertIn('BLOCKED_EVIDENCE', text)
+
+    def test_gate_review_resolves_materialized_ref_before_executor_claim(self):
+        text = self._read('skillset/skills/aegis-gate-review/SKILL.md')
+        self.assertIn('materialized_ref', text)
+        self.assertIn('reviewer-accessible', text.lower())
+        self.assertIn('before', text.lower())
+        self.assertIn('agent claims are not evidence', text.lower())
+
 
 if __name__ == '__main__':
     unittest.main()
