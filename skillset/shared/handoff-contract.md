@@ -33,6 +33,26 @@ suggested_next_stage: <stage>
 
 The recipient named in an `ownership_handoff` becomes the final-answer owner only for that routing or blocked result. A `support_return` never makes the Supporting Skill the final-answer owner for another stage family.
 
+## Execution-surface handoff
+
+`Surface Handoff != Ownership Handoff`.
+
+A surface handoff changes where authorized work executes. It does not transfer ownership, change Current Authority, create Evidence, issue a Gate verdict, or mutate Project State merely by occurring.
+
+```yaml
+type: surface_handoff
+stage: P32
+stage_owner: aegis-implementation
+from_surface: CONTROL_REASONING
+to_surface: CODE_EXECUTION
+preferred_executor: codex
+reason: repository_heavy_execution
+package_ref: <task-package-ref>
+return_surface: CONTROL_REVIEW
+```
+
+The `stage_owner` remains the Primary Owner across a surface handoff unless a separate valid `ownership_handoff` occurs. `package_ref` identifies the approved P31 task package or equivalent execution contract. The receiving execution surface must fail closed rather than invent missing semantic or Authority decisions.
+
 Direct Primary-to-Primary substantive chaining is forbidden. A completed Primary may suggest the next Skill, but may not automatically continue substantive execution under a different Primary Owner.
 
 Composite fallback requires explicit specialist-unavailability evidence; absence from a partial trace is not sufficient.
