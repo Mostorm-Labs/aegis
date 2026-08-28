@@ -1,66 +1,42 @@
 # Aegis Plugin Distribution v0.1 Design
 
-Status: **Proposed Design Authority v0.1 — written spec human-approved 2026-08-29; P30/P31 complete; P32 implementation authorized only for the test/evidence scope in the frozen plan; not Gate-accepted.**
+Status: **Proposed Design Authority v0.1 — human-approved; P30/P31 complete; deterministic implementation exists; catalog/provenance repair amendment accepted 2026-08-29; not Gate-accepted.**
 
 Companion authority: `docs/plugin-distribution-contract-v0.1.md`.
+Repair package: `docs/superpowers/plans/2026-08-29-aegis-catalog-provenance-repair.md`.
 
 ## 1. Context
 
-Aegis currently has a nine-entrypoint Skill architecture in the repository, but installed-platform Task 6 dogfooding exposed an important distribution ambiguity: a user may install only a subset of those Skills and accidentally create a state such as `aegis + aegis-project-state`. That state is neither the intended full multi-Skill catalog nor the intended composite-only compatibility catalog.
+Aegis has nine real Skill entrypoints. Plugin Distribution solves a product packaging problem: normal users should install one coherent Aegis product rather than understand and maintain nine internal components.
 
-The product problem is therefore distinct from Skill Decomposition:
+Installed-platform dogfooding exposed a separate verification fact: ChatGPT can also host the same nine Skills as individually imported entrypoints. Skill Decomposition v0.2 defines Multi-Skill availability from installed-Skill inventory or an equivalent observable platform fact, not from packaging provenance.
 
-- Skill Decomposition answers **how Aegis internally owns and routes work**.
-- Plugin Distribution answers **how that internally consistent system is installed, versioned, upgraded, and observed as one product**.
+The original draft incorrectly modeled:
 
-The design goal is to make normal installation atomic at the product boundary while preserving the existing Single-Owner Composition semantics underneath.
+```text
+Plugin provenance -> FULL_SPECIALIST
+Standalone provenance -> COMPOSITE_ONLY
+```
+
+That mixed two different axes. The repaired model is:
+
+```text
+Catalog State != Distribution Provenance
+```
 
 ## 2. Design Objective
 
-Freeze a distribution architecture in which:
+Preserve all of these at once:
 
-1. the user installs one normal Aegis product package;
-2. that package exposes the exact nine-Skill catalog;
-3. the nine Skills keep their current ownership/composition semantics;
-4. a separate standalone composite Aegis remains available only for compatibility and controlled fallback testing;
-5. Apps remain orthogonal capability providers;
-6. catalog provenance/version consistency becomes explicit evidence;
-7. PR #9 Task 6 can migrate its environment evidence without moving its semantic acceptance oracle.
+1. normal Aegis product distribution is one Plugin containing exact nine Skills;
+2. Standalone Aegis remains a one-Skill compatibility distribution;
+3. nine Skill entrypoints retain existing ownership/composition semantics;
+4. PR #9 Task 6 may test real Skill Composition through any independently proven catalog, including individual Skill imports;
+5. packaging provenance remains separately auditable and cannot silently alter runtime ownership;
+6. partial/mixed/broken Plugin states still fail closed;
+7. Plugin product acceptance remains separate from PR #9 Skill Composition acceptance.
 
-## 3. Alternatives Considered
-
-### 3.1 Manual nine-Skill installation
-
-Each Skill is uploaded/installed independently.
-
-Advantages:
-
-- minimal repository packaging change;
-- direct visibility of each Skill.
-
-Rejected as the normal product model because:
-
-- users must understand internal architecture;
-- partial installation is easy;
-- version skew is likely;
-- upgrade is non-atomic;
-- Task 6 cannot easily distinguish intentional compatibility from accidental missing specialists.
-
-Manual installation remains useful only for narrow development/debug scenarios.
-
-### 3.2 Recombine everything into one composite Skill
-
-Return to one `aegis` Skill with specialist logic as references.
-
-Rejected because it destroys the point of the accepted nine-entrypoint architecture: specialist discovery, unique Primary Owner semantics, support boundaries, and installed-platform composition behavior become invisible or simulated rather than real.
-
-### 3.3 One Plugin containing nine Skills + separate Standalone Aegis — Selected
-
-Normal users install one Aegis Plugin that carries the full catalog. Standalone Aegis exists independently as a compatibility distribution.
-
-This keeps installation simple without collapsing internal ownership boundaries.
-
-## 4. Product Architecture
+## 3. Product Architecture
 
 ```text
                          AEGIS PRODUCT
@@ -72,169 +48,136 @@ This keeps installation simple without collapsing internal ownership boundaries.
                  │                         │
                  ▼                         ▼
             AEGIS PLUGIN            STANDALONE AEGIS
-        normal distribution          compatibility
+        preferred distribution        compatibility
                  │                         │
                  ▼                         ▼
             exact 9 Skills             aegis only
-                 │                         │
-                 ▼                         ▼
-           FULL_SPECIALIST          COMPOSITE_ONLY
-                 │                         │
-                 └────────────┬────────────┘
-                              ▼
-                       Runtime Selection
-                              │
-                              ▼
-                 Single-Owner Composition
 ```
 
-Apps attach laterally and do not enter the ownership graph.
+For development/dogfood, the same Skill components may also be imported individually. That is not the normal product model.
 
-## 5. Component Responsibilities
+## 4. Component Responsibilities
 
-### 5.1 Aegis Product
+### Aegis Product
 
-Owns user-facing identity and release semantics. It does not participate in runtime routing.
+Owns user-facing identity and release semantics. No runtime stage ownership.
 
-### 5.2 Aegis Plugin
+### Aegis Plugin
 
-Owns normal packaging and installation coherence.
+Owns normal packaging, installation coherence, release identity and later whole-catalog upgrade semantics.
 
-Responsibilities:
+It does **not** own lifecycle stages, final answers, Authority repair, Gate verdicts or short-circuit routing.
 
-- include/pin the expected nine Skills;
-- expose one product release identity;
-- make the expected installed catalog auditable;
-- optionally declare App dependencies/capabilities in future releases.
+### Nine Skills
 
-Non-responsibilities:
+Remain the semantic routing/ownership units inherited from Skill Decomposition v0.2.
 
-- stage ownership;
-- final-answer ownership;
-- Authority repair;
-- Gate verdicts;
-- runtime short-circuit decisions.
+### Standalone Aegis
 
-### 5.3 Nine Skills
+Carries only central `aegis` for compatibility use. It is not a partially installed Plugin.
 
-Remain the only semantic routing/ownership units. Their topology and roles are inherited from Skill Decomposition v0.2.
+### Apps
 
-### 5.4 Standalone Aegis
+Provide external data/actions/evidence. They never enter the Primary Owner graph.
 
-A compatibility distribution that carries only the composite central `aegis` Skill. It is not a partially installed Plugin and should have explicit standalone provenance.
+## 5. Three Independent Questions
 
-### 5.5 Apps
+Installed-platform evidence must answer three independent questions:
 
-Provide external data and actions such as GitHub/Notion access. App availability can satisfy or block evidence obligations but never changes who owns a lifecycle stage.
+1. **Catalog State** — which Aegis Skill entrypoints are observable?
+2. **Release Consistency** — do the observed components belong to one coherent release/component set?
+3. **Distribution Provenance** — Plugin, Standalone, individual imports, duplicate, or unknown?
 
-## 6. Installed Catalog Model
+None may be inferred from prompt prose.
 
-The platform-facing contract needs a normalized catalog snapshot with enough evidence to answer three separate questions:
+## 6. Catalog State
 
-1. **Distribution provenance** — Plugin or Standalone?
-2. **Component completeness** — which expected Skills are observable?
-3. **Release consistency** — do all observed components belong to one release/component set?
+Catalog comparison is set-based; ChatGPT UI ordering is non-semantic.
 
-The snapshot should not be inferred from user prose. It must come from platform-observable installation/distribution evidence where possible.
-
-Derived states:
-
-| State | Meaning | Runtime consequence |
+| State | Meaning | Base runtime consequence |
 | --- | --- | --- |
-| `FULL_SPECIALIST` | Plugin provenance + exact nine Skills + one release set | existing Multi-Skill Mode |
-| `COMPOSITE_ONLY` | Standalone provenance + only `aegis` | existing Composite Compatibility Mode |
-| `PARTIAL_CATALOG` | expected Plugin catalog incomplete | `BLOCKED_ENVIRONMENT` |
-| `MIXED_REVISION` | catalog spans incompatible release/component revisions | `BLOCKED_ENVIRONMENT` |
-| `DUPLICATE_DISTRIBUTION` | Plugin + Standalone ambiguity without deterministic deduplication | `BLOCKED_ENVIRONMENT` |
+| `FULL_SPECIALIST` | exact nine Aegis Skills observable, coherent release | Multi-Skill candidate |
+| `COMPOSITE_ONLY` | only central `aegis` observable for the Aegis family, coherent release | Compatibility candidate |
+| `PARTIAL_CATALOG` | any other non-empty subset/shape | `BLOCKED_ENVIRONMENT` |
+| `MIXED_REVISION` | component/release observations conflict | `BLOCKED_ENVIRONMENT` |
 
-## 7. Why Partial Catalog Must Fail Closed
+Non-Aegis Skills such as `skill-creator` are outside this Aegis-family inventory.
 
-A partial Plugin install cannot safely be treated as compatibility mode.
+## 7. Distribution Provenance
 
-Without this rule, an installation or upgrade defect can silently alter semantic ownership:
+| Provenance | Meaning |
+| --- | --- |
+| `PLUGIN` | normal Aegis Plugin distribution observed |
+| `STANDALONE` | Standalone Aegis distribution observed |
+| `INDIVIDUAL_SKILLS` | Aegis Skills imported/installed individually |
+| `DUPLICATE_DISTRIBUTION` | conflicting simultaneous distribution provenance without deterministic deduplication |
+| `UNKNOWN` | provenance cannot be established |
 
-```text
-missing aegis-modeling
--> central aegis assumes specialist unavailable
--> central aegis owns P12
-```
+Provenance is evidence metadata, not a lifecycle owner and not a substitute for catalog inventory.
 
-That would turn distribution corruption into legitimate runtime behavior.
-
-The selected rule is:
-
-```text
-intended standalone absence -> compatibility may execute
-unexpected Plugin absence   -> BLOCKED_ENVIRONMENT
-```
-
-This preserves the meaning of specialist availability evidence.
-
-## 8. Versioning Design
-
-### 8.1 One public release line
-
-Use a single Aegis product version. The Plugin release version is the product version.
+## 8. Runtime Safety Matrix
 
 ```text
-Aegis Product 0.x.y == Aegis Plugin 0.x.y
+PLUGIN + FULL_SPECIALIST
+    -> PASS / multi_skill
+
+STANDALONE + COMPOSITE_ONLY
+    -> PASS / compatibility
+
+INDIVIDUAL_SKILLS + FULL_SPECIALIST
+    -> PASS / multi_skill for PR #9 Task 6
+
+INDIVIDUAL_SKILLS + COMPOSITE_ONLY
+    -> PASS / compatibility for PR #9 Task 6
+
+PLUGIN + COMPOSITE_ONLY or PARTIAL_CATALOG
+    -> BLOCKED_ENVIRONMENT
+    -> never compatibility fallback
+
+STANDALONE + FULL_SPECIALIST or PARTIAL_CATALOG
+    -> BLOCKED_ENVIRONMENT
+
+DUPLICATE_DISTRIBUTION
+    -> BLOCKED_ENVIRONMENT
+
+UNKNOWN
+    -> BLOCKED_EVIDENCE
+
+MIXED_REVISION
+    -> BLOCKED_ENVIRONMENT
 ```
 
-### 8.2 Independent internal contract versions
+This preserves the central safety invariant: a broken normal installation can never masquerade as intended compatibility.
 
-Authority/contract versions remain independent because they describe different semantics, not product packaging chronology.
+## 9. Why Manual Installation Is Still Rejected as the Normal Product Model
 
-Examples:
+Individual import is valid verification provenance, but remains a poor normal product experience because:
 
-- Skill Decomposition v0.2;
-- Project State v0.4;
-- Execution Surface v0.1;
-- Plugin Distribution v0.1.
+- users must understand internal architecture;
+- partial install is easy;
+- upgrades are non-atomic;
+- version skew is easier to create;
+- product identity is fragmented.
 
-### 8.3 No public per-Skill SemVer matrix
-
-Each Skill keeps a stable identifier plus exact revision/digest pinned by the release. This avoids an unnecessary 9-dimensional compatibility matrix.
-
-### 8.4 Canonical-source rule
-
-For a given Aegis release, the central `aegis` component inside the Plugin and the Standalone package must derive from the same canonical source revision.
-
-## 9. Upgrade Design
-
-Upgrade occurs at the Plugin/release level rather than per Skill.
-
-Desired observable transition:
+So:
 
 ```text
-complete release X
--> upgrade
--> complete release Y
+manual nine-Skill import
+= admissible Skill Composition dogfood
+!= preferred product distribution
 ```
 
-If the platform exposes an intermediate partial/mixed state, runtime work fails closed until coherence is restored.
+## 10. Versioning and Upgrade
 
-Upgrade must never be used as evidence that compatibility fallback is legitimate.
+Use one public Aegis product/Plugin release version. Individual Skills use stable IDs plus exact component digests/revisions pinned by the release.
 
-## 10. Apps Design
+Plugin upgrades are whole-catalog transitions. If a transition exposes partial/mixed state, runtime work fails closed until coherence is restored.
 
-Plugin v0.1 should be **Skills-only** from an Aegis contract perspective: no App is required for core installation or Task 6 closure.
+## 11. Apps
 
-Future optional Apps may include GitHub and Notion. Their role is capability/evidence only.
+Plugin v0.1 requires no Apps. Future GitHub/Notion Apps may satisfy capability/evidence obligations but never modify stage ownership.
 
-Example:
-
-```text
-P34 owner = aegis-gate-review
-GitHub App unavailable
--> owner unchanged
--> evidence may be BLOCKED
-```
-
-This prevents OAuth/workspace policy from becoming an accidental dependency of Skill Decomposition closure.
-
-## 11. Authority Dependency
-
-Plugin Distribution v0.1 is downstream of Skill Decomposition v0.2:
+## 12. Authority Dependency
 
 ```text
 Skill Decomposition v0.2
@@ -242,181 +185,103 @@ Skill Decomposition v0.2
 Plugin Distribution v0.1
 ```
 
-The Plugin packages the topology; it does not define it.
+The downstream Plugin contract may constrain product packaging, but may not tighten the upstream Skill Composition Gate by requiring Plugin provenance.
 
-Because Skill Decomposition v0.2 is still Proposed/BLOCKED_EVIDENCE, Plugin Distribution v0.1 must remain Proposed during the Task 6 test-build phase.
+## 13. PR #9 Task 6
 
-A test build is permitted as evidence tooling. It is not sufficient for Authority promotion.
+Task 6 remains a Skill Composition behavioral Gate.
 
-## 12. PR #9 Task 6 Migration Decision
-
-The Task 6 semantic target is frozen and must not be replaced by a Plugin Gate.
-
-### Unchanged normative elements
+Unchanged:
 
 - `terminal_trace_v0.2`;
-- all four protected case IDs;
+- four protected case IDs/prompts;
 - Primary Owner rules;
 - support/Router boundaries;
-- blocker short-circuit rules;
+- blocked short-circuit rules;
 - compatibility fallback semantics;
 - 4/4 PASS threshold.
 
-### Changed evidence layer
-
-Task 6 gains a distribution-aware catalog preflight:
+Environment evidence becomes:
 
 ```text
-distribution evidence
+Installed Aegis inventory
+        +
+release consistency
+        +
+separate provenance
         ↓
-Installed Catalog Snapshot
+Catalog Evaluation
         ↓
-derived catalog mode
-        ↓
-fresh platform event
+fresh behavior event
         ↓
 terminal_trace_v0.2
-        ↓
-Task 6 aggregate verdict
 ```
 
-This is explicitly an **evidence-layer migration, not a semantic Gate migration**.
+### Environment A
 
-## 13. Task 6 Environment Mapping
-
-### Environment A — Plugin test build
-
-Requirements:
-
-- one Aegis Plugin test build;
-- platform-observable exact nine-Skill catalog;
-- release/component revisions consistent;
-- derived state `FULL_SPECIALIST`.
-
-Run unchanged:
-
-1. `09-01-direct-specialist`;
-2. `09-01-ambiguous-router`;
-3. `09-01-upstream-blocker-reroute`.
-
-### Environment B — Standalone Aegis
-
-Requirements:
-
-- standalone distribution provenance;
-- only central `aegis` observable;
-- derived state `COMPOSITE_ONLY`.
-
-Run unchanged:
-
-4. `09-01-composite-fallback`.
-
-The case's prompt text cannot serve as the evidence that `aegis-modeling` is unavailable. Availability comes from the catalog evidence.
-
-A future neutral-prompt regression may test `Design a semantic schema.` under standalone-only evidence, but that is outside current PR #9 acceptance.
-
-## 14. Evidence Model
-
-Separate two truths that were previously conflated:
+For Cases 1-3:
 
 ```text
-Catalog Evidence != Behavior Evidence
+catalog_state = FULL_SPECIALIST
+provenance = PLUGIN | INDIVIDUAL_SKILLS
 ```
 
-Catalog Evidence proves:
+### Environment B
 
-- distribution provenance;
-- installed Skill inventory;
-- specialist availability/unavailability;
-- component release/revision consistency.
-
-Behavior Evidence proves:
-
-- complete terminal invocation trace;
-- final answer owner;
-- support/primary/router roles;
-- blocker/ambiguity facts;
-- downstream substantive-execution count;
-- cycle/loop observations.
-
-The Task 6 evaluator may represent these as separate artifact references or as a normalized wrapper, but each truth must remain independently auditable.
-
-## 15. Historical PR #9 Integration
-
-If fresh Task 6 evidence later causes `gate-skill-decomposition-v02-pr9` to PASS, Project State must preserve that PR #9 originally merged while the Gate was non-PASS.
-
-Later acceptance changes current trust and Authority status; it does not rewrite the historical integration occurrence into a conforming-at-merge event.
-
-## 16. Error Handling
-
-Distribution errors fail closed before specialist behavioral acceptance.
-
-- missing catalog evidence -> `BLOCKED_EVIDENCE`;
-- unavailable test environment / platform cannot expose required catalog mode -> `BLOCKED_ENVIRONMENT`;
-- partial/mixed/duplicate catalog -> `BLOCKED_ENVIRONMENT`;
-- complete catalog but wrong routing/ownership trace -> behavioral `FAIL` with existing v0.2 violation classes;
-- complete catalog + incomplete terminal trace -> `BLOCKED_EVIDENCE`.
-
-The evaluator must not convert an environment/catalog defect into `ROUTER_OWNERSHIP_LEAK` unless specialist availability is independently established.
-
-## 17. Verification Strategy
-
-Implementation must prove at least these layers independently:
-
-### 17.1 Deterministic repository tests
-
-- expected Plugin catalog = exactly nine known Skills;
-- standalone catalog = only `aegis`;
-- state derivation for all five catalog states;
-- same-release revision consistency;
-- no Plugin object is introduced as a Primary Owner;
-- Apps do not modify the ownership map;
-- existing `terminal_trace_v0.2` tests remain unchanged/green.
-
-### 17.2 Package validation
-
-- test Plugin package includes the nine expected Skill bundles;
-- standalone package derives central `aegis` from the same canonical source revision;
-- package manifest/version data is deterministic.
-
-### 17.3 Installed-platform dogfood
-
-- Environment A yields reviewer-accessible `FULL_SPECIALIST` evidence;
-- Environment B yields reviewer-accessible `COMPOSITE_ONLY` evidence;
-- four protected Task 6 traces rerun fresh;
-- evaluator obtains 4/4 PASS before P34 can accept Skill Decomposition v0.2.
-
-## 18. Non-Goals
-
-v0.1 does not attempt to:
-
-- require GitHub/Notion Apps;
-- design a general third-party App plugin ecosystem;
-- change Aegis lifecycle stages;
-- change Execution Surface routing;
-- invent per-Skill public SemVer;
-- silently migrate existing partial personal installations;
-- make PR #9 historically conforming;
-- merge or promote any Authority merely because a test Plugin is built.
-
-## 19. Implementation Boundary
-
-No Plugin packaging code, catalog schema/tooling, Task 6 manifest migration, or Skill text change is authorized by this document alone.
-
-Next required sequence after written-spec approval:
+For Case 4:
 
 ```text
-P30 implementation plan
-        ↓
-P31 task packages
-        ↓
-RED-first deterministic catalog contract
-        ↓
-test-only Plugin distribution
-        ↓
-Task 6 evidence-layer migration
-        ↓
-installed-platform rerun
-        ↓
-P34
+catalog_state = COMPOSITE_ONLY
+provenance = STANDALONE | INDIVIDUAL_SKILLS
 ```
+
+The prompt's sentence “Only composite Aegis is installed” is never evidence of unavailability; catalog evidence supplies that fact.
+
+## 14. Evidence Separation
+
+```text
+Catalog Evidence
+!= Behavior Evidence
+!= Plugin Product Gate Evidence
+```
+
+Catalog Evidence proves installed Aegis availability and release coherence.
+Behavior Evidence proves invocation trace, terminal owner and forbidden execution facts.
+Plugin Product Gate Evidence proves packaging properties such as one-install provenance and upgrade behavior.
+
+PR #9 requires the first two only.
+
+## 15. Verification Strategy
+
+Deterministic tests must prove:
+
+- exact-nine catalog derives `FULL_SPECIALIST` under Plugin and individual-import provenance;
+- aegis-only catalog derives `COMPOSITE_ONLY` under Standalone and individual-import provenance;
+- UI order does not affect classification;
+- Plugin partial state fails closed and cannot become compatibility;
+- Standalone/full mismatch fails closed;
+- partial/mixed/duplicate/unknown provenance failures are classified correctly;
+- distribution provenance is reported separately;
+- no Plugin object becomes a stage owner;
+- protected routing/oracle semantics remain unchanged.
+
+Installed-platform dogfood then supplies real catalog and behavior evidence.
+
+## 16. Historical Safety
+
+If PR #9 later passes, preserve that PR #9 originally merged under a non-PASS Gate. `int-pr9` remains historical nonconforming-at-merge truth.
+
+## 17. Non-Goals
+
+This repair does not:
+
+- abandon the one-Plugin normal product architecture;
+- make individual import the recommended product install path;
+- change Skill ownership/routing;
+- change protected Task 6 prompts/oracle;
+- require Apps;
+- promote Plugin Distribution v0.1 merely because PR #9 Task 6 passes.
+
+## 18. Implementation Boundary
+
+The bounded repair is defined by `docs/superpowers/plans/2026-08-29-aegis-catalog-provenance-repair.md`. Only catalog/provenance evaluation, its deterministic tests, and directly inconsistent Proposed documentation may change. Protected routing semantics remain pinned.
