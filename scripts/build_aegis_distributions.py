@@ -9,31 +9,35 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from tools.aegis_skillset.package import (
     build_skill_installation_kit,
+    build_skill_installation_kit_archive,
     build_source_bundles,
     render_release_manifest,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.1.0-task6.1"
-TARGET = ROOT / "skillset/releases/aegis-0.1.0-task6.1.json"
+DEFAULT_VERSION = "0.1.0-task6.1"
 
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--version", default=DEFAULT_VERSION)
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--write-manifest", action="store_true")
     parser.add_argument("--package-dir")
+    parser.add_argument("--installation-kit-archive-dir")
     args = parser.parse_args()
 
-    manifest = render_release_manifest(ROOT, VERSION)
+    version = args.version
+    target = ROOT / f"skillset/releases/aegis-{version}.json"
+    manifest = render_release_manifest(ROOT, version)
     text = json.dumps(manifest, sort_keys=True, indent=2) + "\n"
 
     if args.write_manifest:
-        TARGET.parent.mkdir(parents=True, exist_ok=True)
-        TARGET.write_text(text, encoding="utf-8")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text, encoding="utf-8")
 
     if args.check:
-        old = TARGET.read_text(encoding="utf-8") if TARGET.exists() else ""
+        old = target.read_text(encoding="utf-8") if target.exists() else ""
         if old != text:
             print("".join(difflib.unified_diff(old.splitlines(True), text.splitlines(True))))
             return 1
@@ -41,8 +45,11 @@ def main():
 
     if args.package_dir:
         output_dir = Path(args.package_dir)
-        build_source_bundles(ROOT, VERSION, output_dir)
-        build_skill_installation_kit(ROOT, VERSION, output_dir)
+        build_source_bundles(ROOT, version, output_dir)
+        build_skill_installation_kit(ROOT, version, output_dir)
+
+    if args.installation_kit_archive_dir:
+        build_skill_installation_kit_archive(ROOT, version, Path(args.installation_kit_archive_dir))
 
     return 0
 
