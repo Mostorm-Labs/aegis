@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 
-from .model import ManifestSet
+from .model import ManifestSet, validate_manifests
 
 
 def legacy_decision_id(gate_id: str) -> str:
@@ -14,6 +14,9 @@ def legacy_decision_id(gate_id: str) -> str:
 def migrate_v04_to_v05(manifests: ManifestSet) -> ManifestSet:
     if manifests.schema_version != "0.4":
         raise ValueError("v0.5 migration requires schema_version 0.4")
+    source_errors = validate_manifests(manifests, strict_gate_validity=True)
+    if source_errors:
+        raise ValueError("invalid v0.4 source: " + "; ".join(source_errors))
 
     project = copy.deepcopy(manifests.project)
     authorities = copy.deepcopy(manifests.authorities)
