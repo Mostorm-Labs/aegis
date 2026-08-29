@@ -130,6 +130,21 @@ def build_skill_installation_kit(root: Path, release_version: str, output_dir: P
     return kit_dir
 
 
+def build_skill_installation_kit_archive(root: Path, release_version: str, output_dir: Path) -> Path:
+    output_dir = Path(output_dir)
+    kit_dir = build_skill_installation_kit(root, release_version, output_dir)
+    prefix = kit_dir.name
+    files: dict[str, tuple[bytes, int]] = {}
+    for path in sorted(p for p in kit_dir.rglob("*") if p.is_file()):
+        rel = path.relative_to(kit_dir).as_posix()
+        mode = path.stat().st_mode & 0o777
+        files[f"{prefix}/{rel}"] = (path.read_bytes(), mode or 0o644)
+
+    target = output_dir / f"aegis-skill-installation-kit-{release_version}.zip"
+    target.write_bytes(_zip_bytes(files))
+    return target
+
+
 def build_source_bundles(root: Path, release_version: str, output_dir: Path) -> tuple[Path, Path]:
     manifest = render_release_manifest(root, release_version)
     plugin = [entry["name"] for entry in manifest["plugin"]["skills"]]
