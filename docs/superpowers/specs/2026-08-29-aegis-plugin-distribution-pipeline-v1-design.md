@@ -278,4 +278,4 @@ The implementation used RED → GREEN verification.
 - package RED: workflow run `33226118719` demonstrated the installation kit and ZIP identity fields were absent;
 - package GREEN: workflow run `33226255032` passed after deterministic ZIP packaging and release identity were implemented;
 - CI publication RED: workflow run `33226277473` demonstrated the user-facing installation-kit artifact upload step was absent;
-- final GREEN repository implementation was verified before this record was written; see the PR #13 durable completion record for the exact materialized revision, hosted run IDs, artifact ID/digest, and protected semantic blob checks.
+- final implementation/evidence references are maintained in the PR #13 durable completion record rather than embedded as self-referential source-revision metadata in this spec.
