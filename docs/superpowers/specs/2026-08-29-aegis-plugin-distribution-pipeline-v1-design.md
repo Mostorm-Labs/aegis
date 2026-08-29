@@ -1,6 +1,6 @@
 # Aegis Installation Kit V1 — Design
 
-Status: **Approved in chat on 2026-08-29; implementation authorized in this thread.**
+Status: **Approved in chat on 2026-08-29; deterministic implementation verified.**
 
 Related work:
 
@@ -270,3 +270,12 @@ V1 is complete when:
 8. repeated builds are byte-for-byte reproducible;
 9. existing deterministic routing/ownership/project-state regressions remain green;
 10. no user or maintainer manually compresses the nine Skill directories for a release.
+
+## 14. Verification Record
+
+The implementation used RED → GREEN verification.
+
+- package RED: workflow run `33226118719` demonstrated the installation kit and ZIP identity fields were absent;
+- package GREEN: workflow run `33226255032` passed after deterministic ZIP packaging and release identity were implemented;
+- CI publication RED: workflow run `33226277473` demonstrated the user-facing installation-kit artifact upload step was absent;
+- final GREEN repository implementation was verified before this record was written; see the PR #13 durable completion record for the exact materialized revision, hosted run IDs, artifact ID/digest, and protected semantic blob checks.
