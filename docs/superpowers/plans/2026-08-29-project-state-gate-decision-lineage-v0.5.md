@@ -24,7 +24,7 @@ RED runs:
 - `33234280222` — v0.5 lineage/migration oracle failed before v0.5 tooling existed.
 - `33234756600` — immutable transition oracle failed before transition validation existed.
 
-Latest implementation verification is recorded in the Authority document and PR #14. Root `.aegis/*` remains v0.4 until P34/P23.
+Fresh exact-head GREEN evidence is maintained in PR #14 rather than hard-coded here, so evidence-only commits do not make this plan self-stale. Root `.aegis/*` remains v0.4 until P34/P23.
 
 ## Global Constraints
 
@@ -140,7 +140,7 @@ Aegis evaluation corpus/regressions
 
 ### Task 6: P32 Completion Evidence and P34 Handoff — COMPLETE / P34 NEXT
 
-Required exact-head evidence is maintained on PR #14 and in `docs/project-state-gate-decision-lineage-v0.5.md`.
+Required exact-head evidence is maintained on PR #14 and in its durable review comments.
 
 The P32 slice intentionally does **not**:
 
