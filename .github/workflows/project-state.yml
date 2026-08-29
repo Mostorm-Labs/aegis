@@ -96,5 +96,11 @@ jobs:
             diff -u .aegis/state.json /tmp/root-state.json || true
             exit 1
           fi
+      - name: Validate Aegis skillset
+        run: python3 -m tools.aegis_skillset.cli validate .
+      - name: Run Aegis skillset regressions
+        run: python3 -m unittest discover -s tests/skillset -v
       - name: Validate Aegis evaluation corpus
         run: python3 evals/scripts/validate_corpus.py
+      - name: Run Aegis evaluation regressions
+        run: python3 -m unittest discover -s evals/tests -v
