@@ -351,9 +351,9 @@ RED evidence:
 - Initial v0.5 lineage/migration oracle: Project State run `33234280222` failed before v0.5 schemas/tooling existed while legacy tests remained green.
 - Cross-snapshot immutability oracle: Project State run `33234756600` failed because `tools.aegis_state.transition_v05` did not yet exist; the remaining Project State suite was green.
 
-Fresh exact-head GREEN evidence for commit `43513094bdb36c638d59c8552a4fbf2d51f10538`:
+Fresh exact-head GREEN evidence for implementation head `05bf0199a1448e6ec941a22ef3e51d365e997b1f`:
 
-- Aegis Project State Integrity run `33234803966`: PASS.
+- Aegis Project State Integrity run `33234904485`: PASS.
 - v0.3/v0.4/v0.5 schema JSON parsing: PASS.
 - v0.4 minimal manifest validation/check: PASS / `STATE_OK`.
 - v0.5 minimal manifest validation/check: PASS / `STATE_OK`.
