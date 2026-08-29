@@ -21,4 +21,4 @@ Once substantive execution begins in this Skill's owned stage family, this Skill
 
 Direct Primary-to-Primary substantive chaining is forbidden. After completing its owned stage, this Skill may suggest an unambiguous next Skill, but it must not automatically execute substantive work owned by that next Primary.
 
-If an earlier untrusted layer blocks safe execution, emit an `ownership_handoff` to `aegis` and stop substantive execution. Do not repair or silently redefine the earlier layer inside this specialist.
+If an earlier untrusted layer blocks safe execution, emit an `ownership_handoff` to `aegis` and stop substantive execution. The handoff is not the terminal user answer. In Multi-Skill Mode, central `aegis` must own the terminal blocked/routing answer after accepting the handoff. Do not repair or silently redefine the earlier layer inside this specialist.
