@@ -47,6 +47,18 @@ class SkillsetWorkflowPathTests(unittest.TestCase):
             with self.subTest(needle=needle):
                 self.assertIn(needle, workflow)
 
+    def test_workflow_uploads_user_facing_nine_skill_installation_kit(self):
+        workflow = WORKFLOW.read_text(encoding='utf-8')
+        required = (
+            'name: Upload Aegis Skill installation kit',
+            'name: aegis-skill-installation-kit-0.1.0-task6.1',
+            'path: /tmp/aegis-plugin-dist/aegis-skills-0.1.0-task6.1/',
+            'if-no-files-found: error',
+        )
+        for needle in required:
+            with self.subTest(needle=needle):
+                self.assertIn(needle, workflow)
+
 
 if __name__ == '__main__':
     unittest.main()
