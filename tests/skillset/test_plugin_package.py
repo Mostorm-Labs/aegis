@@ -8,7 +8,12 @@ import zipfile
 from pathlib import Path
 
 from tools.aegis_skillset.model import load_skillset
-from tools.aegis_skillset.package import build_source_bundles, render_release_manifest, tree_sha256
+from tools.aegis_skillset.package import (
+    build_skill_installation_kit_archive,
+    build_source_bundles,
+    render_release_manifest,
+    tree_sha256,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 RELEASE = "0.1.0-task6.1"
@@ -89,6 +94,42 @@ class PluginPackageTests(unittest.TestCase):
             self.assertEqual(
                 first_bytes,
                 {name: (kit / f"{name}.zip").read_bytes() for name in expected_skills},
+            )
+
+    def test_explicit_release_version_builds_reproducible_installation_archive(self):
+        release = "0.1.0-beta.1"
+        expected_skills = [s.name for s in load_skillset(ROOT).skills]
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td)
+            command = [
+                sys.executable,
+                str(ROOT / "scripts/build_aegis_distributions.py"),
+                "--version",
+                release,
+                "--installation-kit-archive-dir",
+                str(out),
+            ]
+            first = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(0, first.returncode, first.stdout + first.stderr)
+            archive_path = out / f"aegis-skill-installation-kit-{release}.zip"
+            self.assertTrue(archive_path.is_file())
+            first_bytes = archive_path.read_bytes()
+
+            with zipfile.ZipFile(archive_path) as z:
+                prefix = f"aegis-skills-{release}/"
+                names = set(z.namelist())
+                self.assertIn(prefix + "release.json", names)
+                for skill_name in expected_skills:
+                    self.assertIn(prefix + f"{skill_name}.zip", names)
+                manifest = json.loads(z.read(prefix + "release.json").decode("utf-8"))
+                self.assertEqual(release, manifest["release_version"])
+
+            second = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(0, second.returncode, second.stdout + second.stderr)
+            self.assertEqual(first_bytes, archive_path.read_bytes())
+            self.assertEqual(
+                first_bytes,
+                build_skill_installation_kit_archive(ROOT, release, out).read_bytes(),
             )
 
 
