@@ -91,6 +91,10 @@
     },
     {
       "applicability": "current",
+      "integration_id": "int-pr14"
+    },
+    {
+      "applicability": "current",
       "integration_id": "int-pr2"
     },
     {
@@ -136,6 +140,11 @@
     },
     {
       "conformance": "conforming",
+      "gate_decision_id": "gate-project-state-v05-pr14::decision::0001",
+      "integration_id": "int-pr14"
+    },
+    {
+      "conformance": "conforming",
       "gate_decision_id": "gate-eval-tooling-pr2::decision::0001",
       "integration_id": "int-pr2"
     },
@@ -165,7 +174,7 @@
       "integration_id": "int-pr9"
     }
   ],
-  "manifest_digest": "6a5abf7a1cb54af0253e400bbfd0034f5c30f0bc6ffa5ab72f6c6f11024bb8d6",
+  "manifest_digest": "5f570ae36d849f762f5f4dcbf565ec1fe81aa37fb2fee86aa4f505d4a24ec3d1",
   "needs_review_authorities": [],
   "needs_review_gates": [],
   "nonconforming_integrations": [
