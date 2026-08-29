@@ -8,6 +8,7 @@ from pathlib import Path
 from .compute import compute_state
 from .migrate_v05 import migrate_v04_to_v05
 from .model import ManifestError, load_manifests, validate_manifests
+from .transition_v05 import validate_v05_transition
 
 
 def _render(state: dict) -> str:
@@ -90,6 +91,29 @@ def cmd_check(root: str) -> int:
     return 0
 
 
+def cmd_transition_check(previous_root: str, current_root: str) -> int:
+    previous = _load(previous_root)
+    current = _load(current_root)
+    if previous is None or current is None:
+        return 2
+
+    transition_errors = validate_v05_transition(previous, current)
+    if transition_errors:
+        for error in transition_errors:
+            print(f"BLOCKED_AUTHORITY: P21: {error}")
+        return 2
+
+    for label, manifests in (("previous", previous), ("current", current)):
+        errors = _structural_errors(manifests)
+        if errors:
+            for error in errors:
+                print(f"INVALID_{label.upper()}: {error}")
+            return 2
+
+    print("TRANSITION_OK")
+    return 0
+
+
 def cmd_migrate_v05(source_root: str, destination_root: str) -> int:
     source = _load(source_root)
     if source is None:
@@ -135,6 +159,9 @@ def build_parser() -> argparse.ArgumentParser:
     recompute.add_argument("--write", action="store_true")
     check = sub.add_parser("check")
     check.add_argument("project_root")
+    transition = sub.add_parser("transition-check")
+    transition.add_argument("previous_root")
+    transition.add_argument("current_root")
     migrate = sub.add_parser("migrate-v05")
     migrate.add_argument("source_root")
     migrate.add_argument("destination_root")
@@ -149,6 +176,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_recompute(args.project_root, args.write)
     if args.command == "check":
         return cmd_check(args.project_root)
+    if args.command == "transition-check":
+        return cmd_transition_check(args.previous_root, args.current_root)
     if args.command == "migrate-v05":
         return cmd_migrate_v05(args.source_root, args.destination_root)
     return 2
