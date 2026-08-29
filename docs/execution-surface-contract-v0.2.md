@@ -32,7 +32,7 @@ A resumable task **must not** use historical HEAD equality as its only starting-
 
 ## 3. Task anchor
 
-Repository-backed P31 packages should encode:
+Any repository-backed P31 package whose execution depends on a repository baseline MUST include a non-null `task_anchor`:
 
 ```yaml
 task_anchor:
@@ -46,7 +46,7 @@ The task anchor is stable for the package unless upstream Authority legitimately
 
 ## 4. Resume cursor
 
-When P33 has reconciled interrupted work, the handoff may carry:
+`resume_cursor` is nullable at the schema level. When P33 has a control-plane-accepted continuation point, the handoff MUST include a non-null `resume_cursor`:
 
 ```yaml
 resume_cursor:
@@ -57,7 +57,7 @@ resume_cursor:
   next_action: <first-incomplete-verified-step>
 ```
 
-The resume cursor is execution/navigation metadata. It does not become Authority, Evidence, Gate, Integration, or Project State; it does not authorize new files, new semantics, or scope expansion.
+If no accepted continuation point exists yet, `resume_cursor: null` is valid. The resume cursor is execution/navigation metadata. It does not become Authority, Evidence, Gate, Integration, or Project State; it does not authorize new files, new semantics, or scope expansion.
 
 ## 5. Surface handoff v0.2
 
@@ -78,7 +78,7 @@ resume_cursor: null | <accepted-cursor>
 return_surface: CONTROL_REVIEW
 ```
 
-`package_ref` continues to carry the authorized work contract. `task_anchor` and `resume_cursor` carry execution-position semantics only.
+`package_ref` continues to carry the authorized work contract. `task_anchor` and `resume_cursor` carry execution-position semantics only. The nullability shown above does not weaken the conditional requirements in §§3-4: baseline-dependent repository execution requires a non-null anchor, and a known accepted P33 continuation requires a non-null cursor.
 
 ## 6. P32 starting-state semantics
 
@@ -139,8 +139,9 @@ P34 resolves `materialized_ref` independently. A `resume_cursor` is not evidence
 
 `aegis-implementation` must:
 
-- encode repository task anchors during P31 packaging;
-- carry an accepted resume cursor when P33 has one;
+- require a non-null repository task anchor whenever P31 execution depends on a repository baseline;
+- require a non-null accepted resume cursor whenever P33 has a known control-plane-accepted continuation point;
+- allow `resume_cursor: null` only when no accepted continuation point exists yet;
 - inspect actual repository state instead of assuming the package commit is the current HEAD;
 - distinguish `EXACT_CURSOR`, `DESCENDANT_CURSOR`, `ANCHOR_DESCENDANT_WITHOUT_CURSOR`, and `DIVERGED`;
 - preserve valid descendant work and resume from the first incomplete verified step;
@@ -155,10 +156,10 @@ Generated/distributed Skills must preserve these instructions from the canonical
 v0.2 is accepted when deterministic and hosted verification prove:
 
 1. shared handoff instructions define `Task Anchor != Execution Cursor`;
-2. `task_anchor` uses explicit repository relation semantics;
-3. optional `resume_cursor` carries an accepted execution ref/revision and continuation facts;
+2. baseline-dependent repository execution conditionally requires a non-null `task_anchor` with explicit repository relation semantics;
+3. `resume_cursor` is nullable only when no accepted continuation point exists, and a known accepted P33 continuation conditionally requires a non-null cursor with execution ref/revision and continuation facts;
 4. P33 defines all four reconciliation outcomes;
-5. a descendant cursor case yields resume/reconciliation and does not replay completed work;
+5. behavioral dogfood exercises `EXACT_CURSOR`, `DESCENDANT_CURSOR`, `ANCHOR_DESCENDANT_WITHOUT_CURSOR`, and `DIVERGED`, including no-replay descendant resume and fail-closed divergence;
 6. genuine divergence fails closed with `BLOCKED_EXECUTION_DIVERGENCE` or a more specific valid blocker;
 7. historical HEAD equality is not the sole resumable-task predicate;
 8. canonical and generated Skill instructions agree;
