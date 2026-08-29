@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mostorm-labs.github.io/aegis/schemas/project-state/v0.5/project.schema.json",
+  "title": "Aegis Project Manifest v0.5",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "project"],
+  "properties": {
+    "schema_version": {"const": "0.5"},
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "profile"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "profile": {"enum": ["lite", "standard", "full"]},
+        "required_layers": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "lifecycle_hint": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

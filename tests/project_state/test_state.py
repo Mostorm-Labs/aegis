@@ -53,6 +53,32 @@ class StateTests(unittest.TestCase):
             self.assertEqual(check_proc.returncode, 0, check_proc.stdout + check_proc.stderr)
             self.assertIn("STATE_OK", check_proc.stdout)
 
+    def test_cli_migrate_v05_then_check_passes(self):
+        repo_root = Path(__file__).resolve().parents[2]
+        source = repo_root / "examples" / "project-state" / "minimal"
+        with tempfile.TemporaryDirectory() as td:
+            destination = Path(td) / "migrated"
+            migrate_proc = subprocess.run(
+                [sys.executable, "-m", "tools.aegis_state.cli", "migrate-v05", str(source), str(destination)],
+                cwd=repo_root,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(migrate_proc.returncode, 0, migrate_proc.stdout + migrate_proc.stderr)
+            self.assertIn("MIGRATED_V05", migrate_proc.stdout)
+
+            check_proc = subprocess.run(
+                [sys.executable, "-m", "tools.aegis_state.cli", "check", str(destination)],
+                cwd=repo_root,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(check_proc.returncode, 0, check_proc.stdout + check_proc.stderr)
+            self.assertIn("STATE_OK", check_proc.stdout)
+            state = json.loads((destination / ".aegis" / "state.json").read_text(encoding="utf-8"))
+            self.assertEqual("0.5", state["schema_version"])
+            self.assertEqual("0.5", state["generator_version"])
+
 
 if __name__ == "__main__":
     unittest.main()

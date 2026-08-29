@@ -1,0 +1,23 @@
+{
+  "evidence": [
+    {
+      "id": "ev-g1",
+      "ref": "ci://example/g1",
+      "status": "available",
+      "subject_ids": [
+        "G1"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-int-g1",
+      "ref": "pr://example/1/open",
+      "status": "available",
+      "subject_ids": [
+        "int-g1"
+      ],
+      "type": "integration_state"
+    }
+  ],
+  "schema_version": "0.5"
+}
