@@ -1,59 +1,44 @@
-# Aegis Plugin Distribution Pipeline V1 — Design
+# Aegis Installation Kit V1 — Design
 
-Status: **Design approved in chat on 2026-08-29; written spec awaiting human review.**
+Status: **Approved in chat on 2026-08-29; implementation authorized in this thread.**
 
-Related Authority / design work:
+Related work:
 
 - `docs/plugin-distribution-contract-v0.1.md`
 - `docs/superpowers/specs/2026-08-29-aegis-plugin-distribution-v0.1-design.md`
 - `docs/superpowers/specs/2026-08-29-aegis-catalog-provenance-repair.md`
-- `docs/superpowers/plans/2026-08-29-aegis-catalog-provenance-repair.md`
-
-Official platform references checked on 2026-08-29:
-
-- https://help.openai.com/en/articles/20001256
-- https://help.openai.com/en/articles/20001066-skills-in-chatgpt
 
 ## 1. Product Goal
 
-Aegis V1 must eliminate per-Skill installation work for normal users.
+Aegis V1 must remove the repetitive packaging work required to install the exact nine-Skill catalog in ChatGPT.
 
-The target experience is:
+The current supported ChatGPT Skill UI accepts one Skill ZIP at a time. Aegis therefore must not require the maintainer or tester to manually create nine ZIP archives for every release.
+
+The V1 delivery path is:
 
 ```text
 Aegis source
     ↓
 CI validates one coherent release
     ↓
-one Aegis Plugin release
+CI packages nine upload-ready Skill ZIPs
     ↓
-workspace admin publishes / enables once
+one downloadable GitHub artifact
     ↓
-installation policy = Installed
+user extracts once
     ↓
-eligible workspace users receive Aegis automatically
-    ↓
-exact 9 Aegis Skills are available
+9 ready-to-upload Skill ZIPs
 ```
-
-The normal user must **not**:
-
-- download the repository;
-- split the release into nine folders;
-- create nine ZIP files;
-- upload nine Skills;
-- reason about which specialist Skills are required;
-- repair partial or mixed installations manually.
 
 ### V1 success criterion
 
-For each Aegis release, the administrator performs at most one Plugin publication/rollout action after CI produces an accepted release package. Eligible ordinary users perform **zero manual Aegis Skill installation actions** and receive the exact nine-Skill Aegis catalog through the Plugin.
+For each Aegis release, CI automatically produces one installation-kit artifact containing the exact nine Aegis Skills as nine independently uploadable ZIP files. The maintainer performs **zero manual Skill compression operations**.
 
-The workspace installation policy should be set to `Installed` for the intended eligible role(s), so normal user installation is automatic where the platform supports that policy.
+A future Plugin or bulk-install API may remove the remaining nine upload clicks, but neither is required for V1.
 
-## 2. First-Class Design Principle: Minimize Human Work
+## 2. First-Class Principle: Minimize Human Work
 
-Aegis exists to reduce coordination burden, not to turn verification into additional manual operations.
+Aegis exists to reduce coordination and verification burden.
 
 Normative principle:
 
@@ -61,389 +46,227 @@ Normative principle:
 credible evidence at the lowest human cost
 ```
 
-Equivalent rule:
+For packaging this means:
 
 ```text
-Evidence completeness
-!=
-test every supported mode on every change
+source folders
+-> machine packaging
+-> upload-ready artifacts
 ```
 
-A Gate should prove the risk boundary of the current change. Optional compatibility paths must not become permanent human blockers for the normal product path unless the change can affect those paths.
-
-This principle applies to both distribution and verification.
-
-## 3. Product / Distribution Topology
-
-The normal product topology remains:
+and never:
 
 ```text
-Aegis Product
-└── Aegis Plugin
-    ├── aegis
-    ├── aegis-project-state
-    ├── aegis-discovery
-    ├── aegis-modeling
-    ├── aegis-architecture
-    ├── aegis-verification
-    ├── aegis-governance
-    ├── aegis-implementation
-    └── aegis-gate-review
+source folders
+-> human creates 9 ZIPs
+-> human checks 9 layouts
 ```
 
-The Plugin is the installation and release envelope.
+## 3. Distribution Model
 
-The nine Skills remain the reasoning / ownership units.
+The Aegis release is the coherent identity boundary. Delivery mechanisms are adapters around that release.
 
-The Plugin remains **not** a tenth Primary Owner.
+```text
+Aegis Release
+├── exact 9 Skill identities + digests
+└── Delivery adapters
+    ├── Skill Installation Kit      # required V1 path
+    ├── Plugin                      # optional/future platform path
+    └── Bulk Install API            # optional/future platform path
+```
 
-Standalone central `aegis` remains a compatibility distribution, but it is not the normal product installation path.
+`Product != Release != Delivery Adapter != Skill`.
 
-## 4. V1 Release Pipeline
+No delivery adapter becomes a lifecycle Primary Owner.
 
-### 4.1 Stage A — Source validation
+## 4. Installation Kit Layout
 
-CI starts from an exact repository revision and verifies:
+CI must produce one directory that is uploaded as one GitHub Actions artifact:
 
-- exact nine Skill identities;
-- ownership metadata;
-- generated Skill consistency;
-- routing corpus integrity;
-- Project State integrity;
-- deterministic tests;
-- release manifest consistency.
+```text
+aegis-skills-<release>/
+├── release.json
+├── aegis.zip
+├── aegis-project-state.zip
+├── aegis-discovery.zip
+├── aegis-modeling.zip
+├── aegis-architecture.zip
+├── aegis-verification.zip
+├── aegis-governance.zip
+├── aegis-implementation.zip
+└── aegis-gate-review.zip
+```
 
-A release candidate that fails any deterministic obligation cannot proceed to packaging.
+Downloading the GitHub artifact may wrap this directory in the platform artifact ZIP. The user experience is still one download and one extraction before the nine upload-ready Skill ZIPs are visible.
 
-### 4.2 Stage B — Deterministic release manifest
+## 5. Individual Skill ZIP Contract
 
-CI generates one release manifest containing at minimum:
+Each nested Skill ZIP is directly uploadable through the ChatGPT Skill upload UI.
+
+The ZIP root must contain the Skill contents directly, for example:
+
+```text
+aegis-modeling.zip
+├── SKILL.md
+├── agents/
+│   └── openai.yaml
+├── references/
+├── scripts/        # when present
+└── assets/         # when present
+```
+
+Forbidden layout:
+
+```text
+aegis-modeling.zip
+└── aegis-modeling/
+    └── SKILL.md
+```
+
+The packaging pipeline must not require a second repackaging operation by the user.
+
+## 6. Determinism and Release Identity
+
+All nine ZIPs must be deterministic for the same source tree and release inputs.
+
+The release manifest must pin, per Skill:
 
 ```yaml
-product_id: aegis
-release_version: <release>
-source_revision: <exact commit SHA>
-plugin_id: aegis
-skills:
-  - skill_id: aegis
-    tree_sha256: <digest>
-  - skill_id: aegis-project-state
-    tree_sha256: <digest>
-  - ... exact nine total
+name: aegis-modeling
+tree_sha256: <digest of source Skill tree>
+zip_filename: aegis-modeling.zip
+zip_sha256: <digest of deterministic upload ZIP>
 ```
 
-The release manifest is the machine-readable identity of the coherent Aegis release.
+The artifact is also bound to the exact GitHub workflow run / head SHA that produced it.
 
-No Skill exposes an independent public SemVer line. The Plugin/release owns the public release identity; each Skill is pinned by exact digest/revision.
+Skill public versioning does not split from the Aegis release. All nine ZIPs in one installation kit belong to one coherent release/component set.
 
-### 4.3 Stage C — One Plugin release package
+## 7. Packaging Algorithm
 
-CI produces one normal distribution artifact:
+For each Skill in `skillset/manifest.json` order:
+
+1. read the generated `skills/<skill-id>/` tree;
+2. validate required Skill structure;
+3. create a deterministic ZIP whose archive root is the contents of that Skill directory;
+4. compute `zip_sha256`;
+5. record source-tree and ZIP digests in `release.json`;
+6. place the ZIP in the installation-kit directory.
+
+After all nine are written, the pipeline verifies:
+
+- exactly nine expected ZIP filenames exist;
+- every ZIP contains root-level `SKILL.md`;
+- every ZIP contains `agents/openai.yaml`;
+- no ZIP contains an extra enclosing `<skill-id>/` directory;
+- ZIP digests match `release.json`;
+- source-tree digests match the release manifest;
+- repeated builds are byte-for-byte reproducible.
+
+## 8. CI Contract
+
+`Aegis Skillset Integrity` must build the installation kit after deterministic validation and upload it as a named artifact.
+
+V1 artifact name:
 
 ```text
-aegis-plugin-<release>
-├── release manifest
-└── exact nine Skills
+aegis-skill-installation-kit-<release>
 ```
 
-The repository may also continue to produce a standalone compatibility artifact, but it must be clearly separated from the normal product artifact and must not be offered as the default user installation path.
+The artifact path must contain `release.json` and all nine nested Skill ZIP files, not raw Skill folders that require manual recompression.
 
-The release package must be reproducible from the same source revision.
+Existing source-bundle artifacts may remain for repository/evidence use, but they are not the user-facing installation deliverable.
 
-### 4.4 Stage D — Platform publication boundary
+## 9. Compatibility and Plugin Boundaries
 
-Current OpenAI product documentation establishes that a Plugin can contain multiple Skills and that workspace administrators can manage Plugin installation policies. It does **not** establish a stable public CI API or a guaranteed local ZIP schema for programmatically publishing a custom multi-Skill Plugin into every ChatGPT workspace.
+Standalone central `aegis` may continue to exist as a compatibility distribution. It is not required to be manually reconstructed as part of the normal nine-Skill installation flow.
 
-Therefore V1 defines an explicit publication boundary:
+A future Plugin delivery adapter may package the same exact release into one Plugin installation. A future supported bulk-install API may install all nine Skill ZIPs from one action.
+
+Neither future adapter changes:
+
+- the nine Skill identities;
+- ownership semantics;
+- routing semantics;
+- release digests;
+- `terminal_trace_v0.2`.
+
+V1 must not invent an undocumented Plugin upload format or bulk-install API.
+
+## 10. Human Interaction Budget
+
+### Maintainer / tester
 
 ```text
-CI automation
-    ↓
-reviewer-accessible accepted release package
-    ↓
-ONE supported Plugin publication/import action by owner/admin
-    ↓
-workspace Plugin
+manual Skill compression operations per release = 0
+manual Skill folder repackaging = 0
+manual release consistency assembly = 0
 ```
 
-Until OpenAI exposes a stable supported publication API, Aegis must not invent or depend on an undocumented endpoint.
-
-If a supported publication/import API becomes available later, this boundary may be automated without changing Skill ownership or release semantics.
-
-### 4.5 Stage E — Workspace rollout
-
-After the Aegis Plugin is available to the workspace, the administrator configures its installation policy as:
+### Current ChatGPT installation path
 
 ```text
-Installed
+1 artifact download
+1 artifact extraction
+9 Skill uploads
 ```
 
-for the intended eligible role(s), where the workspace supports role-based installation controls.
+The remaining nine upload actions are a platform/UI limitation, not work that Aegis should amplify with manual packaging.
 
-Expected user experience:
+### Future target
+
+When ChatGPT exposes a supported Plugin or bulk-install path usable for this distribution:
 
 ```text
-admin publishes/enables Aegis Plugin
-        ↓
-workspace policy installs it automatically
-        ↓
-user opens ChatGPT
-        ↓
-Aegis capabilities are available
-        ↓
-0 manual Skill uploads
+1 install action
+-> exact nine Skills
 ```
-
-Underlying App permissions, if Aegis later includes Apps, remain separate from Plugin installation and do not change Primary Owner semantics.
-
-## 5. Upgrade Semantics
-
-Aegis upgrades at the Plugin/release level:
-
-```text
-Aegis Plugin release N
-        ↓
-whole-catalog transition
-        ↓
-Aegis Plugin release N+1
-```
-
-Desired externally observable state is always a coherent release.
-
-The normal user must never be asked to update individual specialist Skills.
-
-If the platform exposes a transient partial/mixed state during upgrade, Aegis fails closed for specialist-owned execution until the coherent catalog is restored.
-
-A partial Plugin installation must never be reinterpreted as Standalone compatibility mode.
-
-## 6. Rollback Semantics
-
-A release must retain enough identity to restore the last accepted coherent Plugin release.
-
-Rollback target:
-
-```text
-release N+1 rejected / broken
-        ↓
-restore accepted Plugin release N
-        ↓
-exact nine Skill digests from N
-```
-
-Rollback is release-level, never a hand-edited combination of Skill versions.
-
-## 7. Gate Decomposition
-
-The previous Task 6 shape over-coupled the normal product path to Standalone compatibility evidence. V1 separates the Gates by risk boundary.
-
-### 7.1 Core Skill Composition Gate — blocking
-
-Purpose: prove the normal nine-Skill Aegis system routes and owns work correctly.
-
-Required environment:
-
-```text
-catalog_state = FULL_SPECIALIST
-installed Aegis catalog = exact nine Skills
-coherent release/component set
-```
-
-Required protected probes:
-
-1. `Audit this PR against its Gate evidence.`
-2. `What should this project do next?`
-3. `Design module architecture, but project authority is unresolved.`
-
-Acceptance:
-
-```text
-3 / 3 PASS
-```
-
-This Gate blocks Skill Decomposition acceptance because it validates the normal product topology.
-
-### 7.2 Standalone Compatibility Regression — non-blocking for normal product changes
-
-Purpose: prove central `aegis` can perform the documented composite fallback when specialists are genuinely unavailable.
-
-Protected probe:
-
-`Only composite Aegis is installed; design a semantic schema.`
-
-This remains a normative compatibility regression but does **not** block the normal nine-Skill Core Composition Gate on every change.
-
-It becomes blocking only when the change touches the compatibility risk boundary, including for example:
-
-- `aegis` compatibility instructions;
-- specialist-unavailable evidence semantics;
-- fallback routing;
-- Standalone packaging/distribution;
-- compatibility-mode oracle behavior.
-
-Otherwise it can run in scheduled/release regression or when the affected boundary changes.
-
-### 7.3 Plugin Distribution Gate — separate blocking Gate for product distribution
-
-Purpose: prove the product can be delivered as one coherent Plugin release without per-Skill user work.
-
-Minimum acceptance evidence:
-
-- one Aegis Plugin release maps to exact nine Skill digests;
-- the Plugin is available in the target workspace;
-- workspace installation policy is `Installed` for the intended eligible population;
-- a normal user receives Aegis without manually uploading any Skill;
-- installed Aegis catalog is exact nine and release-consistent;
-- partial/mixed Plugin state fails closed;
-- Plugin packaging creates no new lifecycle owner.
-
-This Gate is separate from the Skill Composition Gate.
-
-## 8. Test Selection by Change Impact
-
-Verification should be impact-driven.
-
-Conceptual mapping:
-
-```text
-routing / owner semantics changed
-    -> Core Composition Gate
-
-central compatibility/fallback changed
-    -> Core Composition Gate + Compatibility Regression
-
-Plugin packaging/release changed
-    -> Plugin Distribution Gate
-
-release manifest/digest changed
-    -> deterministic release checks + Plugin Distribution Gate
-
-unrelated docs changed
-    -> do not force external platform reruns
-```
-
-The exact machine-readable impact selector can be introduced in implementation planning. V1 does not require a general-purpose test scheduler before the release pipeline itself works.
-
-## 9. Human Interaction Budget
-
-V1 explicitly budgets human actions.
-
-### Normal end user
-
-```text
-manual Aegis Skill installs per release = 0
-manual Aegis Skill ZIP operations = 0
-manual catalog assembly = 0
-```
-
-### Workspace administrator / Plugin owner
-
-Until a supported publication API exists:
-
-```text
-Plugin publication/import actions per release <= 1
-workspace installation-policy setup = one-time per deployment policy, unless policy changes
-```
-
-After a stable publication API exists, the target becomes zero release-publication actions as well.
-
-### Aegis maintainer
-
-Maintainer effort should be concentrated on Authority, review, exceptional failures, and release approval — not repetitive packaging or catalog assembly.
-
-## 10. Evidence Model
-
-Distribution evidence should be generated as close to the source as possible.
-
-```text
-Git revision
-    ↓
-release manifest
-    ↓
-Plugin release artifact
-    ↓
-platform Plugin identity / publication event
-    ↓
-workspace installation policy
-    ↓
-observed exact-nine catalog
-```
-
-Each later evidence item should carry enough reference to resolve the earlier identity chain.
-
-Behavior evidence remains separate:
-
-```text
-Catalog Evidence != Behavior Evidence
-```
-
-A screenshot may support platform observability, but it does not replace release identity or terminal behavior evidence when those are required.
 
 ## 11. Failure Modes
 
-### CI package generation fails
+### Missing Skill or invalid generated Skill structure
 
-Return repository implementation/test failure. Do not publish.
+Packaging fails. No installation-kit artifact is published.
 
-### Release manifest and source tree disagree
+### ZIP layout is not directly uploadable
 
-Return `MIXED_REVISION` / deterministic release failure. Do not publish.
+Packaging tests fail. No artifact is published.
 
-### Platform publication/import unavailable
+### ZIP digest or source-tree digest mismatch
 
-Return `BLOCKED_ENVIRONMENT` for Plugin Distribution Gate only. Do not force users to install nine Skills as the product workaround.
+Release consistency fails. No artifact is published.
 
-Individually imported exact-nine Skills may still be used for the separate Skill Composition Gate because catalog state and distribution provenance are orthogonal.
+### Partial kit
 
-### Plugin visible but partial catalog observed
+A kit with fewer or more than the exact nine expected Skill ZIPs is invalid.
 
-Return `BLOCKED_ENVIRONMENT`; do not invoke compatibility fallback.
+### Bulk install unavailable
 
-### Workspace policy cannot auto-install
-
-Plugin Distribution V1 acceptance is not complete for the intended zero-touch deployment population. Do not redefine success as nine manual Skill installations.
+This does not block V1. Users receive the nine upload-ready ZIPs and do not manually create archives.
 
 ## 12. Non-Goals
 
 V1 does not require:
 
-- inventing an undocumented OpenAI Plugin publication API;
-- inventing a private Plugin ZIP schema and claiming platform compatibility;
-- making Standalone Aegis the normal product path;
-- automatically connecting future external Apps;
-- removing the nine independent Skill identities;
-- changing Aegis ownership semantics;
-- changing `terminal_trace_v0.2` semantics;
-- running every compatibility environment on every repository change.
+- a directly uploadable multi-Skill Plugin;
+- an undocumented Plugin schema;
+- an automated ChatGPT bulk-install API;
+- changing any Skill's substantive instructions;
+- changing lifecycle ownership;
+- changing routing or compatibility oracle semantics;
+- deleting existing source bundles used for evidence/debugging.
 
-## 13. V1 Acceptance Criteria
+## 13. Acceptance Criteria
 
-The design is implemented successfully when all of the following are true:
+V1 is complete when:
 
-1. CI deterministically produces one coherent Aegis Plugin release artifact from an exact source revision.
-2. The artifact pins the exact nine Skills and their digests.
-3. The Plugin/release is the normal installation unit; nine individual Skill ZIPs are not part of the normal user workflow.
-4. A supported Plugin publication/import action can materialize that release into the target workspace, or Plugin Distribution reports `BLOCKED_ENVIRONMENT` without semantic fallback.
-5. Workspace admin can set the Plugin to `Installed` for the intended eligible population where that control is supported.
-6. An eligible ordinary user performs zero manual Aegis Skill installation actions.
-7. The resulting observed Aegis catalog is exact nine and release-consistent.
-8. Core Skill Composition acceptance uses the normal `FULL_SPECIALIST` environment and requires the protected normal-path probes to pass 3/3.
-9. Standalone composite fallback remains a compatibility regression and is not a permanent blocker for unrelated normal-path changes.
-10. Plugin Distribution acceptance remains separate from Skill Composition acceptance.
-11. No Plugin/distribution object becomes a lifecycle Primary Owner.
-12. Existing historical integration truth, Gate history, and protected routing semantics are not rewritten.
-
-## 14. Future Extension
-
-When OpenAI exposes a stable supported publication/import API, the publication boundary can become:
-
-```text
-CI accepted release
-    ↓
-automated Plugin publish/update
-    ↓
-workspace Installed policy
-    ↓
-zero-touch rollout
-```
-
-That future automation must preserve the same release manifest, exact-nine catalog contract, fail-closed mixed-revision rules, and ownership boundaries defined here.
+1. one CI run produces one named installation-kit artifact;
+2. that artifact contains `release.json` plus exactly nine nested Skill ZIPs;
+3. each nested ZIP is directly uploadable without repackaging and has root-level `SKILL.md` and `agents/openai.yaml`;
+4. all nine expected Skill IDs are present exactly once;
+5. every Skill ZIP is deterministic;
+6. every Skill ZIP has a `zip_sha256` recorded in `release.json`;
+7. source `tree_sha256` and ZIP digest identity are machine-verifiable;
+8. repeated builds are byte-for-byte reproducible;
+9. existing deterministic routing/ownership/project-state regressions remain green;
+10. no user or maintainer manually compresses the nine Skill directories for a release.
