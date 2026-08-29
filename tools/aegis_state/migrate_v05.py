@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 
+from .compute import compute_state
 from .model import ManifestSet, validate_manifests
 
 
@@ -17,6 +18,15 @@ def migrate_v04_to_v05(manifests: ManifestSet) -> ManifestSet:
     source_errors = validate_manifests(manifests, strict_gate_validity=True)
     if source_errors:
         raise ValueError("invalid v0.4 source: " + "; ".join(source_errors))
+
+    source_state = compute_state(manifests)
+    validity_drift = [
+        finding
+        for finding in source_state.get("blocking_findings", [])
+        if isinstance(finding, str) and " validity drift: " in finding
+    ]
+    if validity_drift:
+        raise ValueError("gate validity drift cannot be preserved by v0.5 migration: " + "; ".join(validity_drift))
 
     project = copy.deepcopy(manifests.project)
     authorities = copy.deepcopy(manifests.authorities)
