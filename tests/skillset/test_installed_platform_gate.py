@@ -1,10 +1,11 @@
 import importlib
+import io
 import json
-import subprocess
-import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULE = ROOT / "tools/aegis_skillset/dogfood.py"
@@ -15,6 +16,16 @@ class InstalledPlatformGateTests(unittest.TestCase):
     def _dogfood(self):
         self.assertTrue(MODULE.is_file(), "installed-platform evaluator module missing")
         return importlib.import_module("tools.aegis_skillset.dogfood")
+
+    def _run_cli_with_verdict(self, command, verdict):
+        cli = importlib.import_module("tools.aegis_skillset.cli")
+        module = self._dogfood()
+        result = module.InstalledPlatformGateEvaluation(verdict, (), ())
+        output = io.StringIO()
+        with patch.object(cli, "evaluate_installed_platform_rerun", return_value=result):
+            with redirect_stdout(output):
+                return_code = cli.main([command, str(ROOT)])
+        return return_code, output.getvalue()
 
     def test_current_rerun_manifest_fails_closed_without_platform_evidence(self):
         self.assertTrue(MANIFEST.is_file(), "Task 6 rerun manifest missing")
@@ -149,26 +160,18 @@ class InstalledPlatformGateTests(unittest.TestCase):
         self.assertIn("ROUTER_OWNERSHIP_LEAK", first.violations)
 
     def test_check_cli_accepts_structurally_valid_blocked_state(self):
-        proc = subprocess.run(
-            [sys.executable, "-m", "tools.aegis_skillset.cli", "installed-platform-check", str(ROOT)],
-            cwd=ROOT,
-            text=True,
-            capture_output=True,
-            check=False,
+        return_code, stdout = self._run_cli_with_verdict(
+            "installed-platform-check", "BLOCKED_EVIDENCE"
         )
-        self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
-        self.assertIn("BLOCKED_EVIDENCE", proc.stdout)
+        self.assertEqual(0, return_code, stdout)
+        self.assertIn("BLOCKED_EVIDENCE", stdout)
 
     def test_gate_cli_rejects_blocked_state(self):
-        proc = subprocess.run(
-            [sys.executable, "-m", "tools.aegis_skillset.cli", "installed-platform-gate", str(ROOT)],
-            cwd=ROOT,
-            text=True,
-            capture_output=True,
-            check=False,
+        return_code, stdout = self._run_cli_with_verdict(
+            "installed-platform-gate", "BLOCKED_EVIDENCE"
         )
-        self.assertEqual(2, proc.returncode, proc.stdout + proc.stderr)
-        self.assertIn("BLOCKED_EVIDENCE", proc.stdout)
+        self.assertEqual(2, return_code, stdout)
+        self.assertIn("BLOCKED_EVIDENCE", stdout)
 
     def test_workflow_runs_installed_platform_state_check(self):
         workflow = (ROOT / ".github/workflows/skillset.yml").read_text(encoding="utf-8")
