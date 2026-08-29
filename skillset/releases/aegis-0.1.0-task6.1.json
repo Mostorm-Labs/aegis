@@ -29,9 +29,9 @@
       },
       {
         "name": "aegis-architecture",
-        "tree_sha256": "7ea125999a6f46f9e10842f953cfbbda55bde97038c4b9ed67f751c01c324a54",
+        "tree_sha256": "5c5a19c008e7a7027e64277287d4e5e5cfcf1bb4d1e65da5a30d0f6f0862deaf",
         "zip_filename": "aegis-architecture.zip",
-        "zip_sha256": "4a0db051ead5075ad43f030b4b8df762905f8731f0649376f4008884622c1033"
+        "zip_sha256": "332716c2ca09300d91ee086bd7f119c1e190f6e311c0c4a922ab6f92c9326c28"
       },
       {
         "name": "aegis-verification",
