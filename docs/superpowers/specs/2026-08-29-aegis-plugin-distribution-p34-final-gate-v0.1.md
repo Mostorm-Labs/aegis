@@ -1,6 +1,6 @@
 # Aegis Plugin Distribution P34 Final Gate Design v0.1
 
-Status: **Approved Final Gate Design v0.1 — human-approved 2026-08-29; Gate not yet accepted.**
+Status: **Approved Final Gate Design v0.1 — human-approved 2026-08-29; P35 repair amendment F13-PD01-01 incorporated; Gate not yet accepted.**
 
 Gate ID: `gate-plugin-distribution-v01-pr13`
 
@@ -52,6 +52,7 @@ The following invariants are normative for all PD-P34 cases:
 8. Plugin and Installation Kit are parallel adapters around one coherent Aegis release/component set.
 9. Every future Aegis release that publishes a Plugin must remain capable of publishing the portable exact-nine Installation Kit from the same canonical Skill sources.
 10. Canonical Skill source remains `skills/<skill-id>/`; Plugin Skill trees are deterministic materializations and must not become a second hand-maintained Authority.
+11. **A published Aegis release identity is historical and must not be retrospectively reused by a Plugin source created after that release's pinned source revision.**
 
 Target product model:
 
@@ -130,7 +131,7 @@ plugins/
 `plugins/aegis/.codex-plugin/plugin.json` must:
 
 - use `name = aegis`;
-- use strict SemVer matching the Aegis release identity under test;
+- use strict SemVer matching the Aegis candidate/release identity under test;
 - include non-empty `description` and `author.name`;
 - set `skills` to `./skills/`;
 - include the native required interface metadata;
@@ -155,7 +156,23 @@ The Plugin materialization must be generated/checkable from canonical sources. D
 
 ### Release binding
 
-The Plugin manifest version and materialized Skill contents must resolve to one coherent committed Aegis release manifest. PD-P34-01 initially binds to `v0.1.0-beta.1` / `0.1.0-beta.1` unless a later explicitly reviewed release supersedes that test target.
+The Plugin manifest version and materialized Skill contents must resolve to one coherent committed Aegis candidate/release manifest.
+
+The already-published `v0.1.0-beta.1` release is historical and remains pinned to source revision `6a20969d66d1d594e7c37f970f43142e5a061e2e`; it MUST NOT be reused for the later native Plugin source.
+
+PD-P34-01 therefore binds to the next unpublished candidate identity:
+
+```text
+candidate_release_version = 0.1.0-beta.2
+candidate_release_manifest = skillset/releases/aegis-0.1.0-beta.2.json
+Plugin manifest version = 0.1.0-beta.2
+```
+
+The candidate manifest is evidence/configuration for the Plugin Gate and is not itself a published GitHub Release. Publication remains downstream of the applicable P34/P24 decision.
+
+Because Plugin and Installation Kit are parallel adapters, the same `0.1.0-beta.2` candidate must also remain buildable as an exact-nine Installation Kit from the same canonical Skill sources.
+
+This release-binding repair is recorded as `F13-PD01-01` in `docs/superpowers/findings/2026-08-29-pd-p34-01-release-identity-finding.md`.
 
 ### PD-P34-01 PASS threshold
 
@@ -169,7 +186,8 @@ PASS requires all of the following:
 6. all nine Plugin Skill trees are byte/content-identical to canonical Skill trees under the deterministic tree oracle;
 7. materialization is reproducible/checkable by repository tooling;
 8. CI fails when the materialization is absent or drifts and passes after materialization is corrected;
-9. the exact result is committed to a reviewer-accessible GitHub revision.
+9. Plugin and a buildable exact-nine Installation Kit are bound to the same unpublished candidate release identity;
+10. the exact result is committed to a reviewer-accessible GitHub revision.
 
 PD-P34-01 proves **source materialization only**. It does not prove that a human installed the Plugin in ChatGPT; that is PD-P34-02.
 
@@ -310,18 +328,20 @@ Missing one core case is a blocker, not `PASS_WITH_FINDINGS`.
 - unsupported/unavailable marketplace import or workspace permission -> `BLOCKED_ENVIRONMENT`;
 - missing real install/upgrade/materialization evidence -> `BLOCKED_EVIDENCE` / `EVIDENCE_GAP`;
 - invalid native manifest, wrong catalog, drifted generated Plugin tree, or valid upgrade producing incoherence -> `BLOCKED_IMPLEMENTATION` / `IMPLEMENTATION_DEFECT`;
+- release-binding rule that reuses an already-published historical identity -> `SPEC_DEFECT` at P20/P34 Verification Design;
 - broken Plugin becoming compatibility -> `BLOCKED_IMPLEMENTATION` / serious safety defect;
 - packaging changing protected ownership/routing -> `BLOCKED_IMPLEMENTATION`;
 - Project State historical integration facts -> out of scope and must not be rewritten.
 
 ## 12. Current Execution Boundary
 
-The next authorized implementation slice is only:
+The authorized implementation slice remains:
 
 ```text
 PD-P34-01 RED
 -> native marketplace / Plugin materialization
 -> deterministic materialization oracle
+-> release-identity repair / reverification when required
 -> GREEN
 -> exact GitHub materialized_ref
 ```
