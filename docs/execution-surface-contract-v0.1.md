@@ -1,6 +1,8 @@
 # Aegis Execution Surface Contract v0.1
 
-Status: **Proposed Additive Authority v0.1 — human-approved candidate on PR #10.**
+Status: **Superseded by `docs/execution-surface-contract-v0.2.md`.**
+
+Supersession reason: v0.1 defined execution-surface routing and reviewer-accessible result materialization but did not define a shared repository execution-position contract for distinguishing a stable task baseline from a later accepted resume point. Historical v0.1 content below is preserved unchanged.
 
 This contract adds execution-surface routing to Aegis without changing lifecycle-stage ownership. It formalizes the control-plane / execution-plane split validated in real development: reasoning-heavy planning and review stay on a conversational control surface, while repository-heavy implementation and reverification move to a coding execution surface.
 

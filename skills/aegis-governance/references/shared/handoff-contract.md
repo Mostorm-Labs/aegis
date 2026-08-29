@@ -48,10 +48,52 @@ to_surface: CODE_EXECUTION
 preferred_executor: codex
 reason: repository_heavy_execution
 package_ref: <task-package-ref>
+task_anchor:
+  revision: <trusted-revision>
+  relation: ancestor
+resume_cursor: null
 return_surface: CONTROL_REVIEW
 ```
 
 The `stage_owner` remains the Primary Owner across a surface handoff unless a separate valid `ownership_handoff` occurs. `package_ref` identifies the approved P31 task package or equivalent execution contract. The receiving execution surface must fail closed rather than invent missing semantic or Authority decisions.
+
+## Execution position
+
+`Task Anchor != Execution Cursor`.
+
+A task package tells the executor what is authorized. A `task_anchor` tells repository execution what trusted history the task must descend from. A `resume_cursor` tells the executor where previously reconciled authorized execution currently is.
+
+Any repository-backed package whose execution depends on a repository baseline MUST include a non-null `task_anchor`:
+
+```yaml
+task_anchor:
+  revision: <40-char-revision>
+  relation: ancestor
+```
+
+`relation: ancestor` means the anchor revision must be an ancestor of the accepted starting or resume revision. It does not mean the anchor must equal HEAD. A resumable task must not use historical HEAD equality as its only starting-state predicate.
+
+`resume_cursor` is nullable at the schema level. When a control-plane-accepted P33 continuation point is known, the handoff MUST include a non-null `resume_cursor`:
+
+```yaml
+resume_cursor:
+  execution_ref: <branch-or-durable-ref>
+  revision: <40-char-revision>
+  completed_through:
+    - <verified-completed-step>
+  next_action: <first-incomplete-verified-step>
+```
+
+If no accepted continuation point exists yet, `resume_cursor: null` is valid. The cursor is navigation metadata only. It does not expand scope, replace Authority, or become Gate evidence.
+
+P33 classifies the observed repository position before resuming:
+
+- `EXACT_CURSOR`: observed HEAD equals `resume_cursor.revision`; resume from `next_action`.
+- `DESCENDANT_CURSOR`: the cursor revision is an ancestor of observed HEAD; inspect only the delta after the cursor, preserve verified valid work, and do not replay completed work.
+- `ANCHOR_DESCENDANT_WITHOUT_CURSOR`: no accepted cursor exists but `task_anchor.revision` is an ancestor of observed HEAD; reconcile completed versus pending work, establish a cursor, then resume at the first incomplete verified step.
+- `DIVERGED`: neither the accepted cursor nor required anchor relation can be established, or repository history/state contradicts Authority or authorized scope; fail closed with `BLOCKED_EXECUTION_DIVERGENCE` or a more specific existing Authority/environment blocker.
+
+A historical expected-HEAD mismatch by itself is not divergence when the observed revision is a valid descendant under the declared anchor/cursor relation.
 
 Direct Primary-to-Primary substantive chaining is forbidden. A completed Primary may suggest the next Skill, but may not automatically continue substantive execution under a different Primary Owner.
 
