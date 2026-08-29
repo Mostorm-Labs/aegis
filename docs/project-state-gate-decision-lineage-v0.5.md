@@ -1,6 +1,6 @@
 # Aegis Project State Gate Decision Lineage v0.5
 
-Status: **Proposed Replacement Authority v0.5 — P21/P22 complete; P20 verification design and P34 acceptance pending.**
+Status: **Proposed Replacement Authority v0.5 — P21/P22 complete; P20 verification design complete; P32 implementation complete; P34 acceptance pending.**
 
 Previous Authority: [Project State v0.4](project-state-manifest-v0.4.md), which remains Current until this replacement passes its Gate and is superseded through P23.
 
@@ -342,6 +342,28 @@ The replacement Authority is not accepted until executable evidence proves all o
 11. **Root PR #9 proof:** after migrating the root fixtures/state and appending the new PR #9 PASS decision, `int-pr9` remains `nonconforming` while `gate-skill-decomposition-v02-pr9` has no active blocker.
 12. **Self-host integrity:** v0.5 schemas parse, root manifests validate, generated `state.json` is reproducible, and the existing Aegis Skillset/Project State/evaluation regressions remain green.
 
+## P32 implementation evidence
+
+Implementation is isolated on PR #14. Root `.aegis/*` remains v0.4; no root migration or Authority promotion is included in the P32 slice.
+
+RED evidence:
+
+- Initial v0.5 lineage/migration oracle: Project State run `33234280222` failed before v0.5 schemas/tooling existed while legacy tests remained green.
+- Cross-snapshot immutability oracle: Project State run `33234756600` failed because `tools.aegis_state.transition_v05` did not yet exist; the remaining Project State suite was green.
+
+Fresh exact-head GREEN evidence for commit `43513094bdb36c638d59c8552a4fbf2d51f10538`:
+
+- Aegis Project State Integrity run `33234803966`: PASS.
+- v0.3/v0.4/v0.5 schema JSON parsing: PASS.
+- v0.4 minimal manifest validation/check: PASS / `STATE_OK`.
+- v0.5 minimal manifest validation/check: PASS / `STATE_OK`.
+- Project State tests: `74/74 PASS`, including immutable-transition, lineage integrity, migration equivalence, and root PR #9 reconciliation.
+- Root v0.4 manifest validation/check: PASS / `STATE_OK`.
+- Aegis Skillset validation: PASS; Skillset regressions: `71/71 PASS` on this branch baseline.
+- Evaluation corpus validation: `34` cases PASS; evaluation regressions: `34/34 PASS`.
+
+The exact-head workflow intentionally runs Project State, Skillset, and evaluation regressions together so P34 does not have to infer cross-system safety from an older commit.
+
 ## Required lifecycle
 
 ```text
@@ -353,15 +375,15 @@ P22 Five-Axis Drift Review  COMPLETE
   ↓
 Project State v0.5 Proposed Replacement Authority
   ↓
-P20 Verification Design
+P20 Verification Design     COMPLETE
   ↓
-P30 Implementation Plan
+P30 Implementation Plan     COMPLETE
   ↓
-P31 Task Packages
+P31 Task Packages           COMPLETE
   ↓
-P32 RED-first implementation
+P32 RED-first implementation COMPLETE
   ↓
-P34 independent Gate Review
+P34 independent Gate Review ← NEXT
   ↓ PASS
 P23 Project State v0.4 → v0.5 supersession
   ↓
