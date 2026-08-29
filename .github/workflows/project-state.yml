@@ -52,9 +52,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Parse project-state v0.3 and v0.4 schemas
+      - name: Parse project-state v0.3, v0.4, and v0.5 schemas
         run: |
-          for version in v0.3 v0.4; do
+          for version in v0.3 v0.4 v0.5; do
             for schema in schemas/project-state/$version/*.json; do
               python3 -m json.tool "$schema" >/dev/null
             done
@@ -66,6 +66,15 @@ jobs:
           if ! python3 -m tools.aegis_state.cli check examples/project-state/minimal; then
             python3 -m tools.aegis_state.cli recompute examples/project-state/minimal > /tmp/minimal-state.json
             diff -u examples/project-state/minimal/.aegis/state.json /tmp/minimal-state.json || true
+            exit 1
+          fi
+      - name: Validate minimal v0.5 project manifests
+        run: python3 -m tools.aegis_state.cli validate examples/project-state/v0.5-minimal
+      - name: Check generated minimal v0.5 project state
+        run: |
+          if ! python3 -m tools.aegis_state.cli check examples/project-state/v0.5-minimal; then
+            python3 -m tools.aegis_state.cli recompute examples/project-state/v0.5-minimal > /tmp/minimal-v05-state.json
+            diff -u examples/project-state/v0.5-minimal/.aegis/state.json /tmp/minimal-v05-state.json || true
             exit 1
           fi
       - name: Run project-state unit tests
