@@ -1,0 +1,22 @@
+{
+  "decisions": [
+    {
+      "evidence_ids": [
+        "ev-g1"
+      ],
+      "gate_id": "G1",
+      "id": "G1::decision::0001",
+      "verdict": "PASS"
+    }
+  ],
+  "gates": [
+    {
+      "authority_ids": [
+        "architecture-v1"
+      ],
+      "id": "G1",
+      "stage": "P34"
+    }
+  ],
+  "schema_version": "0.5"
+}
