@@ -1,0 +1,37 @@
+{
+  "active_stage": "implementation",
+  "awaiting_integrations": [
+    "int-g1"
+  ],
+  "blocking_findings": [
+    "integration int-g1 is awaiting integration into main after Gate PASS"
+  ],
+  "blocking_gate_decisions": [],
+  "blocking_gates": [],
+  "current_gate_decisions": [
+    {
+      "decision_id": "G1::decision::0001",
+      "gate_id": "G1",
+      "verdict": "PASS"
+    }
+  ],
+  "earliest_untrusted_layer": "implementation",
+  "generator_version": "0.5",
+  "historical_gates": [],
+  "integration_applicability": [
+    {
+      "applicability": "current",
+      "integration_id": "int-g1"
+    }
+  ],
+  "integration_conformance": [],
+  "manifest_digest": "d83321966560b5313b69f69bc42556a1e366f9d7f5c7c2dbb96f6567e1f4ddd5",
+  "needs_review_authorities": [],
+  "needs_review_gates": [],
+  "nonconforming_integrations": [],
+  "recommended_handoff": "superpowers:finishing-a-development-branch",
+  "recommended_next_stage": null,
+  "schema_version": "0.5",
+  "stale_authorities": [],
+  "stale_gates": []
+}
