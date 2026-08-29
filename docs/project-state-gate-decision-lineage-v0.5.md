@@ -84,17 +84,17 @@ A later review creates a new decision. It never mutates a previous decision's ve
   ],
   "decisions": [
     {
-      "id": "gate-decision-pr9-p34-01",
+      "id": "gate-skill-decomposition-v02-pr9::decision::0001",
       "gate_id": "gate-skill-decomposition-v02-pr9",
       "verdict": "BLOCKED_EVIDENCE",
       "evidence_ids": ["ev-pr9-task6-preflight"]
     },
     {
-      "id": "gate-decision-pr9-p34-02",
+      "id": "gate-skill-decomposition-v02-pr9::decision::0002",
       "gate_id": "gate-skill-decomposition-v02-pr9",
       "verdict": "PASS",
       "evidence_ids": ["ev-pr9-task6-current"],
-      "supersedes": "gate-decision-pr9-p34-01"
+      "supersedes": "gate-skill-decomposition-v02-pr9::decision::0001"
     }
   ]
 }
@@ -110,6 +110,8 @@ A Gate Contract has:
 
 The contract does not carry a mutable review verdict. Its effective validity is derived from its Authority set.
 
+Every v0.5 Gate Contract must have at least one Gate Decision.
+
 ### Gate Decision rules
 
 A Gate Decision has:
@@ -122,6 +124,17 @@ A Gate Decision has:
 
 Decision records are append-only governance facts. A later review must create a new decision ID.
 
+Decision IDs are deterministic and sequential within one Gate lineage:
+
+```text
+<gate-id>::decision::0001
+<gate-id>::decision::0002
+<gate-id>::decision::0003
+...
+```
+
+The decimal suffix is four-digit zero-padded and monotonically increases by one. Migration creates `0001`; each later P34 re-review appends the next sequence number.
+
 ## Decision lineage
 
 For every Gate:
@@ -130,9 +143,10 @@ For every Gate:
 2. A decision may supersede at most one previous decision.
 3. A decision may be superseded by at most one later decision.
 4. Cycles are invalid.
-5. Exactly one unsuperseded decision must exist when a Gate has decisions.
-6. More than one unsuperseded head is an unresolved decision fork and fails closed to `P21`.
-7. The unique unsuperseded head is the **Current Gate Decision**.
+5. Exactly one unsuperseded decision must exist.
+6. All decisions for the Gate must belong to one connected linear lineage rooted at `::decision::0001`.
+7. More than one unsuperseded head, a disconnected decision, or a sequence gap is invalid manifest state and fails closed before downstream routing; the diagnostic route is `P21`.
+8. The unique unsuperseded head is the **Current Gate Decision**.
 
 Historical decisions remain queryable and retain their original verdicts and evidence.
 
@@ -159,6 +173,8 @@ current decision = PASS or PASS_WITH_FINDINGS
 
 A superseded BLOCKED decision remains historical evidence but is not an active blocker.
 
+The existing `blocking_gates[]` projection remains in v0.5 for compatibility and contains Gate Contract IDs whose **current decision head** is an active BLOCKED verdict. v0.5 additionally exposes `blocking_gate_decisions[]` with the exact decision IDs.
+
 ## Integration semantics
 
 v0.5 Integrations bind to a specific Gate Decision, not merely to a mutable Gate Contract.
@@ -170,7 +186,7 @@ Canonical v0.5 shape:
   "id": "int-pr9",
   "kind": "pull_request",
   "ref": "https://github.com/Mostorm-Labs/aegis/pull/9",
-  "gate_decision_id": "gate-decision-pr9-p34-01",
+  "gate_decision_id": "gate-skill-decomposition-v02-pr9::decision::0001",
   "status": "integrated",
   "target_ref": "main",
   "evidence_ids": ["ev-pr9-merged"],
@@ -181,7 +197,7 @@ Canonical v0.5 shape:
 For v0.5, every Integration lifecycle record must bind the exact decision relevant to that occurrence/action:
 
 - `integrated`: the decision in force for the actual integration occurrence;
-- `awaiting_integration`: the PASS/PASS_WITH_FINDINGS decision authorizing the proposed integration;
+- `awaiting_integration`: the current PASS/PASS_WITH_FINDINGS decision authorizing the proposed integration;
 - `closed_unmerged`: the final decision associated with that completed candidate.
 
 The Gate Contract is reached through `gate_decision_id -> decision.gate_id`; duplicating a second authored `gate_id` on the Integration is intentionally avoided to prevent drift.
@@ -229,15 +245,16 @@ Required projections include:
   "current_gate_decisions": [
     {
       "gate_id": "gate-skill-decomposition-v02-pr9",
-      "decision_id": "gate-decision-pr9-p34-02",
+      "decision_id": "gate-skill-decomposition-v02-pr9::decision::0002",
       "verdict": "PASS"
     }
   ],
+  "blocking_gates": [],
   "blocking_gate_decisions": [],
   "integration_conformance": [
     {
       "integration_id": "int-pr9",
-      "gate_decision_id": "gate-decision-pr9-p34-01",
+      "gate_decision_id": "gate-skill-decomposition-v02-pr9::decision::0001",
       "conformance": "nonconforming"
     }
   ],
@@ -245,18 +262,18 @@ Required projections include:
 }
 ```
 
-`blocking_gates[]` may remain as a compatibility projection of Gate IDs, but it must be derived from the current decision head rather than from historical decisions.
-
 ## Evidence semantics
 
 Evidence remains separate from decisions.
 
-A Gate Decision records which evidence IDs supported that decision occurrence. Evidence status can later become unavailable/superseded without mutating the decision's historical verdict. That may affect whether the decision can support current actionability, but it must not rewrite the historical decision itself.
+A Gate Decision records which evidence IDs supported that decision occurrence. The decision's `evidence_ids[]` membership is immutable after that decision is authored. Evidence registry status may later become unavailable or superseded without mutating the decision's historical verdict.
 
 For a Current Gate Decision:
 
 - unavailable required evidence makes the current decision ineffective for downstream action and routes to verification review;
 - the historical verdict remains immutable.
+
+For a superseded historical decision, later evidence availability changes do not reactivate it as a current blocker and do not change historical Integration conformance.
 
 ## Migration from v0.4
 
@@ -265,20 +282,14 @@ v0.5 is opt-in. v0.4 manifests retain exact v0.4 behavior.
 A deterministic migration from v0.4 to v0.5 must:
 
 1. preserve every existing Gate ID as a Gate Contract ID;
-2. create exactly one legacy decision for each v0.4 Gate using the existing verdict and evidence IDs;
+2. create exactly one `::<decision>::0001`-style legacy decision for each v0.4 Gate using the existing verdict and evidence IDs, specifically `<gate-id>::decision::0001`;
 3. preserve the original Gate stage and Authority set on the Gate Contract;
-4. replace each Integration's `gate_id` with the corresponding generated legacy `gate_decision_id`;
+4. replace each Integration's `gate_id` with the corresponding generated `gate_decision_id`;
 5. preserve every Integration occurrence status, target, revision, and occurrence evidence;
 6. reproduce the same pre-migration current blockers and Integration conformance before any new decision is appended;
 7. introduce no nondeterministic timestamps or generated IDs.
 
-Legacy decision IDs must be deterministic from the Gate identity. The exact naming rule is part of implementation authority and must be frozen before coding; recommended form:
-
-```text
-<gate-id>::decision::0001
-```
-
-A later re-review appends `::0002`, `::0003`, and so on within that Gate lineage.
+After migration, a later re-review appends `::decision::0002`, then `0003`, and so on.
 
 ## Backward compatibility
 
@@ -294,10 +305,10 @@ No v0.5 behavior may reinterpret historical v0.3/v0.4 projects unless those mani
 Once v0.5 itself passes P34 and is promoted through P23:
 
 1. migrate the root Project State to v0.5;
-2. preserve the original PR #9 decision as `BLOCKED_EVIDENCE`;
+2. preserve the original PR #9 decision as `BLOCKED_EVIDENCE` in `gate-skill-decomposition-v02-pr9::decision::0001`;
 3. bind `int-pr9` permanently to that original decision;
-4. append a new PR #9 P34 decision carrying the accepted 4/4 installed-platform evidence and verdict `PASS`;
-5. make the new PASS decision the unique current lineage head;
+4. append `gate-skill-decomposition-v02-pr9::decision::0002` carrying the accepted 4/4 installed-platform evidence and verdict `PASS`;
+5. make `0002` the unique current lineage head;
 6. confirm `int-pr9` remains `nonconforming` historical truth;
 7. then execute Skill Decomposition v0.2 P23 supersession.
 
@@ -323,9 +334,9 @@ The replacement Authority is not accepted until executable evidence proves all o
 3. **Unique current head:** current Gate verdict/actionability is derived from the unique unsuperseded decision head.
 4. **Historical integration preservation:** an Integration bound to the old BLOCKED decision remains `nonconforming` after the new PASS decision becomes current.
 5. **Blocker clearance:** the superseded historical BLOCKED decision does not remain in current blockers.
-6. **Fork fail-closed:** two unsuperseded decision heads for one Gate are rejected or route deterministically to `P21` as unresolved Authority/Gate state.
+6. **Fork fail-closed:** two unsuperseded decision heads, disconnected lineages, or sequence gaps are rejected and diagnosed as requiring `P21`.
 7. **Lineage integrity:** cross-Gate supersession, dangling decision refs, decision cycles, duplicate decision IDs, and Integration refs to missing decisions are rejected.
-8. **Awaiting integration safety:** `awaiting_integration` requires a current-effective PASS/PASS_WITH_FINDINGS decision and cannot use a historical/superseded/blocked decision.
+8. **Awaiting integration safety:** `awaiting_integration` requires the current-effective PASS/PASS_WITH_FINDINGS decision and cannot use a historical/superseded/blocked decision.
 9. **Migration equivalence:** deterministic v0.4 → v0.5 migration reproduces the pre-migration v0.4 current blockers, applicability, and conformance before any new decision is appended.
 10. **Version isolation:** v0.3 and v0.4 regression behavior remains unchanged.
 11. **Root PR #9 proof:** after migrating the root fixtures/state and appending the new PR #9 PASS decision, `int-pr9` remains `nonconforming` while `gate-skill-decomposition-v02-pr9` has no active blocker.
