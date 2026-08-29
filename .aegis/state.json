@@ -28,6 +28,11 @@
       "verdict": "PASS"
     },
     {
+      "decision_id": "gate-execution-surface-v02-pr16::decision::0001",
+      "gate_id": "gate-execution-surface-v02-pr16",
+      "verdict": "PASS"
+    },
+    {
       "decision_id": "gate-openai-provider-tooling-pr3::decision::0001",
       "gate_id": "gate-openai-provider-tooling-pr3",
       "verdict": "PASS"
@@ -71,6 +76,7 @@
   "earliest_untrusted_layer": "verification",
   "generator_version": "0.5",
   "historical_gates": [
+    "gate-execution-surface-v01-pr10",
     "gate-project-state-pr4",
     "gate-project-state-v02-pr7",
     "gate-project-state-v03-pr8",
@@ -82,7 +88,7 @@
       "integration_id": "int-pr1"
     },
     {
-      "applicability": "current",
+      "applicability": "historical",
       "integration_id": "int-pr10"
     },
     {
@@ -92,6 +98,10 @@
     {
       "applicability": "current",
       "integration_id": "int-pr14"
+    },
+    {
+      "applicability": "current",
+      "integration_id": "int-pr16"
     },
     {
       "applicability": "current",
@@ -145,6 +155,11 @@
     },
     {
       "conformance": "conforming",
+      "gate_decision_id": "gate-execution-surface-v02-pr16::decision::0001",
+      "integration_id": "int-pr16"
+    },
+    {
+      "conformance": "conforming",
       "gate_decision_id": "gate-eval-tooling-pr2::decision::0001",
       "integration_id": "int-pr2"
     },
@@ -174,7 +189,7 @@
       "integration_id": "int-pr9"
     }
   ],
-  "manifest_digest": "2a5e221dd7075521bab7fb2fc391723326cda4f78216cd07ec82d9b5562886fa",
+  "manifest_digest": "d154e4f7fcf52e6e9eaef8977a2e9370333b0599ae6696a95ce8729186510d74",
   "needs_review_authorities": [],
   "needs_review_gates": [],
   "nonconforming_integrations": [

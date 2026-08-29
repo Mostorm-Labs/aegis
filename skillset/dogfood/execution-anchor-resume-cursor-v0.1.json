@@ -1,0 +1,33 @@
+{
+  "schema_version": "0.1",
+  "scenario_id": "ES-RC-001",
+  "purpose": "prove_descendant_resume_without_replay",
+  "stage": "P33",
+  "authority_refs": [
+    "docs/execution-surface-contract-v0.2.md",
+    "skillset/shared/handoff-contract.md",
+    "skillset/skills/aegis-implementation/SKILL.md"
+  ],
+  "task_anchor": {
+    "revision": "1111111111111111111111111111111111111111",
+    "relation": "ancestor"
+  },
+  "resume_cursor": {
+    "execution_ref": "codex/example-resume-branch",
+    "revision": "2222222222222222222222222222222222222222",
+    "completed_through": [
+      "authorized implementation",
+      "focused verification"
+    ],
+    "next_action": "review descendant delta before the first incomplete verified step"
+  },
+  "observed": {
+    "revision": "3333333333333333333333333333333333333333",
+    "relation_to_anchor": "descendant",
+    "relation_to_cursor": "descendant"
+  },
+  "decision": "P33_RESUME",
+  "reconciliation_class": "DESCENDANT_CURSOR",
+  "replay_completed_work": false,
+  "note": "Synthetic revisions model ancestry semantics only; they are not claims about repository Git objects."
+}

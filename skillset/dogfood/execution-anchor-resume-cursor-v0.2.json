@@ -1,0 +1,103 @@
+{
+  "schema_version": "0.2",
+  "purpose": "cover_all_p33_execution_position_outcomes",
+  "authority_refs": [
+    "docs/execution-surface-contract-v0.2.md",
+    "skillset/shared/handoff-contract.md",
+    "skillset/skills/aegis-implementation/SKILL.md"
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "ES-RC-EXACT-001",
+      "stage": "P33",
+      "task_anchor": {
+        "revision": "1111111111111111111111111111111111111111",
+        "relation": "ancestor"
+      },
+      "resume_cursor": {
+        "execution_ref": "codex/example-exact-cursor",
+        "revision": "2222222222222222222222222222222222222222",
+        "completed_through": [
+          "authorized implementation"
+        ],
+        "next_action": "run the first incomplete verified step"
+      },
+      "observed": {
+        "revision": "2222222222222222222222222222222222222222",
+        "relation_to_anchor": "descendant",
+        "relation_to_cursor": "equal"
+      },
+      "reconciliation_class": "EXACT_CURSOR",
+      "decision": "P33_RESUME",
+      "replay_completed_work": false
+    },
+    {
+      "scenario_id": "ES-RC-DESC-001",
+      "stage": "P33",
+      "task_anchor": {
+        "revision": "1111111111111111111111111111111111111111",
+        "relation": "ancestor"
+      },
+      "resume_cursor": {
+        "execution_ref": "codex/example-descendant-cursor",
+        "revision": "2222222222222222222222222222222222222222",
+        "completed_through": [
+          "authorized implementation",
+          "focused verification"
+        ],
+        "next_action": "review descendant delta before the first incomplete verified step"
+      },
+      "observed": {
+        "revision": "3333333333333333333333333333333333333333",
+        "relation_to_anchor": "descendant",
+        "relation_to_cursor": "descendant"
+      },
+      "reconciliation_class": "DESCENDANT_CURSOR",
+      "decision": "P33_RESUME",
+      "replay_completed_work": false
+    },
+    {
+      "scenario_id": "ES-RC-ANCHOR-001",
+      "stage": "P33",
+      "task_anchor": {
+        "revision": "1111111111111111111111111111111111111111",
+        "relation": "ancestor"
+      },
+      "resume_cursor": null,
+      "observed": {
+        "revision": "2222222222222222222222222222222222222222",
+        "relation_to_anchor": "descendant"
+      },
+      "reconciliation_class": "ANCHOR_DESCENDANT_WITHOUT_CURSOR",
+      "decision": "P33_RESUME",
+      "establish_resume_cursor": true,
+      "replay_completed_work": false
+    },
+    {
+      "scenario_id": "ES-RC-DIVERGED-001",
+      "stage": "P33",
+      "task_anchor": {
+        "revision": "1111111111111111111111111111111111111111",
+        "relation": "ancestor"
+      },
+      "resume_cursor": {
+        "execution_ref": "codex/example-diverged-cursor",
+        "revision": "2222222222222222222222222222222222222222",
+        "completed_through": [
+          "authorized implementation"
+        ],
+        "next_action": "run the first incomplete verified step"
+      },
+      "observed": {
+        "revision": "4444444444444444444444444444444444444444",
+        "relation_to_anchor": "unrelated",
+        "relation_to_cursor": "unrelated"
+      },
+      "reconciliation_class": "DIVERGED",
+      "decision": "BLOCKED_EXECUTION_DIVERGENCE",
+      "continue_execution": false,
+      "replay_completed_work": false
+    }
+  ],
+  "note": "Synthetic revisions model execution-position semantics only; they are not claims about repository Git objects."
+}
