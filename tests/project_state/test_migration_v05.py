@@ -8,9 +8,6 @@ from tools.aegis_state.migrate_v05 import legacy_decision_id, migrate_v04_to_v05
 from tools.aegis_state.model import load_manifests, validate_manifests
 
 
-ROOT = Path(__file__).resolve().parents[2]
-
-
 def write_v04(root: Path):
     aegis = root / ".aegis"
     aegis.mkdir(parents=True)
@@ -183,46 +180,64 @@ class MigrationV05Tests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "gate validity drift"):
                 migrate_v04_to_v05(source)
 
-    def test_root_pr9_reconciliation_preserves_nonconforming_occurrence(self):
-        root_v04 = load_manifests(ROOT)
-        self.assertEqual("0.4", root_v04.schema_version)
-        migrated = migrate_v04_to_v05(root_v04)
-
-        gate_id = "gate-skill-decomposition-v02-pr9"
-        d1 = legacy_decision_id(gate_id)
-        d2 = f"{gate_id}::decision::0002"
-        migrated.evidence["evidence"].append(
-            {
-                "id": "ev-pr9-task6-accepted",
-                "type": "gate_review",
-                "ref": "https://github.com/Mostorm-Labs/aegis/pull/9#issuecomment-5459909250",
-                "status": "available",
-                "subject_ids": [d2],
-            }
-        )
-        migrated.gates["decisions"].append(
-            {
-                "id": d2,
+    def test_pr9_reconciliation_preserves_nonconforming_occurrence(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_v04(root)
+            gate_id = "gate-skill-decomposition-v02-pr9"
+            gates_path = root / ".aegis" / "gates.json"
+            gates = json.loads(gates_path.read_text(encoding="utf-8"))
+            gates["gates"][0]["id"] = gate_id
+            gates_path.write_text(json.dumps(gates), encoding="utf-8")
+            integrations_path = root / ".aegis" / "integrations.json"
+            integrations = json.loads(integrations_path.read_text(encoding="utf-8"))
+            integrations["integrations"][0].update({
+                "id": "int-pr9",
+                "ref": "https://github.com/Mostorm-Labs/aegis/pull/9",
                 "gate_id": gate_id,
-                "verdict": "PASS",
-                "evidence_ids": ["ev-pr9-task6-accepted"],
-                "supersedes": d1,
-            }
-        )
+                "integrated_revision": "a0c6b0103b119f517c7adf9ec4a90b5963e5e1e3",
+            })
+            integrations_path.write_text(json.dumps(integrations), encoding="utf-8")
 
-        self.assertEqual([], validate_manifests(migrated))
-        state = compute_state(migrated)
-        self.assertNotIn(gate_id, state["blocking_gates"])
-        self.assertIn("int-pr9", state["nonconforming_integrations"])
-        pr9_conformance = next(
-            item for item in state["integration_conformance"] if item["integration_id"] == "int-pr9"
-        )
-        self.assertEqual(d1, pr9_conformance["gate_decision_id"])
-        self.assertEqual("nonconforming", pr9_conformance["conformance"])
-        self.assertIn(
-            {"gate_id": gate_id, "decision_id": d2, "verdict": "PASS"},
-            state["current_gate_decisions"],
-        )
+            root_v04 = load_manifests(root)
+            self.assertEqual("0.4", root_v04.schema_version)
+            self.assertEqual([], validate_manifests(root_v04))
+            migrated = migrate_v04_to_v05(root_v04)
+
+            d1 = legacy_decision_id(gate_id)
+            d2 = f"{gate_id}::decision::0002"
+            migrated.evidence["evidence"].append(
+                {
+                    "id": "ev-pr9-task6-accepted",
+                    "type": "gate_review",
+                    "ref": "https://github.com/Mostorm-Labs/aegis/pull/9#issuecomment-5459909250",
+                    "status": "available",
+                    "subject_ids": [d2],
+                }
+            )
+            migrated.gates["decisions"].append(
+                {
+                    "id": d2,
+                    "gate_id": gate_id,
+                    "verdict": "PASS",
+                    "evidence_ids": ["ev-pr9-task6-accepted"],
+                    "supersedes": d1,
+                }
+            )
+
+            self.assertEqual([], validate_manifests(migrated))
+            state = compute_state(migrated)
+            self.assertNotIn(gate_id, state["blocking_gates"])
+            self.assertIn("int-pr9", state["nonconforming_integrations"])
+            pr9_conformance = next(
+                item for item in state["integration_conformance"] if item["integration_id"] == "int-pr9"
+            )
+            self.assertEqual(d1, pr9_conformance["gate_decision_id"])
+            self.assertEqual("nonconforming", pr9_conformance["conformance"])
+            self.assertIn(
+                {"gate_id": gate_id, "decision_id": d2, "verdict": "PASS"},
+                state["current_gate_decisions"],
+            )
 
 
 if __name__ == "__main__":
