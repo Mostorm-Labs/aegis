@@ -351,16 +351,16 @@ RED evidence:
 - Initial v0.5 lineage/migration oracle: Project State run `33234280222` failed before v0.5 schemas/tooling existed while legacy tests remained green.
 - Cross-snapshot immutability oracle: Project State run `33234756600` failed because `tools.aegis_state.transition_v05` did not yet exist; the remaining Project State suite was green.
 
-Fresh exact-head GREEN evidence for implementation head `05bf0199a1448e6ec941a22ef3e51d365e997b1f`:
+Fresh exact-head GREEN evidence is recorded on PR #14 as reviewer-accessible metadata rather than embedded as a commit-specific literal here. The required verification surface is:
 
-- Aegis Project State Integrity run `33234904485`: PASS.
+- Aegis Project State Integrity: PASS on the exact review head.
 - v0.3/v0.4/v0.5 schema JSON parsing: PASS.
 - v0.4 minimal manifest validation/check: PASS / `STATE_OK`.
 - v0.5 minimal manifest validation/check: PASS / `STATE_OK`.
-- Project State tests: `74/74 PASS`, including immutable-transition, lineage integrity, migration equivalence, and root PR #9 reconciliation.
+- Project State regressions include immutable-transition, lineage integrity, migration equivalence, and root PR #9 reconciliation.
 - Root v0.4 manifest validation/check: PASS / `STATE_OK`.
-- Aegis Skillset validation: PASS; Skillset regressions: `71/71 PASS` on this branch baseline.
-- Evaluation corpus validation: `34` cases PASS; evaluation regressions: `34/34 PASS`.
+- Aegis Skillset validation/regressions: PASS.
+- Evaluation corpus/regressions: PASS.
 
 The exact-head workflow intentionally runs Project State, Skillset, and evaluation regressions together so P34 does not have to infer cross-system safety from an older commit.
 
