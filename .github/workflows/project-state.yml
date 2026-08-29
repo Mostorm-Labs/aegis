@@ -87,14 +87,46 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Validate Aegis root v0.4 manifests
+      - name: Validate Aegis root manifests
         run: python3 -m tools.aegis_state.cli validate .
-      - name: Check Aegis root generated v0.4 state
+      - name: Check Aegis root generated state
         run: |
           if ! python3 -m tools.aegis_state.cli check .; then
             python3 -m tools.aegis_state.cli recompute . > /tmp/root-state.json
             diff -u .aegis/state.json /tmp/root-state.json || true
             exit 1
+          fi
+      - name: Enforce v0.5 Gate transition history on pull requests
+        if: github.event_name == 'pull_request'
+        env:
+          PREVIOUS_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          CURRENT_VERSION=$(python3 -c 'import json; print(json.load(open(".aegis/project.json", encoding="utf-8"))["schema_version"])')
+          git fetch origin "$PREVIOUS_SHA" --depth=1
+          PREVIOUS_VERSION=$(git show "$PREVIOUS_SHA:.aegis/project.json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["schema_version"])')
+          if [ "$CURRENT_VERSION" = "0.5" ] && [ "$PREVIOUS_VERSION" = "0.5" ]; then
+            rm -rf /tmp/aegis-previous
+            mkdir -p /tmp/aegis-previous
+            git archive "$PREVIOUS_SHA" .aegis | tar -x -C /tmp/aegis-previous
+            python3 -m tools.aegis_state.cli transition-check /tmp/aegis-previous .
+          else
+            echo "TRANSITION_CHECK_SKIPPED: previous=$PREVIOUS_VERSION current=$CURRENT_VERSION"
+          fi
+      - name: Enforce v0.5 Gate transition history on pushes
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        env:
+          PREVIOUS_SHA: ${{ github.event.before }}
+        run: |
+          CURRENT_VERSION=$(python3 -c 'import json; print(json.load(open(".aegis/project.json", encoding="utf-8"))["schema_version"])')
+          git fetch origin "$PREVIOUS_SHA" --depth=1
+          PREVIOUS_VERSION=$(git show "$PREVIOUS_SHA:.aegis/project.json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["schema_version"])')
+          if [ "$CURRENT_VERSION" = "0.5" ] && [ "$PREVIOUS_VERSION" = "0.5" ]; then
+            rm -rf /tmp/aegis-previous
+            mkdir -p /tmp/aegis-previous
+            git archive "$PREVIOUS_SHA" .aegis | tar -x -C /tmp/aegis-previous
+            python3 -m tools.aegis_state.cli transition-check /tmp/aegis-previous .
+          else
+            echo "TRANSITION_CHECK_SKIPPED: previous=$PREVIOUS_VERSION current=$CURRENT_VERSION"
           fi
       - name: Validate Aegis skillset
         run: python3 -m tools.aegis_skillset.cli validate .
