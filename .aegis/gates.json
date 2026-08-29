@@ -1,1 +1,29 @@
-{"schema_version":"0.4","gates":[{"id":"gate-eval-framework-pr1","stage":"P34","verdict":"PASS","validity":"current","authority_ids":["aegis-evaluation-framework-v0.1"],"evidence_ids":["ev-pr1-merged","ev-pr1-ci"]},{"id":"gate-eval-tooling-pr2","stage":"P34","verdict":"PASS","validity":"current","authority_ids":["aegis-evaluation-tooling-v0.1"],"evidence_ids":["ev-pr2-merged","ev-pr2-ci"]},{"id":"gate-openai-provider-tooling-pr3","stage":"P34","verdict":"PASS","validity":"current","authority_ids":["aegis-openai-baseline-v0.1"],"evidence_ids":["ev-pr3-ci","ev-pr3-merged"]},{"id":"gate-openai-real-baseline","stage":"P34","verdict":"BLOCKED_ENVIRONMENT","validity":"current","authority_ids":["aegis-openai-baseline-v0.1"],"evidence_ids":["ev-openai-env-block"]},{"id":"gate-project-state-pr4","stage":"P34","verdict":"PASS","validity":"stale","authority_ids":["aegis-project-state-v0.1"],"evidence_ids":["ev-pr4-ci","ev-pr4-merged"]},{"id":"gate-project-state-v02-pr7","stage":"P34","verdict":"PASS_WITH_FINDINGS","validity":"stale","authority_ids":["aegis-project-state-v0.2"],"evidence_ids":["ev-pr7-p34","ev-pr7-merged"]},{"id":"gate-project-state-v03-pr8","stage":"P34","verdict":"PASS","validity":"current","authority_ids":["aegis-project-state-v0.3"],"evidence_ids":["ev-pr8-p34","ev-pr8-merged"]},{"id":"gate-skill-decomposition-v02-pr9","stage":"P34","verdict":"BLOCKED_EVIDENCE","validity":"current","authority_ids":["aegis-skill-decomposition-v0.2"],"evidence_ids":["ev-pr9-task6-preflight","ev-pr9-task6-rerun-state","ev-pr9-f09-05","ev-pr9-task6-ci-33053118456"]},{"id":"gate-project-state-v04-pr11","stage":"P34","verdict":"PASS","validity":"current","authority_ids":["aegis-project-state-v0.4"],"evidence_ids":["ev-f09-06-authority","ev-pr11-project-state-ci-33163536074","ev-pr11-skillset-ci-33163536133","ev-pr11-p34"]},{"id":"gate-execution-surface-v01-pr10","stage":"P34","verdict":"PASS","validity":"current","authority_ids":["aegis-execution-surface-v0.1"],"evidence_ids":["ev-pr10-es-bd-001","ev-pr10-project-state-ci-33184095219","ev-pr10-skillset-ci-33184095315","ev-pr10-p34"]}]}
+{
+  "schema_version": "0.5",
+  "gates": [
+    {"id":"gate-eval-framework-pr1","stage":"P34","authority_ids":["aegis-evaluation-framework-v0.1"]},
+    {"id":"gate-eval-tooling-pr2","stage":"P34","authority_ids":["aegis-evaluation-tooling-v0.1"]},
+    {"id":"gate-openai-provider-tooling-pr3","stage":"P34","authority_ids":["aegis-openai-baseline-v0.1"]},
+    {"id":"gate-openai-real-baseline","stage":"P34","authority_ids":["aegis-openai-baseline-v0.1"]},
+    {"id":"gate-project-state-pr4","stage":"P34","authority_ids":["aegis-project-state-v0.1"]},
+    {"id":"gate-project-state-v02-pr7","stage":"P34","authority_ids":["aegis-project-state-v0.2"]},
+    {"id":"gate-project-state-v03-pr8","stage":"P34","authority_ids":["aegis-project-state-v0.3"]},
+    {"id":"gate-skill-decomposition-v02-pr9","stage":"P34","authority_ids":["aegis-skill-decomposition-v0.2"]},
+    {"id":"gate-project-state-v04-pr11","stage":"P34","authority_ids":["aegis-project-state-v0.4"]},
+    {"id":"gate-execution-surface-v01-pr10","stage":"P34","authority_ids":["aegis-execution-surface-v0.1"]},
+    {"id":"gate-project-state-v05-pr14","stage":"P34","authority_ids":["aegis-project-state-v0.5"]}
+  ],
+  "decisions": [
+    {"id":"gate-eval-framework-pr1::decision::0001","gate_id":"gate-eval-framework-pr1","verdict":"PASS","evidence_ids":["ev-pr1-merged","ev-pr1-ci"]},
+    {"id":"gate-eval-tooling-pr2::decision::0001","gate_id":"gate-eval-tooling-pr2","verdict":"PASS","evidence_ids":["ev-pr2-merged","ev-pr2-ci"]},
+    {"id":"gate-openai-provider-tooling-pr3::decision::0001","gate_id":"gate-openai-provider-tooling-pr3","verdict":"PASS","evidence_ids":["ev-pr3-ci","ev-pr3-merged"]},
+    {"id":"gate-openai-real-baseline::decision::0001","gate_id":"gate-openai-real-baseline","verdict":"BLOCKED_ENVIRONMENT","evidence_ids":["ev-openai-env-block"]},
+    {"id":"gate-project-state-pr4::decision::0001","gate_id":"gate-project-state-pr4","verdict":"PASS","evidence_ids":["ev-pr4-ci","ev-pr4-merged"]},
+    {"id":"gate-project-state-v02-pr7::decision::0001","gate_id":"gate-project-state-v02-pr7","verdict":"PASS_WITH_FINDINGS","evidence_ids":["ev-pr7-p34","ev-pr7-merged"]},
+    {"id":"gate-project-state-v03-pr8::decision::0001","gate_id":"gate-project-state-v03-pr8","verdict":"PASS","evidence_ids":["ev-pr8-p34","ev-pr8-merged"]},
+    {"id":"gate-skill-decomposition-v02-pr9::decision::0001","gate_id":"gate-skill-decomposition-v02-pr9","verdict":"BLOCKED_EVIDENCE","evidence_ids":["ev-pr9-task6-preflight","ev-pr9-task6-rerun-state","ev-pr9-f09-05","ev-pr9-task6-ci-33053118456"]},
+    {"id":"gate-project-state-v04-pr11::decision::0001","gate_id":"gate-project-state-v04-pr11","verdict":"PASS","evidence_ids":["ev-f09-06-authority","ev-pr11-project-state-ci-33163536074","ev-pr11-skillset-ci-33163536133","ev-pr11-p34"]},
+    {"id":"gate-execution-surface-v01-pr10::decision::0001","gate_id":"gate-execution-surface-v01-pr10","verdict":"PASS","evidence_ids":["ev-pr10-es-bd-001","ev-pr10-project-state-ci-33184095219","ev-pr10-skillset-ci-33184095315","ev-pr10-p34"]},
+    {"id":"gate-project-state-v05-pr14::decision::0001","gate_id":"gate-project-state-v05-pr14","verdict":"PASS","evidence_ids":["ev-f09-07-authority","ev-pr14-project-state-ci-33236194931","ev-pr14-p34"]}
+  ]
+}
