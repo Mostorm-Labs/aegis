@@ -5,8 +5,11 @@ on:
     paths:
       - "skillset/**"
       - "skills/**"
+      - ".agents/plugins/**"
+      - "plugins/aegis/**"
       - "tools/aegis_skillset/**"
       - "scripts/build_skillset.py"
+      - "scripts/build_openai_plugin_materialization.py"
       - "scripts/validate_generated_skills.py"
       - "tests/skillset/**"
       - "evals/providers/openai/bundle.py"
@@ -27,8 +30,11 @@ on:
     paths:
       - "skillset/**"
       - "skills/**"
+      - ".agents/plugins/**"
+      - "plugins/aegis/**"
       - "tools/aegis_skillset/**"
       - "scripts/build_skillset.py"
+      - "scripts/build_openai_plugin_materialization.py"
       - "scripts/validate_generated_skills.py"
       - "tests/skillset/**"
       - "evals/providers/openai/bundle.py"
@@ -66,6 +72,8 @@ jobs:
         run: python3 -m tools.aegis_skillset.cli distribution-check .
       - name: Check Aegis release manifest
         run: python3 scripts/build_aegis_distributions.py --check
+      - name: Check OpenAI native Plugin materialization
+        run: python3 scripts/build_openai_plugin_materialization.py --release-version 0.1.0-beta.1 --check
       - name: Build Aegis test distribution source bundles
         run: python3 scripts/build_aegis_distributions.py --package-dir /tmp/aegis-plugin-dist
       - name: Upload Aegis test distribution source bundles
