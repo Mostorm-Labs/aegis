@@ -63,7 +63,7 @@ The `stage_owner` remains the Primary Owner across a surface handoff unless a se
 
 A task package tells the executor what is authorized. A `task_anchor` tells repository execution what trusted history the task must descend from. A `resume_cursor` tells the executor where previously reconciled authorized execution currently is.
 
-Repository-backed packages should encode a stable anchor such as:
+Any repository-backed package whose execution depends on a repository baseline MUST include a non-null `task_anchor`:
 
 ```yaml
 task_anchor:
@@ -73,7 +73,7 @@ task_anchor:
 
 `relation: ancestor` means the anchor revision must be an ancestor of the accepted starting or resume revision. It does not mean the anchor must equal HEAD. A resumable task must not use historical HEAD equality as its only starting-state predicate.
 
-An accepted P33 continuation may additionally carry:
+`resume_cursor` is nullable at the schema level. When a control-plane-accepted P33 continuation point is known, the handoff MUST include a non-null `resume_cursor`:
 
 ```yaml
 resume_cursor:
@@ -84,7 +84,7 @@ resume_cursor:
   next_action: <first-incomplete-verified-step>
 ```
 
-The cursor is navigation metadata only. It does not expand scope, replace Authority, or become Gate evidence.
+If no accepted continuation point exists yet, `resume_cursor: null` is valid. The cursor is navigation metadata only. It does not expand scope, replace Authority, or become Gate evidence.
 
 P33 classifies the observed repository position before resuming:
 

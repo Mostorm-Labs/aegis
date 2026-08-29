@@ -24,8 +24,8 @@ Read [references/implementation-control.md](references/implementation-control.md
 - `P30` Implementation Planning and `P31` Task Packaging default to `CONTROL_REASONING`.
 - `P32` Implementation and `P33` Resume Interrupted Work default to `CODE_EXECUTION` when a suitable coding surface is available.
 - Before a `CONTROL_REASONING -> CODE_EXECUTION` transfer, produce an approved task package and carry it as `package_ref` in a `surface_handoff`.
-- For repository-backed execution, encode a stable `task_anchor` describing the trusted ancestry relation. `Task Anchor != Execution Cursor`.
-- When P33 has an accepted continuation point, carry an optional `resume_cursor` with the execution ref, accepted revision, verified `completed_through`, and `next_action`.
+- For repository-backed execution that depends on a repository baseline, the package MUST carry a non-null `task_anchor` describing the trusted ancestry relation. `Task Anchor != Execution Cursor`.
+- `resume_cursor` is nullable at the schema level. When P33 has an accepted continuation point, the handoff MUST carry a non-null `resume_cursor` with the execution ref, accepted revision, verified `completed_through`, and `next_action`. If no accepted continuation point exists yet, `resume_cursor: null` is valid.
 - A resumable task must not use historical HEAD equality as its only starting-state predicate. A valid descendant of the anchor/cursor is reconciled rather than rejected solely because HEAD advanced.
 - The coding surface still inspects current repository state and must return a blocker rather than invent missing Authority or semantic decisions.
 - Before returning P32/P33 results to `CONTROL_REVIEW`, materialize the exact result into a reviewer-accessible durable evidence boundary and return its `materialized_ref`. A local-only commit/worktree/test transcript is not sufficient `CONTROL_REVIEW` evidence.
