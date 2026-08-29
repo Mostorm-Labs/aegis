@@ -16,7 +16,7 @@ def decision(decision_id, verdict, *, gate_id="G1", evidence_ids=None, supersede
         "id": decision_id,
         "gate_id": gate_id,
         "verdict": verdict,
-        "evidence_ids": list(evidence_ids or ["ev-block"]),
+        "evidence_ids": list(["ev-block"] if evidence_ids is None else evidence_ids),
     }
     if supersedes is not None:
         item["supersedes"] = supersedes
@@ -33,24 +33,26 @@ def write_v05(
 ):
     aegis = root / ".aegis"
     aegis.mkdir(parents=True)
-    decisions = list(decisions or [decision(D1, "BLOCKED_EVIDENCE")])
+    decisions = list([decision(D1, "BLOCKED_EVIDENCE")] if decisions is None else decisions)
     gates = list(
-        gates
-        or [
+        [
             {
                 "id": "G1",
                 "stage": "P34",
                 "authority_ids": ["auth"],
             }
         ]
+        if gates is None
+        else gates
     )
     evidence = list(
-        evidence
-        or [
+        [
             {"id": "ev-block", "type": "gate_review", "ref": "gate://blocked", "status": "available"},
             {"id": "ev-pass", "type": "gate_review", "ref": "gate://pass", "status": "available"},
             {"id": "ev-occurrence", "type": "repository_integration", "ref": "git://abc123", "status": "available"},
         ]
+        if evidence is None
+        else evidence
     )
     if integrations is None:
         integrations = [
