@@ -61,8 +61,8 @@ class PluginPackageTests(unittest.TestCase):
 
             zip_paths = sorted(kit.glob("*.zip"))
             self.assertEqual(
-                [f"{name}.zip" for name in sorted(expected_skills)],
-                [path.name for path in zip_paths],
+                sorted(f"{name}.zip" for name in expected_skills),
+                sorted(path.name for path in zip_paths),
             )
             self.assertEqual(len(expected_skills), 9)
 
