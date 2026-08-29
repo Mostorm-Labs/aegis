@@ -1,0 +1,35 @@
+{
+  "schema_version": "0.2",
+  "case_id": "09-01-composite-fallback",
+  "fresh_platform_event": true,
+  "complete_response_captured": true,
+  "platform_event_id": "task6-case4-20260829-01",
+  "materialization_ref": "https://github.com/Mostorm-Labs/aegis/pull/13",
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "prompt": "Only composite Aegis is installed; design a semantic schema.",
+  "capture": {
+    "ui_observation": "Used aegis skill; Composite Aegis recognized that no P12 specialist was installed, retained compatibility ownership, and returned the terminal blocked result without invoking a specialist.",
+    "screenshot_sha256": "dce86c59a4073e4ba17ee809fbaf4fa9cb524a78e6a07024295b7673cb02007e",
+    "final_verdict_text": "BLOCKED_MISSING_INPUT",
+    "response_summary": "Composite Aegis accepted P12 compatibility ownership because aegis-modeling was unavailable, then stopped at missing upstream P10/P11 authority rather than inventing a Semantic Schema. Final answer ownership remained central aegis."
+  },
+  "trace": {
+    "terminal": true,
+    "invocations": [
+      {
+        "skill": "aegis",
+        "role": "compatibility"
+      }
+    ],
+    "final_answer_owner": "aegis",
+    "genuine_ambiguity": false,
+    "earlier_blocker_conclusively_established": true,
+    "ownership_edges": [],
+    "handoff_edges": [],
+    "forbidden_downstream_substantive_execution": 0,
+    "primary_substantive_result_emitted": false
+  }
+}
