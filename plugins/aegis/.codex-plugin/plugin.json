@@ -1,0 +1,28 @@
+{
+  "author": {
+    "name": "Mostorm Labs",
+    "url": "https://github.com/Mostorm-Labs"
+  },
+  "description": "Evidence-driven software development control plane.",
+  "interface": {
+    "capabilities": [
+      "Software development",
+      "Workflow",
+      "Verification"
+    ],
+    "category": "Productivity",
+    "defaultPrompt": [
+      "What should this project do next?",
+      "Design the semantic schema for this feature.",
+      "Audit this implementation against its Gate evidence."
+    ],
+    "developerName": "Mostorm Labs",
+    "displayName": "Aegis",
+    "longDescription": "Route software-development work through explicit authority, evidence, implementation, and Gate review.",
+    "shortDescription": "Evidence-driven software development control plane"
+  },
+  "name": "aegis",
+  "repository": "https://github.com/Mostorm-Labs/aegis",
+  "skills": "./skills/",
+  "version": "0.1.0-beta.1"
+}
