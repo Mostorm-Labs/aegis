@@ -1,0 +1,3 @@
+interface:
+  display_name: "Aegis Modeling"
+  short_description: "Product object, behavior, schema and mutation modeling"
