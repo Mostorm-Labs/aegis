@@ -72,8 +72,10 @@ jobs:
         run: python3 -m tools.aegis_skillset.cli distribution-check .
       - name: Check Aegis release manifest
         run: python3 scripts/build_aegis_distributions.py --check
+      - name: Check Plugin candidate release manifest
+        run: python3 scripts/build_aegis_distributions.py --version 0.1.0-beta.2 --check
       - name: Check OpenAI native Plugin materialization
-        run: python3 scripts/build_openai_plugin_materialization.py --release-version 0.1.0-beta.1 --check
+        run: python3 scripts/build_openai_plugin_materialization.py --release-version 0.1.0-beta.2 --check
       - name: Build Aegis test distribution source bundles
         run: python3 scripts/build_aegis_distributions.py --package-dir /tmp/aegis-plugin-dist
       - name: Upload Aegis test distribution source bundles
@@ -87,6 +89,14 @@ jobs:
         with:
           name: aegis-skill-installation-kit-0.1.0-task6.1
           path: /tmp/aegis-plugin-dist/aegis-skills-0.1.0-task6.1/
+          if-no-files-found: error
+      - name: Build Plugin candidate Installation Kit
+        run: python3 scripts/build_aegis_distributions.py --version 0.1.0-beta.2 --installation-kit-archive-dir /tmp/aegis-plugin-candidate-release
+      - name: Upload Plugin candidate Installation Kit
+        uses: actions/upload-artifact@v4
+        with:
+          name: aegis-skill-installation-kit-0.1.0-beta.2-candidate
+          path: /tmp/aegis-plugin-candidate-release/aegis-skill-installation-kit-0.1.0-beta.2.zip
           if-no-files-found: error
       - name: Validate intended routing and handoffs
         run: python3 -m tools.aegis_skillset.cli routing-check .
