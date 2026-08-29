@@ -154,6 +154,19 @@ class MigrationV05Tests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "requires schema_version 0.4"):
                 migrate_v04_to_v05(load_manifests(root))
 
+    def test_invalid_v04_source_cannot_be_laundered_by_migration(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_v04(root)
+            gates_path = root / ".aegis" / "gates.json"
+            gates = json.loads(gates_path.read_text(encoding="utf-8"))
+            gates["gates"][0]["validity"] = "bogus"
+            gates_path.write_text(json.dumps(gates), encoding="utf-8")
+            source = load_manifests(root)
+            self.assertTrue(validate_manifests(source))
+            with self.assertRaisesRegex(ValueError, "invalid v0.4 source"):
+                migrate_v04_to_v05(source)
+
     def test_root_pr9_reconciliation_preserves_nonconforming_occurrence(self):
         root_v04 = load_manifests(ROOT)
         self.assertEqual("0.4", root_v04.schema_version)
