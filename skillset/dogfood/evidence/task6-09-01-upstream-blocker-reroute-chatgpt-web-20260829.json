@@ -1,0 +1,53 @@
+{
+  "schema_version": "0.2",
+  "case_id": "09-01-upstream-blocker-reroute",
+  "fresh_platform_event": true,
+  "complete_response_captured": true,
+  "platform_event_id": "task6-case3-20260829-02",
+  "materialization_ref": "https://github.com/Mostorm-Labs/aegis/pull/13#issuecomment-5459745277",
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "prompt": "Design module architecture, but project authority is unresolved.",
+  "capture": {
+    "ui_observation": "Used aegis-architecture skill, then central aegis skill; central aegis owned the terminal BLOCKED_AUTHORITY routing answer",
+    "screenshot_sha256": "eb1c7408be3e2db5349da9a51cece93ca527b7ef16348d0acb10e9baeedbb405",
+    "final_verdict_text": "BLOCKED_AUTHORITY",
+    "response_summary": "Architecture stopped P15 substantive work at the unresolved Authority boundary, handed the blocker to central Aegis, and central Aegis returned the terminal routing result to P21 without downstream architecture execution."
+  },
+  "trace": {
+    "terminal": true,
+    "invocations": [
+      {
+        "skill": "aegis-architecture",
+        "role": "primary"
+      },
+      {
+        "skill": "aegis-architecture",
+        "role": "primary"
+      },
+      {
+        "skill": "aegis",
+        "role": "router"
+      }
+    ],
+    "final_answer_owner": "aegis",
+    "genuine_ambiguity": false,
+    "earlier_blocker_conclusively_established": true,
+    "ownership_edges": [
+      [
+        "aegis-architecture",
+        "aegis"
+      ]
+    ],
+    "handoff_edges": [
+      [
+        "aegis-architecture",
+        "aegis"
+      ]
+    ],
+    "forbidden_downstream_substantive_execution": 0,
+    "primary_substantive_result_emitted": false
+  }
+}
