@@ -167,6 +167,22 @@ class MigrationV05Tests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "invalid v0.4 source"):
                 migrate_v04_to_v05(source)
 
+    def test_v04_gate_validity_drift_that_cannot_be_preserved_is_rejected(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_v04(root)
+            gates_path = root / ".aegis" / "gates.json"
+            gates = json.loads(gates_path.read_text(encoding="utf-8"))
+            gates["gates"][0]["validity"] = "stale"
+            gates_path.write_text(json.dumps(gates), encoding="utf-8")
+            source = load_manifests(root)
+            self.assertEqual([], validate_manifests(source))
+            source_state = compute_state(source)
+            self.assertNotIn("G1", source_state["blocking_gates"])
+            self.assertTrue(any("validity drift" in finding for finding in source_state["blocking_findings"]))
+            with self.assertRaisesRegex(ValueError, "gate validity drift"):
+                migrate_v04_to_v05(source)
+
     def test_root_pr9_reconciliation_preserves_nonconforming_occurrence(self):
         root_v04 = load_manifests(ROOT)
         self.assertEqual("0.4", root_v04.schema_version)
