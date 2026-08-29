@@ -1,0 +1,229 @@
+name: Aegis Release Distribution
+
+on:
+  push:
+    branches:
+      - "release/v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, for example v0.1.0-beta.1"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aegis-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Resolve release identity
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME#release/}"
+          fi
+
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::invalid release tag: $TAG"
+            exit 1
+          fi
+
+          VERSION="${TAG#v}"
+          PRERELEASE=false
+          if [[ "$VERSION" == *-* ]]; then
+            PRERELEASE=true
+          fi
+
+          NOTES="docs/releases/${TAG}.md"
+          MANIFEST="skillset/releases/aegis-${VERSION}.json"
+          if [ ! -f "$NOTES" ]; then
+            echo "::error::missing release notes: $NOTES"
+            exit 1
+          fi
+          if [ ! -f "$MANIFEST" ]; then
+            echo "::error::missing committed release manifest: $MANIFEST"
+            exit 1
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
+          echo "notes=$NOTES" >> "$GITHUB_OUTPUT"
+          echo "manifest=$MANIFEST" >> "$GITHUB_OUTPUT"
+
+      - name: Refuse tag or release replacement
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::release tag already exists; releases are immutable: $TAG"
+            exit 1
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::release already exists; releases are immutable: $TAG"
+            exit 1
+          fi
+
+      - name: Validate Aegis root Project State
+        run: |
+          python3 -m tools.aegis_state.cli validate .
+          python3 -m tools.aegis_state.cli check .
+
+      - name: Validate Skillset and distribution contracts
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          python3 -m tools.aegis_skillset.cli validate .
+          python3 scripts/build_skillset.py --check
+          python3 -m tools.aegis_skillset.cli distribution-check .
+          python3 scripts/build_aegis_distributions.py --version "$VERSION" --check
+          python3 -m tools.aegis_skillset.cli routing-check .
+          python3 -m tools.aegis_skillset.cli installed-platform-check .
+          python3 scripts/validate_generated_skills.py
+
+      - name: Run repository regressions
+        run: |
+          python3 -m unittest discover -s tests/skillset -v
+          python3 -m unittest discover -s tests/project_state -v
+          python3 evals/scripts/validate_corpus.py
+          python3 -m unittest discover -s evals/tests -v
+
+      - name: Build deterministic Release assets
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          VERSION: ${{ steps.release.outputs.version }}
+          MANIFEST: ${{ steps.release.outputs.manifest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          mkdir -p dist
+          python3 scripts/build_aegis_distributions.py \
+            --version "$VERSION" \
+            --installation-kit-archive-dir dist
+          mv "dist/aegis-skill-installation-kit-${VERSION}.zip" \
+             "dist/aegis-skill-installation-kit-${TAG}.zip"
+          cp "$MANIFEST" "dist/aegis-release-${TAG}.json"
+          (
+            cd dist
+            sha256sum \
+              "aegis-skill-installation-kit-${TAG}.zip" \
+              "aegis-release-${TAG}.json" \
+              > SHA256SUMS
+          )
+
+      - name: Verify Release asset contents and digests
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import zipfile
+          from pathlib import Path
+
+          tag = os.environ["TAG"]
+          version = os.environ["VERSION"]
+          dist = Path("dist")
+          asset = dist / f"aegis-skill-installation-kit-{tag}.zip"
+          manifest_path = dist / f"aegis-release-{tag}.json"
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          assert manifest["release_version"] == version
+          expected = [entry["name"] for entry in manifest["plugin"]["skills"]]
+          assert len(expected) == 9
+          assert len(set(expected)) == 9
+          prefix = f"aegis-skills-{version}/"
+          with zipfile.ZipFile(asset) as archive:
+              names = set(archive.namelist())
+              assert prefix + "release.json" in names
+              embedded = json.loads(archive.read(prefix + "release.json").decode("utf-8"))
+              assert embedded == manifest
+              for entry in manifest["plugin"]["skills"]:
+                  member = prefix + entry["zip_filename"]
+                  assert member in names
+                  data = archive.read(member)
+                  assert hashlib.sha256(data).hexdigest() == entry["zip_sha256"]
+          print("AEGIS_RELEASE_ASSET_OK")
+          PY
+          cd dist
+          sha256sum -c SHA256SUMS
+
+      - name: Preserve P24 build evidence artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aegis-release-evidence-${{ steps.release.outputs.tag }}
+          path: |
+            dist/aegis-skill-installation-kit-${{ steps.release.outputs.tag }}.zip
+            dist/aegis-release-${{ steps.release.outputs.tag }}.json
+            dist/SHA256SUMS
+          if-no-files-found: error
+
+      - name: Build immutable release notes
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          NOTES: ${{ steps.release.outputs.notes }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp "$NOTES" /tmp/aegis-release-notes.md
+          cat >> /tmp/aegis-release-notes.md <<EOF
+
+          ## Build provenance
+
+          - Source revision: \`${GITHUB_SHA}\`
+          - Release tag: \`${TAG}\`
+          - Verification workflow: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          EOF
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+          PRERELEASE: ${{ steps.release.outputs.prerelease }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          COMMON=(
+            "$TAG"
+            --target "$GITHUB_SHA"
+            --title "Aegis $TAG"
+            --notes-file /tmp/aegis-release-notes.md
+          )
+          ASSETS=(
+            "dist/aegis-skill-installation-kit-${TAG}.zip#Aegis 9-Skill Installation Kit"
+            "dist/aegis-release-${TAG}.json#Release manifest"
+            "dist/SHA256SUMS#SHA-256 checksums"
+          )
+          if [ "$PRERELEASE" = "true" ]; then
+            gh release create "${COMMON[@]}" --prerelease "${ASSETS[@]}"
+          else
+            gh release create "${COMMON[@]}" --latest "${ASSETS[@]}"
+          fi
+
+      - name: Verify published Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+        run: gh release view "$TAG" --json tagName,isPrerelease,targetCommitish,url,assets
