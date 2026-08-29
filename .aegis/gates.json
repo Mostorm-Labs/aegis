@@ -22,6 +22,7 @@
     {"id":"gate-project-state-v02-pr7::decision::0001","gate_id":"gate-project-state-v02-pr7","verdict":"PASS_WITH_FINDINGS","evidence_ids":["ev-pr7-p34","ev-pr7-merged"]},
     {"id":"gate-project-state-v03-pr8::decision::0001","gate_id":"gate-project-state-v03-pr8","verdict":"PASS","evidence_ids":["ev-pr8-p34","ev-pr8-merged"]},
     {"id":"gate-skill-decomposition-v02-pr9::decision::0001","gate_id":"gate-skill-decomposition-v02-pr9","verdict":"BLOCKED_EVIDENCE","evidence_ids":["ev-pr9-task6-preflight","ev-pr9-task6-rerun-state","ev-pr9-f09-05","ev-pr9-task6-ci-33053118456"]},
+    {"id":"gate-skill-decomposition-v02-pr9::decision::0002","gate_id":"gate-skill-decomposition-v02-pr9","verdict":"PASS","evidence_ids":["ev-pr9-task6-p34-accepted"],"supersedes":"gate-skill-decomposition-v02-pr9::decision::0001"},
     {"id":"gate-project-state-v04-pr11::decision::0001","gate_id":"gate-project-state-v04-pr11","verdict":"PASS","evidence_ids":["ev-f09-06-authority","ev-pr11-project-state-ci-33163536074","ev-pr11-skillset-ci-33163536133","ev-pr11-p34"]},
     {"id":"gate-execution-surface-v01-pr10::decision::0001","gate_id":"gate-execution-surface-v01-pr10","verdict":"PASS","evidence_ids":["ev-pr10-es-bd-001","ev-pr10-project-state-ci-33184095219","ev-pr10-skillset-ci-33184095315","ev-pr10-p34"]},
     {"id":"gate-project-state-v05-pr14::decision::0001","gate_id":"gate-project-state-v05-pr14","verdict":"PASS","evidence_ids":["ev-f09-07-authority","ev-pr14-project-state-ci-33236194931","ev-pr14-p34"]}
