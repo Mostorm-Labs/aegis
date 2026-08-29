@@ -42,12 +42,12 @@ jobs:
             --installation-kit-archive-dir /tmp/aegis-p24-beta2
       - name: Stage generated outputs
         run: |
-          mkdir -p /tmp/aegis-p24-prep/.aegis
+          mkdir -p /tmp/aegis-p24-prep/generated
           mkdir -p /tmp/aegis-p24-prep/skillset/releases
-          mkdir -p /tmp/aegis-p24-prep/.agents/plugins
-          cp .aegis/state.json /tmp/aegis-p24-prep/.aegis/state.json
+          cp .aegis/state.json /tmp/aegis-p24-prep/generated/state.json
+          cp .agents/plugins/marketplace.json /tmp/aegis-p24-prep/generated/marketplace.json
+          cp plugins/aegis/.codex-plugin/plugin.json /tmp/aegis-p24-prep/generated/plugin.json
           cp skillset/releases/aegis-0.1.0-beta.2.json /tmp/aegis-p24-prep/skillset/releases/aegis-0.1.0-beta.2.json
-          cp .agents/plugins/marketplace.json /tmp/aegis-p24-prep/.agents/plugins/marketplace.json
           cp -a plugins /tmp/aegis-p24-prep/plugins
           cp /tmp/aegis-p24-beta2/aegis-skill-installation-kit-0.1.0-beta.2.zip /tmp/aegis-p24-prep/
       - name: Upload P24 prep outputs
