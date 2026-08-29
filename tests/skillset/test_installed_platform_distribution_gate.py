@@ -107,8 +107,20 @@ class DistributionGateTests(unittest.TestCase):
         )
 
     def test_missing_catalog_ref_blocked(self):
-        result = evaluate_installed_platform_rerun(ROOT)
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            manifest = json.loads(
+                (ROOT / "skillset/dogfood/installed-platform-rerun-v0.2.1.json").read_text()
+            )
+            target = manifest["cases"][0]
+            target["catalog_evidence_ref"] = None
+            manifest_path = directory / "manifest.json"
+            manifest_path.write_text(json.dumps(manifest))
+            result = evaluate_installed_platform_rerun(ROOT, manifest_path)
         self.assertEqual("BLOCKED_EVIDENCE", result.verdict)
+        first = next(case for case in result.cases if case.case_id == target["id"])
+        self.assertEqual("BLOCKED_EVIDENCE", first.verdict)
+        self.assertIn("catalog_evidence_ref", first.evidence_gaps)
 
     def test_partial_plugin_catalog_blocks_environment(self):
         with tempfile.TemporaryDirectory() as directory:
