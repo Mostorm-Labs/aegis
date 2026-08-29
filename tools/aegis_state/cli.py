@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from .compute import compute_state
+from .migrate_v05 import migrate_v04_to_v05
 from .model import ManifestError, load_manifests, validate_manifests
 
 
@@ -89,6 +90,41 @@ def cmd_check(root: str) -> int:
     return 0
 
 
+def cmd_migrate_v05(source_root: str, destination_root: str) -> int:
+    source = _load(source_root)
+    if source is None:
+        return 2
+    try:
+        migrated = migrate_v04_to_v05(source)
+    except ValueError as exc:
+        print(f"MIGRATION_ERROR: {exc}")
+        return 2
+    errors = validate_manifests(migrated, strict_gate_validity=True)
+    if errors:
+        for error in errors:
+            print(f"INVALID: {error}")
+        return 2
+
+    destination = Path(destination_root)
+    manifest_root = destination / ".aegis"
+    if manifest_root.exists():
+        print(f"MIGRATION_ERROR: destination already contains .aegis: {manifest_root}")
+        return 2
+    manifest_root.mkdir(parents=True)
+    documents = {
+        "project.json": migrated.project,
+        "authorities.json": migrated.authorities,
+        "gates.json": migrated.gates,
+        "evidence.json": migrated.evidence,
+        "integrations.json": migrated.integrations,
+    }
+    for name, document in documents.items():
+        (manifest_root / name).write_text(json.dumps(document, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    (manifest_root / "state.json").write_text(_render(compute_state(migrated)), encoding="utf-8")
+    print(f"MIGRATED_V05: {manifest_root}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Aegis project state manifest tooling")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -99,6 +135,9 @@ def build_parser() -> argparse.ArgumentParser:
     recompute.add_argument("--write", action="store_true")
     check = sub.add_parser("check")
     check.add_argument("project_root")
+    migrate = sub.add_parser("migrate-v05")
+    migrate.add_argument("source_root")
+    migrate.add_argument("destination_root")
     return parser
 
 
@@ -110,6 +149,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_recompute(args.project_root, args.write)
     if args.command == "check":
         return cmd_check(args.project_root)
+    if args.command == "migrate-v05":
+        return cmd_migrate_v05(args.source_root, args.destination_root)
     return 2
 
 
