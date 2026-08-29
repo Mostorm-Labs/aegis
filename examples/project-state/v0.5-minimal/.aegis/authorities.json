@@ -1,0 +1,15 @@
+{
+  "authorities": [
+    {
+      "depends_on": [],
+      "id": "architecture-v1",
+      "kind": "system_architecture",
+      "ref": "docs/architecture-v1.md",
+      "scope": "runtime",
+      "status": "Current",
+      "version": "v1"
+    }
+  ],
+  "impact_reviews": [],
+  "schema_version": "0.5"
+}
