@@ -74,6 +74,12 @@ jobs:
           name: aegis-distributions-0.1.0-task6.1
           path: /tmp/aegis-plugin-dist/*.zip
           if-no-files-found: error
+      - name: Upload Aegis Skill installation kit
+        uses: actions/upload-artifact@v4
+        with:
+          name: aegis-skill-installation-kit-0.1.0-task6.1
+          path: /tmp/aegis-plugin-dist/aegis-skills-0.1.0-task6.1/
+          if-no-files-found: error
       - name: Validate intended routing and handoffs
         run: python3 -m tools.aegis_skillset.cli routing-check .
       - name: Validate installed-platform rerun state
