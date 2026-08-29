@@ -1,0 +1,34 @@
+{
+  "schema_version": "0.2",
+  "case_id": "09-01-ambiguous-router",
+  "fresh_platform_event": true,
+  "complete_response_captured": true,
+  "platform_event_id": "task6-case2-20260829-01",
+  "materialization_ref": "https://github.com/Mostorm-Labs/aegis/pull/13#issuecomment-5459652782",
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "prompt": "What should this project do next?",
+  "capture": {
+    "ui_observation": "Used aegis skill",
+    "screenshot_sha256": "c211b376bfefbb81a19503db894f1c339070f441bb463ef82a2fbdd006f2ffea",
+    "response_summary": "Central Aegis routed from the referenced project's current state/evidence to the earliest untrusted layer and returned P34 B4 re-review as the next action, without a specialist Primary owning the final answer."
+  },
+  "trace": {
+    "terminal": true,
+    "invocations": [
+      {
+        "skill": "aegis",
+        "role": "router"
+      }
+    ],
+    "final_answer_owner": "aegis",
+    "genuine_ambiguity": true,
+    "earlier_blocker_conclusively_established": false,
+    "ownership_edges": [],
+    "handoff_edges": [],
+    "forbidden_downstream_substantive_execution": 0,
+    "primary_substantive_result_emitted": false
+  }
+}
