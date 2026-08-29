@@ -1,0 +1,16 @@
+{
+  "integrations": [
+    {
+      "evidence_ids": [
+        "ev-int-g1"
+      ],
+      "gate_decision_id": "G1::decision::0001",
+      "id": "int-g1",
+      "kind": "pull_request",
+      "ref": "pr://example/1",
+      "status": "awaiting_integration",
+      "target_ref": "main"
+    }
+  ],
+  "schema_version": "0.5"
+}
