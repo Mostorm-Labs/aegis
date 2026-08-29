@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 EVIDENCE = ROOT / "skillset/dogfood/evidence/pd-p34-02-plugin-install-chatgpt-web-20260829.json"
-SOURCE_COMMIT = "a9efc0fe9221ffda7bf37d86fd3bec4385f7f1e2"
+SOURCE_COMMIT = "a27667c89db9563535c8006f5d957f4d66f2efd5"
 RELEASE_VERSION = "0.1.0-beta.2"
 RELEASE_MANIFEST_REF = "skillset/releases/aegis-0.1.0-beta.2.json"
 MARKETPLACE_SOURCE = "https://github.com/Mostorm-Labs/aegis"

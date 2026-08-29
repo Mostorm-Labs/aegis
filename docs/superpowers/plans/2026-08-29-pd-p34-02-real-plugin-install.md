@@ -13,12 +13,13 @@ Prove with one fresh ChatGPT platform event that importing the GitHub-backed Aeg
 
 - Repository: `https://github.com/Mostorm-Labs/aegis`
 - Marketplace path: repository root `.agents/plugins/marketplace.json`
-- Fixed source commit: `a9efc0fe9221ffda7bf37d86fd3bec4385f7f1e2`
+- Fixed source commit: `a27667c89db9563535c8006f5d957f4d66f2efd5`
+- PD-P34-01 re-review materialization: PR #13 comment `5462200319`
 - Plugin: `aegis`
 - Candidate release: `0.1.0-beta.2`
 - Release manifest: `skillset/releases/aegis-0.1.0-beta.2.json`
 
-A fixed commit is required for the acceptance event so that later branch movement cannot change the source being evaluated.
+A fixed commit is required for the acceptance event so that later branch movement cannot change the source being evaluated. The fixed source above is the exact post-reconciliation revision independently re-reviewed for PD-P34-01 after the v0.5 `main@163cb9a2b606d6268c3679acddb758bcd2e6f6ad` reconciliation.
 
 ## RED-first evidence contract
 
@@ -31,7 +32,7 @@ Before performing the platform installation, add a repository test that requires
 - `plugin_name = aegis`;
 - `distribution_provenance = PLUGIN`;
 - marketplace source equal to this GitHub repository;
-- `source_commit = a9efc0fe9221ffda7bf37d86fd3bec4385f7f1e2`;
+- `source_commit = a27667c89db9563535c8006f5d957f4d66f2efd5`;
 - `release_version = 0.1.0-beta.2`;
 - release manifest bound to the beta.2 candidate manifest;
 - an installation-before snapshot showing no active Aegis Plugin distribution;
@@ -51,7 +52,7 @@ Using a ChatGPT workspace administrator surface:
 1. Open `Workspace settings -> Plugins -> Add -> Import marketplace`.
 2. Source: `https://github.com/Mostorm-Labs/aegis`.
 3. Path: leave empty (marketplace is at repository root).
-4. Branch, tag, or commit: `a9efc0fe9221ffda7bf37d86fd3bec4385f7f1e2`.
+4. Branch, tag, or commit: `a27667c89db9563535c8006f5d957f4d66f2efd5`.
 5. Import the marketplace and review the import result.
 6. Open Aegis and install/enable exactly one Plugin distribution for the test role/account.
 7. Capture the complete Aegis-family installed catalog and Plugin identity after installation.
