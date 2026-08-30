@@ -1,0 +1,71 @@
+{
+  "schema_version": "0.1",
+  "case_id": "PD-P34-04",
+  "capture_status": "REAL_PLATFORM_BEFORE_SNAPSHOT",
+  "acceptance_status": "BLOCKED_EVIDENCE",
+  "complete_upgrade_capture": false,
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "distribution_provenance": "PLUGIN",
+  "marketplace_source": "https://github.com/Mostorm-Labs/aegis",
+  "marketplace_source_id": "WorkspacePluginMarketplaceSource_de4bfec01b608191a06aac3c0781b939",
+  "marketplace_ref_type": "branch",
+  "marketplace_ref": "aegis/pd-p34-04-valid-upgrade-channel",
+  "marketplace_resolved_commit": "edf9511679e68943b4120edb6889f970a02b74d2",
+  "plugin_id": "Plugin_272c0dceee6c8191adccddf1c8b04f9a",
+  "plugin_name": "aegis",
+  "plugin_page_url": "https://chatgpt.com/admin/plugins/Plugin_272c0dceee6c8191adccddf1c8b04f9a?catalog=WORKSPACE&view=marketplaces&marketplace=WorkspacePluginMarketplaceSource_de4bfec01b608191a06aac3c0781b939",
+  "release_snapshot": {
+    "release_version": "0.1.0-beta.1.1",
+    "source_commit": "edf9511679e68943b4120edb6889f970a02b74d2",
+    "catalog_state": "FULL_SPECIALIST",
+    "installed_skill_display_names": [
+      "Aegis",
+      "Aegis Architecture",
+      "Aegis Discovery",
+      "Aegis Gate Review",
+      "Aegis Governance",
+      "Aegis Implementation",
+      "Aegis Modeling",
+      "Aegis Project State",
+      "Aegis Verification"
+    ],
+    "aegis_plugin_distribution_count": 1,
+    "duplicate_aegis_distribution": false,
+    "enabled": true
+  },
+  "marketplace_sync_snapshot": {
+    "status": "Completed",
+    "added": 1,
+    "updated": 0,
+    "unchanged": 0,
+    "no_longer_in_source": 0,
+    "failed": 0,
+    "auto_sync": true
+  },
+  "captures": [
+    {
+      "role": "release-a-marketplace-before",
+      "screenshot_sha256": "3eb7fce9233263f30b5a7869b60ab62187d13fbe5e7a4494f4e8de09499285bc"
+    },
+    {
+      "role": "release-a-plugin-exact-nine-before",
+      "screenshot_sha256": "bb95b447560552c31602b3f6b695d1893541f3592d4780568ce4e7d1f6eb550f"
+    }
+  ],
+  "repository_verification": {
+    "channel_ref": "refs/heads/aegis/pd-p34-04-valid-upgrade-channel",
+    "channel_ref_commit": "edf9511679e68943b4120edb6889f970a02b74d2",
+    "release_a_verification_run_id": 33289426094
+  },
+  "missing_acceptance_evidence": [
+    "same marketplace branch resolving to coherent Release B after channel advance",
+    "same ChatGPT platform Plugin ID after Sync now",
+    "Latest sync result showing 0 Added and 1 Updated",
+    "exact-nine FULL_SPECIALIST catalog after Release B sync",
+    "explicit no-delete/no-reinstall transition evidence"
+  ],
+  "normative_evidence_ref": "skillset/dogfood/evidence/pd-p34-04-valid-upgrade-chatgpt-web-20260830.json"
+}
