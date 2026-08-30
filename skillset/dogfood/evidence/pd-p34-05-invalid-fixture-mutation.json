@@ -1,1 +1,0 @@
-{"case_id":"PD-P34-05","mutation":{"path":"plugins/aegis/.codex-plugin/plugin.json","field":"version","invalid_value":"0.1.0_beta.2"}}
