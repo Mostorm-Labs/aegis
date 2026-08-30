@@ -1,0 +1,61 @@
+{
+  "schema_version": "0.1",
+  "case_id": "PD-P34-02",
+  "capture_status": "PARTIAL_REAL_PLATFORM_OBSERVATION",
+  "fresh_platform_event_observed": true,
+  "platform_event_id": "pd-p34-02-chatgpt-web-20260830-01",
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "fixed_source_required": "a27667c89db9563535c8006f5d957f4d66f2efd5",
+  "marketplace_source_required": "https://github.com/Mostorm-Labs/aegis",
+  "candidate_release_required": "0.1.0-beta.2",
+  "captures": [
+    {
+      "role": "pre-install-marketplace-observation",
+      "screenshot_sha256": "076d8e21ea2487355234255a852508a5e6aed7844cc85729683763a662062d55",
+      "observed_facts": [
+        "ChatGPT Web Plugins surface is visible",
+        "Aegis public marketplace listing is visible",
+        "Aegis listing shows the install plus control",
+        "Aegis description reads Evidence-driven software development control plane",
+        "Auditoryworks publisher/filter label is visible"
+      ]
+    },
+    {
+      "role": "post-install-plugin-detail-partial-catalog-observation",
+      "screenshot_sha256": "c2a11abf6b50821b34a7862f1e0fdb53daa9428930f4dce20639051f39602e83",
+      "observed_facts": [
+        "ChatGPT Settings > Plugins > Aegis detail surface is visible",
+        "Aegis plugin description reads Evidence-driven software development control plane",
+        "Aegis Skills section is visible",
+        "The captured viewport shows seven Aegis Skill display names",
+        "A vertical scrollbar shows that the catalog continues below the captured viewport"
+      ],
+      "visible_skill_display_names": [
+        "Aegis",
+        "Aegis Architecture",
+        "Aegis Discovery",
+        "Aegis Gate Review",
+        "Aegis Governance",
+        "Aegis Implementation",
+        "Aegis Modeling"
+      ]
+    }
+  ],
+  "repository_bindings": {
+    "plugin_manifest_ref": "plugins/aegis/.codex-plugin/plugin.json",
+    "plugin_manifest_name": "aegis",
+    "plugin_manifest_version": "0.1.0-beta.2",
+    "release_manifest_ref": "skillset/releases/aegis-0.1.0-beta.2.json"
+  },
+  "missing_acceptance_evidence": [
+    "complete after-install exact-nine catalog capture including Aegis Project State and Aegis Verification",
+    "explicit confirmation that the real marketplace import/install event used fixed source commit a27667c89db9563535c8006f5d957f4d66f2efd5",
+    "platform-visible plugin identity detail if ChatGPT exposes an identifier distinct from manifest/plugin name aegis"
+  ],
+  "normative_evidence_ref": "skillset/dogfood/evidence/pd-p34-02-plugin-install-chatgpt-web-20260829.json",
+  "normative_evidence_materialized": false,
+  "acceptance_status": "BLOCKED_EVIDENCE"
+}
