@@ -24,17 +24,19 @@ In ChatGPT:
 1. Open **Workspace settings**.
 2. Open **Plugins**.
 3. Choose **Add** / **Import marketplace**.
-4. Set the repository source to:
+4. In **Source**, enter the repository URL only:
 
    ```text
    https://github.com/Mostorm-Labs/aegis
    ```
 
-5. Use the repository root marketplace manifest. Leave the path empty when the UI resolves `.agents/plugins/marketplace.json` from the repository root.
-6. If the import UI asks for a branch, tag, or commit, choose one of these policies:
-   - **Maintained repository state:** use the workspace-approved maintained branch, normally `main`.
+   Do not append `/tree/...`, a branch name, or a folder path to the Source URL.
+5. Leave **Path** empty so ChatGPT resolves the repository-root `.agents/plugins/marketplace.json`. Do not enter the manifest filename itself.
+6. Optionally set **Branch, tag, or commit**:
+   - **Maintained repository state:** leave it empty to use the repository default branch, or select the workspace-approved maintained branch.
    - **Immutable `v0.1.0-beta.2` installation:** pin the tag `v0.1.0-beta.2`.
-7. Import the marketplace.
+7. Select **Import marketplace** and complete GitHub authorization if prompted.
+8. Review the import result.
 
 The repository marketplace manifest declares one `aegis` Plugin and points it to `./plugins/aegis`. The Plugin manifest then points its Skills directory to `./skills/`.
 
@@ -43,7 +45,7 @@ The repository marketplace manifest declares one `aegis` Plugin and points it to
 After the marketplace is imported:
 
 1. Find **Aegis** in the imported marketplace.
-2. Install the Plugin.
+2. Install the Plugin, or have the workspace administrator configure its installation policy for the intended roles.
 3. Open the installed Aegis Plugin details.
 4. Verify that the full nine-Skill catalog is present.
 
@@ -97,8 +99,9 @@ The Release also publishes `SHA256SUMS` and `aegis-release-v0.1.0-beta.2.json` f
 2. Optionally verify the archive against `SHA256SUMS` or the SHA-256 value above.
 3. Extract the **outer** Installation Kit exactly once.
 4. Keep the nine nested Skill ZIPs intact; do **not** unpack the nested ZIPs.
-5. Upload the nine nested ZIPs to ChatGPT Skills.
-6. Verify that the installed Aegis-family catalog contains the same exact-nine IDs listed above.
+5. In ChatGPT, open **Plugins** -> **Skills** -> **Create** -> **Upload from your computer**.
+6. Upload the nine nested Skill ZIPs themselves.
+7. Verify that the installed Aegis-family catalog contains the same exact-nine IDs listed above.
 
 The outer kit contains these directly uploadable archives:
 
@@ -156,15 +159,21 @@ continue | block | repair | integrate | release
 
 Aegis Plugin updates are whole-catalog transitions. Do not accept an update that leaves the environment with a partial or mixed Aegis catalog.
 
-When the ChatGPT workspace exposes marketplace synchronization, an administrator may use the marketplace sync control to refresh the repository-backed Plugin. After synchronization, verify the exact-nine catalog again before relying on the environment.
+A newly imported GitHub marketplace has automatic daily sync enabled. To request an update immediately:
 
-For reproducible environments, pin an immutable tag or commit when the import UI exposes that control. For `v0.1.0-beta.2`, the immutable release tag is:
+1. Open **Workspace settings** -> **Plugins**.
+2. Open **Marketplaces**.
+3. Select the Aegis marketplace.
+4. Select **Sync now**.
+5. Review the sync result and verify the exact-nine catalog again before relying on the environment.
+
+For reproducible environments, pin an immutable tag or commit. For `v0.1.0-beta.2`, the immutable release tag is:
 
 ```text
 v0.1.0-beta.2
 ```
 
-An invalid or partial Plugin update must not silently degrade into standalone compatibility. Keep or restore the last coherent installation, or repair the source before accepting the update.
+If an update to the existing Plugin is invalid, ChatGPT retains the last working version while valid updates can continue. Fix the source problem and use **Sync now** to retry. A partial Aegis catalog must never be treated as standalone compatibility.
 
 ## Troubleshooting
 
@@ -172,8 +181,9 @@ An invalid or partial Plugin update must not silently degrade into standalone co
 - **Nine-Skill kit was unpacked too far:** return to the outer kit and upload the nine nested ZIP files themselves.
 - **Plugin marketplace import is unavailable:** use the Release-kit path.
 - **A workspace has both Plugin and separately installed duplicate Aegis components:** remove the duplicate distribution before relying on the environment.
-- **Need a reproducible historical installation:** pin the GitHub import to an immutable tag/commit when the platform exposes that control, or use the immutable Release kit.
+- **Need a reproducible historical installation:** pin the GitHub import to an immutable tag/commit, or use the immutable Release kit.
 - **Aegis appears installed but behavior is unexpected:** first confirm the exact-nine catalog and coherent distribution state before debugging routing or Gate behavior.
+- **A GitHub sync reports an invalid Aegis update:** keep the retained last working version, repair the repository source, then run **Sync now** again.
 
 ## Distribution model
 
@@ -189,3 +199,10 @@ Aegis Product
 ```
 
 The authoritative distribution semantics are defined in [`plugin-distribution-contract-v0.1.md`](plugin-distribution-contract-v0.1.md). The published `v0.1.0-beta.2` release notes are in [`releases/v0.1.0-beta.2.md`](releases/v0.1.0-beta.2.md).
+
+## Platform references
+
+Current ChatGPT platform behavior is documented by OpenAI here:
+
+- GitHub marketplace import and sync: `https://help.openai.com/en/articles/20001504`
+- Skills installation and upload: `https://help.openai.com/en/articles/20001066`
