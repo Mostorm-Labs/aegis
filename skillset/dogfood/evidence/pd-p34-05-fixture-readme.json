@@ -1,0 +1,1 @@
+{"case_id":"PD-P34-05","lifecycle":"create isolated invalid branch -> verify repository validation fails -> move existing test channel -> one real Sync -> capture safe outcome -> restore test channel to last working beta.2"}
