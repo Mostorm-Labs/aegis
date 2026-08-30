@@ -3,13 +3,13 @@ name: PD-P34-04 Valid Upgrade Fixture
 on:
   push:
     branches:
-      - aegis/pd-p34-04-valid-upgrade-a
+      - aegis/pd-p34-04-valid-upgrade-b
 
 permissions:
   contents: read
 
 jobs:
-  verify-release-a:
+  verify-release-b:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -18,7 +18,7 @@ jobs:
           python-version: '3.12'
       - name: Validate skillset source
         run: python3 -m tools.aegis_skillset.cli validate .
-      - name: Check coherent Release A manifest
-        run: python3 scripts/build_aegis_distributions.py --version 0.1.0-beta.1.1 --check
-      - name: Check Release A native Plugin materialization
-        run: python3 scripts/build_openai_plugin_materialization.py --release-version 0.1.0-beta.1.1 --check
+      - name: Check coherent Release B manifest
+        run: python3 scripts/build_aegis_distributions.py --version 0.1.0-beta.2 --check
+      - name: Check Release B native Plugin materialization
+        run: python3 scripts/build_openai_plugin_materialization.py --release-version 0.1.0-beta.2 --check
