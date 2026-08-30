@@ -1,0 +1,1 @@
+{"schema_version":"0.1","case_id":"PD-P34-05","valid_channel":"aegis/pd-p34-04-valid-upgrade-channel","invalid_fixture_branch":"aegis/pd-p34-05-invalid-upgrade-c","last_working_source":"9ea469a56ae829defdac476b21c25704023200ed","restore_channel_after_event":true}
