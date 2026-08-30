@@ -1,0 +1,43 @@
+{
+  "schema_version": "0.1",
+  "platform_event_id": "pd-p34-02-chatgpt-web-20260830-01",
+  "materialization_ref": "https://github.com/Mostorm-Labs/aegis/pull/13#pullrequestreview-5059776733",
+  "fresh_platform_event": true,
+  "complete_catalog_capture": true,
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "observed_distributions": [
+    {
+      "id": "aegis",
+      "kind": "plugin",
+      "release_version": "0.1.0-beta.2"
+    }
+  ],
+  "installed_skills": [
+    "aegis",
+    "aegis-project-state",
+    "aegis-discovery",
+    "aegis-modeling",
+    "aegis-architecture",
+    "aegis-verification",
+    "aegis-governance",
+    "aegis-implementation",
+    "aegis-gate-review"
+  ],
+  "component_release_versions": {
+    "aegis": "0.1.0-beta.2",
+    "aegis-project-state": "0.1.0-beta.2",
+    "aegis-discovery": "0.1.0-beta.2",
+    "aegis-modeling": "0.1.0-beta.2",
+    "aegis-architecture": "0.1.0-beta.2",
+    "aegis-verification": "0.1.0-beta.2",
+    "aegis-governance": "0.1.0-beta.2",
+    "aegis-implementation": "0.1.0-beta.2",
+    "aegis-gate-review": "0.1.0-beta.2"
+  },
+  "release_manifest_ref": "skillset/releases/aegis-0.1.0-beta.2.json",
+  "source_commit": "a27667c89db9563535c8006f5d957f4d66f2efd5",
+  "distribution_provenance": "PLUGIN"
+}
