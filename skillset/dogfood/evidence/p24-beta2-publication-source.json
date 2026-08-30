@@ -1,0 +1,10 @@
+{
+  "schema_version": "0.1",
+  "stage": "P24",
+  "release_tag": "v0.1.0-beta.2",
+  "source_revision": "51ae4b3ba8bf00f2d51b9021c660588db01ea92f",
+  "prepublication_skillset_run": 33291676302,
+  "prepublication_project_state_run": 33291676362,
+  "publication_status": "READY_TO_TRIGGER",
+  "notes": "Pre-publication exact-head checkpoint. Durable release/run/asset identity is recorded by the immutable GitHub Release and post-publication closure after the release workflow succeeds."
+}
