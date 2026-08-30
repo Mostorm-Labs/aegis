@@ -1,0 +1,56 @@
+{
+  "schema_version": "0.2",
+  "case_id": "09-01-upstream-blocker-reroute",
+  "fresh_platform_event": true,
+  "complete_response_captured": true,
+  "platform_event_id": "pd-p34-03-upstream-blocker-reroute-chatgpt-web-20260830-01",
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "prompt": "Design module architecture, but project authority is unresolved.",
+  "distribution_provenance": "PLUGIN",
+  "plugin_id": "aegis",
+  "source_commit": "a27667c89db9563535c8006f5d957f4d66f2efd5",
+  "release_version": "0.1.0-beta.2",
+  "catalog_state": "FULL_SPECIALIST",
+  "materialization_ref": "https://github.com/Mostorm-Labs/aegis/pull/13#issuecomment-5466320669",
+  "capture": {
+    "screenshot_sha256": [
+      "b4e010c2db5c651ee73af7a597e97ae85c4367a89cdfef06feea2e728d9fe320",
+      "17759f5e77d508ea506ddcb6be13c40518bc61657bab7470012181022c7542b4"
+    ],
+    "final_verdict_text": "BLOCKED_AUTHORITY",
+    "response_summary": "Aegis architecture safety preflight stopped P15 because upstream Authority was unresolved. The response explicitly emitted an ownership_handoff from aegis-architecture to central aegis, routed to P21 Authority Review, and stated that no substantive module design was produced."
+  },
+  "trace": {
+    "terminal": true,
+    "invocations": [
+      {
+        "skill": "aegis-architecture",
+        "role": "primary"
+      },
+      {
+        "skill": "aegis",
+        "role": "router"
+      }
+    ],
+    "final_answer_owner": "aegis",
+    "genuine_ambiguity": false,
+    "earlier_blocker_conclusively_established": true,
+    "ownership_edges": [
+      [
+        "aegis-architecture",
+        "aegis"
+      ]
+    ],
+    "handoff_edges": [
+      [
+        "aegis-architecture",
+        "aegis"
+      ]
+    ],
+    "forbidden_downstream_substantive_execution": 0,
+    "primary_substantive_result_emitted": false
+  }
+}
