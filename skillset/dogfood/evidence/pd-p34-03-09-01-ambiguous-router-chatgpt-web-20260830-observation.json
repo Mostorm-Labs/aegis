@@ -1,0 +1,32 @@
+{
+  "schema_version": "0.1",
+  "case_id": "09-01-ambiguous-router",
+  "capture_status": "PARTIAL_REAL_PLATFORM_OBSERVATION",
+  "fresh_platform_event_observed": true,
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "prompt": "What should this project do next?",
+  "distribution_provenance": "PLUGIN",
+  "plugin_id": "aegis",
+  "source_commit": "a27667c89db9563535c8006f5d957f4d66f2efd5",
+  "release_version": "0.1.0-beta.2",
+  "catalog_state": "FULL_SPECIALIST",
+  "capture": {
+    "screenshot_sha256": "0e7e4c5b804877001e2ec7d6c61c6302c7907be73eab12f06a13ea184c2ad543",
+    "observed_facts": [
+      "The exact protected prompt is visible.",
+      "Central Aegis states it is routing from current trusted project state and checks repository-control evidence.",
+      "The capture explicitly shows Thinking, so the response is not terminal.",
+      "No final routed stage/terminal answer is visible in the capture."
+    ]
+  },
+  "normative_evidence_ref": "skillset/dogfood/evidence/pd-p34-03-09-01-ambiguous-router-chatgpt-web-20260830.json",
+  "normative_evidence_materialized": false,
+  "missing_acceptance_evidence": [
+    "complete terminal response capture",
+    "final answer owner / normalized terminal trace"
+  ],
+  "acceptance_status": "BLOCKED_EVIDENCE"
+}
