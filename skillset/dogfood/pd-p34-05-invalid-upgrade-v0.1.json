@@ -24,17 +24,9 @@
     "fixture_branch": "aegis/pd-p34-05-invalid-upgrade-c",
     "source_commit": "bb4347a749bafbf23c0740e54f478791837d64cf",
     "invalidity": "INVALID_NATIVE_PLUGIN_SEMVER",
-    "mutation": {
-      "path": "plugins/aegis/.codex-plugin/plugin.json",
-      "field": "version",
-      "valid_value": "0.1.0-beta.2",
-      "invalid_value": "0.1.0_beta.2"
-    },
     "expected_repository_validation": "FAIL",
     "validation_run_id": 33290934391,
-    "validation_job_id": 99202315028,
-    "failure_step": "Check OpenAI native Plugin materialization",
-    "reviewer_accessible_ref": "https://github.com/Mostorm-Labs/aegis/pull/20"
+    "reviewer_accessible_ref": "https://github.com/Mostorm-Labs/aegis/commit/bb4347a749bafbf23c0740e54f478791837d64cf"
   },
   "allowed_safe_outcomes": [
     "LAST_WORKING_RETAINED",
