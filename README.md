@@ -14,22 +14,19 @@ Aegis turns those concerns into a reusable workflow rather than relying on indiv
 
 ## What is included
 
-Aegis v0.1 is packaged as one installable Skill with progressive references:
+Aegis v0.1 is distributed primarily as one native **Aegis Plugin** that materializes the exact nine canonical Skills:
 
-```text
-skills/aegis/
-├── SKILL.md
-├── agents/
-│   └── openai.yaml
-└── references/
-    ├── bootstrap-routing.md
-    ├── stage-contracts.md
-    ├── discovery-design.md
-    ├── verification-governance.md
-    ├── implementation.md
-    ├── output-contracts.md
-    └── superpowers-integration.md
-```
+1. `aegis`
+2. `aegis-project-state`
+3. `aegis-discovery`
+4. `aegis-modeling`
+5. `aegis-architecture`
+6. `aegis-verification`
+7. `aegis-governance`
+8. `aegis-implementation`
+9. `aegis-gate-review`
+
+The GitHub Release also publishes a portable **9-Skill Installation Kit** containing nine directly uploadable Skill ZIPs for environments where Plugin marketplace distribution is unavailable.
 
 The control plane routes into 25 core stages:
 
@@ -73,22 +70,38 @@ Aegis is designed to compose with Superpowers rather than duplicate it.
 
 See [`skills/aegis/references/superpowers-integration.md`](skills/aegis/references/superpowers-integration.md).
 
-## Install / package
+## Install Aegis
 
-The distributable Skill is built from `skills/aegis` with the standard Skill Creator packager:
+### Recommended: GitHub Plugin
 
-```bash
-python3 /path/to/skill-creator/scripts/package_skill.py skills/aegis dist
+In ChatGPT Workspace settings, import the Plugin marketplace from:
+
+```text
+https://github.com/Mostorm-Labs/aegis
 ```
 
-The resulting archive should be named `skill.zip`.
+Use the repository root marketplace manifest (`.agents/plugins/marketplace.json`). Installing **Aegis** should materialize one Plugin with the exact nine canonical Skills.
+
+### Alternative: 9-Skill Installation Kit
+
+Download the `v0.1.0-beta.2` Release asset:
+
+```text
+https://github.com/Mostorm-Labs/aegis/releases/download/v0.1.0-beta.2/aegis-skill-installation-kit-v0.1.0-beta.2.zip
+```
+
+Extract the outer archive once, then upload the nine nested Skill ZIPs without unpacking them.
+
+See [`docs/installation-and-usage-v0.1.md`](docs/installation-and-usage-v0.1.md) for exact installation, verification, usage, update, and troubleshooting instructions.
 
 ## Status
 
-**v0.1 — Initial usable Skill.** The current development focus is v0.2 evaluation and dogfooding: establish behavioral baselines and regression evidence before splitting Aegis into a multi-Skill suite.
+**v0.1 — Usable evidence-driven development control plane with accepted native Plugin distribution and a published nine-Skill Installation Kit.**
 
 ## Documentation
 
+- [`docs/installation-and-usage-v0.1.md`](docs/installation-and-usage-v0.1.md)
+- [`docs/plugin-distribution-contract-v0.1.md`](docs/plugin-distribution-contract-v0.1.md)
 - [`docs/methodology.md`](docs/methodology.md)
 - [`docs/architecture.md`](docs/architecture.md)
 - [`docs/evaluation-and-dogfooding-v0.1.md`](docs/evaluation-and-dogfooding-v0.1.md)
