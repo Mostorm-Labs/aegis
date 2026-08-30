@@ -1,0 +1,134 @@
+{
+  "schema_version": "0.1",
+  "case_id": "PD-P34-04",
+  "fresh_platform_event": true,
+  "complete_upgrade_capture": true,
+  "platform_event_id": "pd-p34-04-chatgpt-web-sync-20260830-01",
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "distribution_provenance": "PLUGIN",
+  "plugin_name": "aegis",
+  "marketplace_source": "https://github.com/Mostorm-Labs/aegis",
+  "marketplace_source_id": "WorkspacePluginMarketplaceSource_de4bfec01b608191a06aac3c0781b939",
+  "marketplace_ref_type": "branch",
+  "marketplace_ref": "aegis/pd-p34-04-valid-upgrade-channel",
+  "upgrade_mechanism": "marketplace_sync",
+  "sync_result": "success",
+  "same_plugin_id": true,
+  "platform_plugin_id": "Plugin_272c0dceee6c8191adccddf1c8b04f9a",
+  "plugin_page_url": "https://chatgpt.com/admin/plugins/Plugin_272c0dceee6c8191adccddf1c8b04f9a?catalog=WORKSPACE&view=marketplaces&marketplace=WorkspacePluginMarketplaceSource_de4bfec01b608191a06aac3c0781b939",
+  "plugin_deleted_between_snapshots": false,
+  "marketplace_deleted_between_snapshots": false,
+  "accepted_mixed_revision_state": false,
+  "accepted_partial_catalog_state": false,
+  "materialization_ref": "skillset/dogfood/evidence/pd-p34-04-valid-upgrade-chatgpt-web-20260830.json",
+  "latest_sync": {
+    "status": "Completed",
+    "added": 0,
+    "updated": 1,
+    "unchanged": 0,
+    "no_longer_in_source": 0,
+    "failed": 0
+  },
+  "before_snapshot": {
+    "source_commit": "edf9511679e68943b4120edb6889f970a02b74d2",
+    "release_version": "0.1.0-beta.1.1",
+    "plugin_name": "aegis",
+    "platform_plugin_id": "Plugin_272c0dceee6c8191adccddf1c8b04f9a",
+    "catalog_state": "FULL_SPECIALIST",
+    "installed_skill_ids": [
+      "aegis",
+      "aegis-project-state",
+      "aegis-discovery",
+      "aegis-modeling",
+      "aegis-architecture",
+      "aegis-verification",
+      "aegis-governance",
+      "aegis-implementation",
+      "aegis-gate-review"
+    ],
+    "aegis_plugin_distribution_count": 1,
+    "duplicate_aegis_distribution": false,
+    "component_release_versions": {
+      "aegis": "0.1.0-beta.1.1",
+      "aegis-project-state": "0.1.0-beta.1.1",
+      "aegis-discovery": "0.1.0-beta.1.1",
+      "aegis-modeling": "0.1.0-beta.1.1",
+      "aegis-architecture": "0.1.0-beta.1.1",
+      "aegis-verification": "0.1.0-beta.1.1",
+      "aegis-governance": "0.1.0-beta.1.1",
+      "aegis-implementation": "0.1.0-beta.1.1",
+      "aegis-gate-review": "0.1.0-beta.1.1"
+    },
+    "workspace_policy": {
+      "auto_sync": true,
+      "plugin_enabled": true,
+      "availability": "workspace_default"
+    }
+  },
+  "after_snapshot": {
+    "source_commit": "9ea469a56ae829defdac476b21c25704023200ed",
+    "release_version": "0.1.0-beta.2",
+    "plugin_name": "aegis",
+    "platform_plugin_id": "Plugin_272c0dceee6c8191adccddf1c8b04f9a",
+    "catalog_state": "FULL_SPECIALIST",
+    "installed_skill_ids": [
+      "aegis",
+      "aegis-project-state",
+      "aegis-discovery",
+      "aegis-modeling",
+      "aegis-architecture",
+      "aegis-verification",
+      "aegis-governance",
+      "aegis-implementation",
+      "aegis-gate-review"
+    ],
+    "aegis_plugin_distribution_count": 1,
+    "duplicate_aegis_distribution": false,
+    "component_release_versions": {
+      "aegis": "0.1.0-beta.2",
+      "aegis-project-state": "0.1.0-beta.2",
+      "aegis-discovery": "0.1.0-beta.2",
+      "aegis-modeling": "0.1.0-beta.2",
+      "aegis-architecture": "0.1.0-beta.2",
+      "aegis-verification": "0.1.0-beta.2",
+      "aegis-governance": "0.1.0-beta.2",
+      "aegis-implementation": "0.1.0-beta.2",
+      "aegis-gate-review": "0.1.0-beta.2"
+    },
+    "workspace_policy": {
+      "auto_sync": true,
+      "plugin_enabled": true,
+      "availability": "workspace_default"
+    }
+  },
+  "captures": [
+    {
+      "role": "release-a-marketplace-before",
+      "screenshot_sha256": "3eb7fce9233263f30b5a7869b60ab62187d13fbe5e7a4494f4e8de09499285bc"
+    },
+    {
+      "role": "release-a-plugin-exact-nine-before",
+      "screenshot_sha256": "bb95b447560552c31602b3f6b695d1893541f3592d4780568ce4e7d1f6eb550f"
+    },
+    {
+      "role": "release-b-marketplace-after-sync",
+      "screenshot_sha256": "394c53f7850451e97772e32eca4960a5e0b305d3bde4bceb1f7275a3b7f981f9"
+    },
+    {
+      "role": "release-b-plugin-exact-nine-after-sync",
+      "screenshot_sha256": "e0cd2e9a89672ad1d15d73fb16491e39a4e2b28da1ce76c2206b20b644771579"
+    }
+  ],
+  "repository_verification": {
+    "release_a_source_commit": "edf9511679e68943b4120edb6889f970a02b74d2",
+    "release_a_verification_run_id": 33289426094,
+    "release_b_source_commit": "9ea469a56ae829defdac476b21c25704023200ed",
+    "release_b_verification_run_id": 33289965920,
+    "channel_ref": "refs/heads/aegis/pd-p34-04-valid-upgrade-channel",
+    "channel_resolved_to_release_b_before_after_capture": true
+  },
+  "acceptance_status": "READY_FOR_ORACLE"
+}
