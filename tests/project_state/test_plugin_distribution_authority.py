@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class PluginDistributionAuthorityTests(unittest.TestCase):
-    def test_plugin_distribution_authority_is_registered_as_proposed(self):
+    def test_plugin_distribution_authority_is_registered_as_current(self):
         authorities = json.loads((ROOT / ".aegis/authorities.json").read_text(encoding="utf-8"))
         matches = [item for item in authorities["authorities"] if item.get("id") == "aegis-plugin-distribution-v0.1"]
         self.assertEqual(1, len(matches))
@@ -14,7 +14,7 @@ class PluginDistributionAuthorityTests(unittest.TestCase):
         self.assertEqual("aegis/plugin-distribution", authority["scope"])
         self.assertEqual("skill_contract", authority["kind"])
         self.assertEqual("v0.1", authority["version"])
-        self.assertEqual("Proposed", authority["status"])
+        self.assertEqual("Current", authority["status"])
         self.assertEqual("docs/plugin-distribution-contract-v0.1.md", authority["ref"])
         self.assertEqual(["aegis-skill-decomposition-v0.2"], authority["depends_on"])
 
