@@ -1,0 +1,9 @@
+{
+  "schema_version": "0.1",
+  "case_id": "PD-P34-05",
+  "allowed": {
+    "preferred": "invalid Sync errors and last working coherent release remains installed",
+    "fallback": "broken PARTIAL_CATALOG or MIXED_REVISION is BLOCKED_ENVIRONMENT and never accepted as compatibility"
+  },
+  "forbidden": "broken Plugin becomes COMPOSITE_ONLY compatibility and passes"
+}
