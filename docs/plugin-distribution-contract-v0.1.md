@@ -1,13 +1,13 @@
 # Aegis Plugin Distribution Contract v0.1
 
-Status: **Proposed Authority v0.1 — human-approved; P30/P31 complete; P32 deterministic implementation exists; P34 repair amendment accepted 2026-08-29; not Gate-accepted and not Current.**
+Status: **Current Authority v0.1 — P34 Gate accepted; published in Aegis `v0.1.0-beta.2`; PR #13 repository integration closed as current/conforming under Project State v0.5.**
 
 Companion design: `docs/superpowers/specs/2026-08-29-aegis-plugin-distribution-v0.1-design.md`.
 Repair package: `docs/superpowers/plans/2026-08-29-aegis-catalog-provenance-repair.md`.
 
 This contract defines how Aegis is packaged and observed without changing the nine-entrypoint ownership semantics defined by `docs/skill-decomposition-v0.2.md`.
 
-The 2026-08-29 P34 installed-platform intake found and corrected one draft defect: the earlier draft coupled runtime **Catalog State** to **Distribution Provenance**. That coupling conflicted with Skill Decomposition v0.2, which allows specialist availability to be proven by installed-Skill inventory or an equivalent observable platform fact. Because this Authority is still Proposed, the draft is repaired in place while Git history and the P34 finding preserve the prior wording.
+The 2026-08-29 P34 installed-platform intake found and corrected one draft defect: the earlier draft coupled runtime **Catalog State** to **Distribution Provenance**. That coupling conflicted with Skill Decomposition v0.2, which allows specialist availability to be proven by installed-Skill inventory or an equivalent observable platform fact. The repair was accepted before the final Plugin Distribution P34 Gate; Git history and the P34 evidence preserve the prior wording and repair lineage.
 
 ## 1. Scope
 
@@ -322,4 +322,4 @@ For PR #9 evidence support, this contract must prove:
 - distribution provenance is exposed separately from catalog state;
 - `terminal_trace_v0.2` and the protected four cases remain unchanged.
 
-For Plugin Distribution v0.1 product acceptance, a later Gate must additionally prove the normal Plugin itself exposes exact nine Skills and satisfies its packaging/upgrade contract. Passing PR #9 Task 6 alone does not promote this Authority to Current.
+For Plugin Distribution v0.1 product acceptance, the normal Plugin must additionally prove exact-nine materialization and packaging/upgrade safety. That separate product Gate has now passed; this does not change the distinction that PR #9 Task 6 itself only requires catalog and behavior evidence.
