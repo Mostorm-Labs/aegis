@@ -1,0 +1,15 @@
+{
+  "schema_version": "0.1",
+  "case_id": "PD-P34-05",
+  "stage": "RED",
+  "result_revision": "29e1609f05f8219b62e1d6732e31e5811f77689b",
+  "skillset_run_id": 33290812496,
+  "skillset_job_id": 99201999851,
+  "preexisting_checks_before_skillset_tests": "PASS",
+  "expected_failures": [
+    "skillset/dogfood/pd-p34-05-invalid-upgrade-v0.1.json missing",
+    "skillset/dogfood/evidence/pd-p34-05-invalid-upgrade-chatgpt-web-20260830.json missing"
+  ],
+  "unexpected_failures": [],
+  "status": "RED_CONFIRMED"
+}

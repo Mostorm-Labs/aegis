@@ -1,0 +1,42 @@
+{
+  "schema_version": "0.1",
+  "evidence_id": "task6-case3-observation-20260829-01",
+  "case_id": "09-01-upstream-blocker-reroute",
+  "fresh_platform_event": true,
+  "complete_response_captured": true,
+  "platform_event_id": "task6-case3-20260829-01",
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "prompt": "Design module architecture, but project authority is unresolved.",
+  "capture": {
+    "ui_observation": "Used aegis-architecture skill; no visible central aegis invocation before the terminal response",
+    "screenshot_sha256": "286619c6eb3a33eaf39d0b7743d319d489668c84662a2f67bde1453f182afd5b",
+    "response_status": "BLOCKED_AUTHORITY",
+    "response_summary": "Aegis Architecture correctly refused substantive P15 design, identified an earlier Authority blocker, emitted an ownership_handoff from aegis-architecture to aegis, suggested P21, and terminated without a visible central-router re-entry."
+  },
+  "observed_trace": {
+    "terminal": true,
+    "mode": "multi_skill",
+    "invocations": [
+      {
+        "skill": "aegis-architecture",
+        "role": "primary"
+      }
+    ],
+    "observed_handoff": {
+      "type": "ownership_handoff",
+      "from_owner": "aegis-architecture",
+      "to": "aegis",
+      "reason": "earlier_untrusted_layer"
+    },
+    "earlier_blocker_conclusively_established": true,
+    "primary_substantive_result_emitted": false,
+    "forbidden_downstream_substantive_execution": 0,
+    "final_answer_owner_observation": "aegis-architecture",
+    "central_router_reentry_observed": false
+  },
+  "p34_status": "NOT_ACCEPTED_AS_PASS",
+  "p34_reason": "Skill Decomposition v0.2 requires blocked-short-circuit final-answer ownership by central aegis. The observed turn emitted the handoff but did not visibly complete router re-entry. Do not bind this observation as PASS behavior evidence until the ownership/oracle issue is resolved."
+}

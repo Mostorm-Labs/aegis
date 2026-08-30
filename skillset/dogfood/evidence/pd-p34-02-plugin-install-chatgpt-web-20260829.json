@@ -1,0 +1,71 @@
+{
+  "schema_version": "0.1",
+  "fresh_platform_event": true,
+  "complete_catalog_capture": true,
+  "platform_event_id": "pd-p34-02-chatgpt-web-20260830-01",
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "plugin_id": "aegis",
+  "plugin_name": "aegis",
+  "plugin_identity_observation": "ChatGPT Web exposes the installed Plugin as Aegis; no separate opaque platform identifier is visible in the captured settings surface, so the observed platform identity is bound to the marketplace/native Plugin identifier aegis.",
+  "distribution_provenance": "PLUGIN",
+  "marketplace_source": "https://github.com/Mostorm-Labs/aegis",
+  "source_ref": "a27667c89db9563535c8006f5d957f4d66f2efd5",
+  "source_commit": "a27667c89db9563535c8006f5d957f4d66f2efd5",
+  "release_version": "0.1.0-beta.2",
+  "release_manifest_ref": "skillset/releases/aegis-0.1.0-beta.2.json",
+  "materialization_ref": "https://github.com/Mostorm-Labs/aegis/pull/13#issuecomment-5466300093",
+  "before_snapshot": {
+    "aegis_plugin_distribution_count": 0,
+    "installed_aegis_skill_ids": []
+  },
+  "after_snapshot": {
+    "aegis_plugin_distribution_count": 1,
+    "installed_aegis_skill_ids": [
+      "aegis",
+      "aegis-project-state",
+      "aegis-discovery",
+      "aegis-modeling",
+      "aegis-architecture",
+      "aegis-verification",
+      "aegis-governance",
+      "aegis-implementation",
+      "aegis-gate-review"
+    ],
+    "duplicate_aegis_distribution": false
+  },
+  "installed_skill_ids": [
+    "aegis",
+    "aegis-project-state",
+    "aegis-discovery",
+    "aegis-modeling",
+    "aegis-architecture",
+    "aegis-verification",
+    "aegis-governance",
+    "aegis-implementation",
+    "aegis-gate-review"
+  ],
+  "catalog_state": "FULL_SPECIALIST",
+  "accepted_runtime": true,
+  "sync_result": "not-run",
+  "same_plugin_id": "not-applicable",
+  "component_release_versions": {
+    "aegis": "0.1.0-beta.2",
+    "aegis-project-state": "0.1.0-beta.2",
+    "aegis-discovery": "0.1.0-beta.2",
+    "aegis-modeling": "0.1.0-beta.2",
+    "aegis-architecture": "0.1.0-beta.2",
+    "aegis-verification": "0.1.0-beta.2",
+    "aegis-governance": "0.1.0-beta.2",
+    "aegis-implementation": "0.1.0-beta.2",
+    "aegis-gate-review": "0.1.0-beta.2"
+  },
+  "capture_support": {
+    "pre_install_marketplace_screenshot_sha256": "076d8e21ea2487355234255a852508a5e6aed7844cc85729683763a662062d55",
+    "post_install_upper_catalog_screenshot_sha256": "c2a11abf6b50821b34a7862f1e0fdb53daa9428930f4dce20639051f39602e83",
+    "post_install_lower_catalog_screenshot_sha256": "1cc467f9b7be8915acea5028a724bf9cbff24d7c54be1909964f4a44c6a52f9e",
+    "fixed_source_settings_screenshot_sha256": "6c49499de7fbe2f900c5f93dd4c38f1e9d3c28871cfb5e93cd58326e453b5333"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": "0.1",
+  "platform_event_id": "task6-composite-only-20260829-B",
+  "materialization_ref": "https://github.com/Mostorm-Labs/aegis/pull/13",
+  "fresh_platform_event": true,
+  "complete_catalog_capture": true,
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "observed_distributions": [
+    {
+      "id": "aegis-individual",
+      "kind": "individual_skills",
+      "release_version": "0.1.0-task6.1"
+    }
+  ],
+  "installed_skills": [
+    "aegis"
+  ],
+  "component_release_versions": {
+    "aegis": "0.1.0-task6.1"
+  },
+  "release_manifest_ref": "skillset/releases/aegis-0.1.0-task6.1.json",
+  "source_artifact": {
+    "name": "aegis-skill-installation-kit-0.1.0-task6.1",
+    "artifact_id": 9707065246,
+    "source_head": "0d2e8b410e59e08c8dba52c27f4b8d901331ed81"
+  },
+  "capture": {
+    "ui_observation": "ChatGPT Skills page shows Aegis as the only installed Aegis-family Skill; skill-creator is unrelated to the Aegis catalog. The same Aegis entry also appears under Created by me, which is a UI ownership/category view and is not counted as an additional Aegis-family Skill.",
+    "screenshot_sha256": "af8509314b26c654124a88d802d266d57295a6f9b20e010dde07436f67f53588"
+  }
+}

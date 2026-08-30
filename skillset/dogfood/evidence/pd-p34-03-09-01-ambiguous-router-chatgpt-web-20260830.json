@@ -1,0 +1,39 @@
+{
+  "schema_version": "0.2",
+  "case_id": "09-01-ambiguous-router",
+  "fresh_platform_event": true,
+  "complete_response_captured": true,
+  "platform_event_id": "pd-p34-03-ambiguous-router-chatgpt-web-20260830-01",
+  "materialization_ref": "https://github.com/Mostorm-Labs/aegis/pull/13#issuecomment-5466344670",
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "prompt": "What should this project do next?",
+  "distribution_provenance": "PLUGIN",
+  "plugin_id": "aegis",
+  "source_commit": "a27667c89db9563535c8006f5d957f4d66f2efd5",
+  "release_version": "0.1.0-beta.2",
+  "catalog_state": "FULL_SPECIALIST",
+  "capture": {
+    "screenshot_sha256": "5b7d6f59c647a232f684c4605fa543fed6857080c08c866dd41afd033ce825a9",
+    "ui_observation": "The completed ChatGPT Web response explicitly states that central aegis should own only the routing result for this ambiguous request and identifies the current route as P34 / PD-P34-03 Plugin Behavioral Parity.",
+    "response_summary": "Central Aegis routes from current Project State to P34 Verification / Gate Review, keeps the result routing-only, and states that no specialist Primary should own this ambiguous next-step answer."
+  },
+  "trace": {
+    "terminal": true,
+    "invocations": [
+      {
+        "skill": "aegis",
+        "role": "router"
+      }
+    ],
+    "final_answer_owner": "aegis",
+    "genuine_ambiguity": true,
+    "earlier_blocker_conclusively_established": false,
+    "ownership_edges": [],
+    "handoff_edges": [],
+    "forbidden_downstream_substantive_execution": 0,
+    "primary_substantive_result_emitted": false
+  }
+}

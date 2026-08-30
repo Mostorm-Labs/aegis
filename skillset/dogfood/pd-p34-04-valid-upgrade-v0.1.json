@@ -1,0 +1,83 @@
+{
+  "schema_version": "0.1",
+  "case_id": "PD-P34-04",
+  "purpose": "Prove one real ChatGPT Aegis Plugin upgrades atomically from coherent test Release A to the beta.2 Release B component set through one unchanged movable marketplace branch, preserving the same platform Plugin identity and exact-nine catalog coherence.",
+  "plugin_name": "aegis",
+  "marketplace_source": "https://github.com/Mostorm-Labs/aegis",
+  "marketplace_ref_type": "branch",
+  "marketplace_ref": "aegis/pd-p34-04-valid-upgrade-channel",
+  "expected_skill_ids": [
+    "aegis",
+    "aegis-project-state",
+    "aegis-discovery",
+    "aegis-modeling",
+    "aegis-architecture",
+    "aegis-verification",
+    "aegis-governance",
+    "aegis-implementation",
+    "aegis-gate-review"
+  ],
+  "release_a": {
+    "role": "test-only coherent upgrade source",
+    "release_version": "0.1.0-beta.1.1",
+    "source_commit": "edf9511679e68943b4120edb6889f970a02b74d2",
+    "source_branch": "aegis/pd-p34-04-valid-upgrade-a",
+    "release_manifest_ref": "skillset/releases/aegis-0.1.0-beta.1.1.json",
+    "verification_run_id": 33289426094,
+    "published_release": false,
+    "historical_beta1_identity_reused": false
+  },
+  "release_b": {
+    "role": "test-only coherent projection of the accepted beta.2 component set",
+    "release_version": "0.1.0-beta.2",
+    "source_commit": "9ea469a56ae829defdac476b21c25704023200ed",
+    "source_branch": "aegis/pd-p34-04-valid-upgrade-b",
+    "canonical_candidate_source_commit": "a27667c89db9563535c8006f5d957f4d66f2efd5",
+    "release_manifest_ref": "skillset/releases/aegis-0.1.0-beta.2.json",
+    "verification_run_id": 33289965920,
+    "published_release": false
+  },
+  "channel_transition": {
+    "branch": "aegis/pd-p34-04-valid-upgrade-channel",
+    "initial_commit": "edf9511679e68943b4120edb6889f970a02b74d2",
+    "advanced_commit": "9ea469a56ae829defdac476b21c25704023200ed",
+    "advance_method": "git_ref_update_after_before_snapshot"
+  },
+  "release_a_tree_sha256": {
+    "aegis": "8599a15d24ccd80c534cc5838425592f666184f8edcf577366b96a48197c42dd",
+    "aegis-project-state": "66639e270cf547f03fa78d1a2e518a4efc58780cadac778bb690f56e6a42b8c6",
+    "aegis-discovery": "2e89921aee11008c8c4db7500c80f243a149a2465fec3281d1d0146905b73721",
+    "aegis-modeling": "5c842d382244c638b4227185683629e856f010b4d73cea71c1208a288e5635ab",
+    "aegis-architecture": "d3d0fca798af19a9fed9a32d23bdf172b5bee06dfde7226ab3473d860cff26ba",
+    "aegis-verification": "b461f31350a2cd73eacd434bdd0849775b75ed7696481143496db1ee22ef5ce8",
+    "aegis-governance": "bbc320caee94c1ee615ba9ba79795a3bae683ca58c4fb9f41841efa886d2b8c5",
+    "aegis-implementation": "58554a6191327a31c101f8e07f938fad89105e271334cda5e649e222aa064c86",
+    "aegis-gate-review": "b593a93bee619d72bfcbd81abf21ca60e4d465d308ed488a9de4443d7f7a8af5"
+  },
+  "release_b_tree_sha256": {
+    "aegis": "8599a15d24ccd80c534cc5838425592f666184f8edcf577366b96a48197c42dd",
+    "aegis-project-state": "66639e270cf547f03fa78d1a2e518a4efc58780cadac778bb690f56e6a42b8c6",
+    "aegis-discovery": "2e89921aee11008c8c4db7500c80f243a149a2465fec3281d1d0146905b73721",
+    "aegis-modeling": "5c842d382244c638b4227185683629e856f010b4d73cea71c1208a288e5635ab",
+    "aegis-architecture": "d3d0fca798af19a9fed9a32d23bdf172b5bee06dfde7226ab3473d860cff26ba",
+    "aegis-verification": "b461f31350a2cd73eacd434bdd0849775b75ed7696481143496db1ee22ef5ce8",
+    "aegis-governance": "bbc320caee94c1ee615ba9ba79795a3bae683ca58c4fb9f41841efa886d2b8c5",
+    "aegis-implementation": "58554a6191327a31c101f8e07f938fad89105e271334cda5e649e222aa064c86",
+    "aegis-gate-review": "b593a93bee619d72bfcbd81abf21ca60e4d465d308ed488a9de4443d7f7a8af5"
+  },
+  "required_transition": "COHERENT_RELEASE_A -> same Marketplace branch advances -> ChatGPT Sync -> COHERENT_RELEASE_B",
+  "platform_evidence_ref": "skillset/dogfood/evidence/pd-p34-04-valid-upgrade-chatgpt-web-20260830.json",
+  "invariants": {
+    "same_platform_plugin_id_before_after": true,
+    "same_marketplace_branch_before_after": true,
+    "plugin_deletion_forbidden": true,
+    "marketplace_deletion_forbidden": true,
+    "latest_sync_must_update_not_add": true,
+    "exact_nine_before_after": true,
+    "duplicate_distribution_forbidden": true,
+    "accepted_mixed_revision_forbidden": true,
+    "accepted_partial_catalog_forbidden": true,
+    "workspace_policy_preserved_where_observable": true,
+    "unchanged_skill_digests_between_releases_allowed": true
+  }
+}

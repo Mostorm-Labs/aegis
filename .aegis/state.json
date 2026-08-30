@@ -189,7 +189,7 @@
       "integration_id": "int-pr9"
     }
   ],
-  "manifest_digest": "d154e4f7fcf52e6e9eaef8977a2e9370333b0599ae6696a95ce8729186510d74",
+  "manifest_digest": "968aaeabd1e04a305f75abfb9f758918144dbf97163c040470ba47155e8df4c2",
   "needs_review_authorities": [],
   "needs_review_gates": [],
   "nonconforming_integrations": [

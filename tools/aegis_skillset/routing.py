@@ -115,13 +115,26 @@ def evaluate_terminal_trace(case: dict, trace: dict, config: SkillSetConfig) -> 
 
     short_circuit = case.get('short_circuit') or {}
     short_circuit_allowed = short_circuit.get('allowed') is True
-    short_circuit_active = (
+    earlier_blocker_established = (
         short_circuit_allowed
         and trace.get('earlier_blocker_conclusively_established') is True
-        and final_owner == short_circuit.get('terminal_owner', router)
+    )
+    short_circuit_terminal_owner = short_circuit.get('terminal_owner', router)
+    short_circuit_active = (
+        earlier_blocker_established
+        and final_owner == short_circuit_terminal_owner
         and trace.get('primary_substantive_result_emitted') is False
         and trace.get('forbidden_downstream_substantive_execution') == 0
     )
+
+    if (
+        mode == 'multi_skill'
+        and earlier_blocker_established
+        and trace.get('primary_substantive_result_emitted') is False
+        and final_owner
+        and final_owner != short_circuit_terminal_owner
+    ):
+        violations.append('WRONG_FINAL_ANSWER_OWNER')
 
     availability = trace.get('specialist_availability')
     if not isinstance(availability, dict):

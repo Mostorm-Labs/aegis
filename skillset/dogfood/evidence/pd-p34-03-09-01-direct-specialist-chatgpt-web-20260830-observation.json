@@ -1,0 +1,32 @@
+{
+  "schema_version": "0.1",
+  "case_id": "09-01-direct-specialist",
+  "capture_status": "PARTIAL_REAL_PLATFORM_OBSERVATION",
+  "fresh_platform_event_observed": true,
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "prompt": "Audit Mostorm-Labs/aegis PR #9 against its Gate evidence.",
+  "distribution_provenance": "PLUGIN",
+  "plugin_id": "aegis",
+  "source_commit": "a27667c89db9563535c8006f5d957f4d66f2efd5",
+  "release_version": "0.1.0-beta.2",
+  "catalog_state": "FULL_SPECIALIST",
+  "capture": {
+    "screenshot_sha256": "195c89e02b1b4abd4b8447183d0efdb84a0198c928e5f0d13a80e67b06ea1ecd",
+    "observed_facts": [
+      "The exact protected prompt is visible.",
+      "The response declares P34 Gate-audit intent and performs GitHub evidence/repository checks.",
+      "The captured viewport ends while evidence retrieval is still in progress.",
+      "No terminal PASS/BLOCKED verdict is visible in the capture."
+    ]
+  },
+  "normative_evidence_ref": "skillset/dogfood/evidence/pd-p34-03-09-01-direct-specialist-chatgpt-web-20260830.json",
+  "normative_evidence_materialized": false,
+  "missing_acceptance_evidence": [
+    "complete terminal response capture",
+    "final answer owner / normalized terminal trace"
+  ],
+  "acceptance_status": "BLOCKED_EVIDENCE"
+}

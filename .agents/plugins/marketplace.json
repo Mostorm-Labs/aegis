@@ -1,0 +1,20 @@
+{
+  "interface": {
+    "displayName": "Mostorm Labs Aegis"
+  },
+  "name": "mostorm-labs-aegis",
+  "plugins": [
+    {
+      "category": "Productivity",
+      "name": "aegis",
+      "policy": {
+        "authentication": "ON_INSTALL",
+        "installation": "AVAILABLE"
+      },
+      "source": {
+        "path": "./plugins/aegis",
+        "source": "local"
+      }
+    }
+  ]
+}

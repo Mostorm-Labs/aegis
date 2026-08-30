@@ -1,0 +1,93 @@
+{
+  "schema_version": "0.1",
+  "case_id": "PD-P34-05",
+  "fresh_platform_event": true,
+  "complete_invalid_upgrade_capture": true,
+  "platform_event_id": "pd-p34-05-invalid-sync-chatgpt-web-20260830T1151+0800",
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "distribution_provenance": "PLUGIN",
+  "plugin_name": "aegis",
+  "platform_plugin_id": "Plugin_272c0dceee6c8191adccddf1c8b04f9a",
+  "marketplace_source_id": "WorkspacePluginMarketplaceSource_de4bfec01b608191a06aac3c0781b939",
+  "marketplace_ref_type": "branch",
+  "marketplace_ref": "aegis/pd-p34-04-valid-upgrade-channel",
+  "upgrade_mechanism": "marketplace_sync",
+  "same_plugin_id": true,
+  "plugin_deleted_between_snapshots": false,
+  "marketplace_deleted_between_snapshots": false,
+  "invalid_candidate_accepted_runtime": false,
+  "compatibility_fallback": false,
+  "safe_outcome": "LAST_WORKING_RETAINED",
+  "sync_result": "error",
+  "last_working_release_retained": true,
+  "attempted_invalid_candidate": {
+    "source_commit": "bb4347a749bafbf23c0740e54f478791837d64cf",
+    "displayed_short_commit": "bb4347a",
+    "invalidity": "INVALID_NATIVE_PLUGIN_SEMVER",
+    "repository_validation_run_id": 33290934391,
+    "platform_error_code": "IMPORTED_PLUGIN_CONTENT_INVALID",
+    "platform_error": "Refresh failed (IMPORTED_PLUGIN_CONTENT_INVALID). 'version' must use semantic versioning, such as '1.0.0'.",
+    "latest_sync": {
+      "added": 0,
+      "updated": 0,
+      "unchanged": 0,
+      "no_longer_in_source": 0,
+      "failed": 1
+    }
+  },
+  "before_snapshot": {
+    "source_commit": "9ea469a56ae829defdac476b21c25704023200ed",
+    "release_version": "0.1.0-beta.2",
+    "platform_plugin_id": "Plugin_272c0dceee6c8191adccddf1c8b04f9a",
+    "catalog_state": "FULL_SPECIALIST",
+    "installed_skill_ids": [
+      "aegis",
+      "aegis-project-state",
+      "aegis-discovery",
+      "aegis-modeling",
+      "aegis-architecture",
+      "aegis-verification",
+      "aegis-governance",
+      "aegis-implementation",
+      "aegis-gate-review"
+    ],
+    "aegis_plugin_distribution_count": 1,
+    "duplicate_aegis_distribution": false,
+    "accepted_runtime": true
+  },
+  "after_snapshot": {
+    "source_commit": "9ea469a56ae829defdac476b21c25704023200ed",
+    "release_version": "0.1.0-beta.2",
+    "platform_plugin_id": "Plugin_272c0dceee6c8191adccddf1c8b04f9a",
+    "catalog_state": "FULL_SPECIALIST",
+    "installed_skill_ids": [
+      "aegis",
+      "aegis-project-state",
+      "aegis-discovery",
+      "aegis-modeling",
+      "aegis-architecture",
+      "aegis-verification",
+      "aegis-governance",
+      "aegis-implementation",
+      "aegis-gate-review"
+    ],
+    "aegis_plugin_distribution_count": 1,
+    "duplicate_aegis_distribution": false,
+    "accepted_runtime": true
+  },
+  "post_capture_channel_restore": {
+    "marketplace_ref": "aegis/pd-p34-04-valid-upgrade-channel",
+    "restored_source_commit": "9ea469a56ae829defdac476b21c25704023200ed",
+    "verified_by_ref_read": true
+  },
+  "materialization_ref": "https://github.com/Mostorm-Labs/aegis/pull/13#issuecomment-5466565318",
+  "platform_plugin_url": "https://chatgpt.com/admin/plugins/Plugin_272c0dceee6c8191adccddf1c8b04f9a?catalog=WORKSPACE&view=marketplaces&marketplace=WorkspacePluginMarketplaceSource_de4bfec01b608191a06aac3c0781b939",
+  "observation_basis": [
+    "human-supplied ChatGPT Web Marketplace screenshot showing branch, attempted bb4347a, Completed — 1 error, 1 Failed, Update failed, and semantic-version validation error",
+    "human-supplied ChatGPT Web Aegis Plugin detail screenshot showing Enabled and exact nine Skills after the failed sync",
+    "same Plugin URL supplied by the human tester"
+  ]
+}

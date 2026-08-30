@@ -1,0 +1,11 @@
+{
+  "schema_version": "0.1",
+  "product_id": "aegis",
+  "plugin": {
+    "id": "aegis",
+    "kind": "plugin",
+    "skills": ["aegis", "aegis-project-state", "aegis-discovery", "aegis-modeling", "aegis-architecture", "aegis-verification", "aegis-governance", "aegis-implementation", "aegis-gate-review"],
+    "required_apps": [], "optional_apps": []
+  },
+  "standalone": {"id": "aegis-standalone", "kind": "standalone", "skills": ["aegis"]}
+}

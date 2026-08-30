@@ -1,0 +1,36 @@
+{
+  "schema_version": "0.1",
+  "case_id": "PD-P34-05",
+  "plugin_name": "aegis",
+  "marketplace_ref_type": "branch",
+  "marketplace_ref": "aegis/pd-p34-04-valid-upgrade-channel",
+  "last_working_release": {
+    "release_version": "0.1.0-beta.2",
+    "source_commit": "9ea469a56ae829defdac476b21c25704023200ed",
+    "verification_run_id": 33289965920,
+    "expected_skill_ids": [
+      "aegis",
+      "aegis-project-state",
+      "aegis-discovery",
+      "aegis-modeling",
+      "aegis-architecture",
+      "aegis-verification",
+      "aegis-governance",
+      "aegis-implementation",
+      "aegis-gate-review"
+    ]
+  },
+  "invalid_update_fixture": {
+    "fixture_branch": "aegis/pd-p34-05-invalid-upgrade-c",
+    "source_commit": "bb4347a749bafbf23c0740e54f478791837d64cf",
+    "invalidity": "INVALID_NATIVE_PLUGIN_SEMVER",
+    "expected_repository_validation": "FAIL",
+    "validation_run_id": 33290934391,
+    "reviewer_accessible_ref": "https://github.com/Mostorm-Labs/aegis/commit/bb4347a749bafbf23c0740e54f478791837d64cf"
+  },
+  "allowed_safe_outcomes": [
+    "LAST_WORKING_RETAINED",
+    "BROKEN_CATALOG_BLOCKED"
+  ],
+  "forbidden_outcome": "BROKEN_PLUGIN_TO_COMPOSITE_COMPATIBILITY_PASS"
+}

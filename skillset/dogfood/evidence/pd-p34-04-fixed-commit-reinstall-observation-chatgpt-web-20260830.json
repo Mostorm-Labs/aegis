@@ -1,0 +1,67 @@
+{
+  "schema_version": "0.1",
+  "case_id": "PD-P34-04",
+  "observation_type": "non_admissible_upgrade_attempt",
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "marketplace_source": "https://github.com/Mostorm-Labs/aegis",
+  "attempted_release_a_source_commit": "edf9511679e68943b4120edb6889f970a02b74d2",
+  "attempted_release_b_source_commit": "a27667c89db9563535c8006f5d957f4d66f2efd5",
+  "screenshots": [
+    {
+      "sha256": "4e0afd50c109495f0424a9b883f5c9ecf7f5633a90045e8011a442e696df0f7a",
+      "observation": "Aegis deletion confirmation states that deleting Aegis removes it from the workspace directory and cannot be undone."
+    },
+    {
+      "sha256": "e36b59ad068ad3e52227316575e5fdc8666e9bd725d1b06632c8ae96f57dde45",
+      "observation": "Marketplace settings show the fixed commit edf9511679e68943b4120edb6889f970a02b74d2 and automatic sync enabled."
+    },
+    {
+      "sha256": "3c3100f3516df2cef8a899b744d6c71acd7b3edea2efdfcebd283057b8092446",
+      "observation": "The edf9511 marketplace import completed and Latest sync reports 1 Added, 0 Updated, 0 Failed."
+    },
+    {
+      "sha256": "30bd5e39185586cdf19338485bd22dbc6a0ff605608bda5da6f4362995379f30",
+      "observation": "The resulting Aegis Plugin is enabled and visibly contains all nine Aegis Skills."
+    },
+    {
+      "sha256": "4fe67bba28d1449cf3d73391390149f43be13b6388df8849bd92215b96465087",
+      "observation": "The a27667c marketplace import completed with automatic sync enabled and Latest sync reports 1 Added, 0 Updated, 0 Failed."
+    },
+    {
+      "sha256": "dd5f125cc8252459d4b1094b7e220500d7f2cf754bce21d24a1467197104cdcf",
+      "observation": "The resulting Aegis Plugin is enabled and visibly contains all nine Aegis Skills."
+    }
+  ],
+  "observed_transition": "delete/reinstall between fixed-commit marketplace imports",
+  "latest_sync_semantics": {
+    "release_a": {
+      "added": 1,
+      "updated": 0,
+      "failed": 0
+    },
+    "release_b": {
+      "added": 1,
+      "updated": 0,
+      "failed": 0
+    }
+  },
+  "exact_nine_observed_after_each_import": true,
+  "same_platform_plugin_id_proven": false,
+  "plugin_deleted_between_snapshots": true,
+  "admissible_for_pd_p34_04_pass": false,
+  "reason": "PD-P34-04 requires one existing Plugin to be updated in place. These screenshots prove two add/import outcomes separated by deletion, not one same-identity marketplace sync upgrade.",
+  "root_cause": "The attempted marketplace was pinned to a fixed commit. OpenAI marketplace import documentation specifies that a fixed commit remains at that revision, while a branch is the supported ref for receiving future commits.",
+  "corrected_test_route": {
+    "marketplace_ref_type": "branch",
+    "marketplace_ref": "aegis/pd-p34-04-valid-upgrade-channel",
+    "release_a_commit": "edf9511679e68943b4120edb6889f970a02b74d2",
+    "release_b_commit": "9ea469a56ae829defdac476b21c25704023200ed",
+    "required_sync_result": "0 Added / 1 Updated / 0 Failed",
+    "plugin_deletion_forbidden": true,
+    "marketplace_deletion_forbidden": true
+  },
+  "external_reference": "https://help.openai.com/en/articles/20001504"
+}
