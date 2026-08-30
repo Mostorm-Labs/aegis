@@ -1,0 +1,43 @@
+{
+  "schema_version": "0.2",
+  "case_id": "09-01-direct-specialist",
+  "fresh_platform_event": true,
+  "complete_response_captured": true,
+  "platform_event_id": "pd-p34-03-direct-specialist-chatgpt-web-20260830-01",
+  "materialization_ref": "https://github.com/Mostorm-Labs/aegis/pull/13#issuecomment-5466344670",
+  "surface": {
+    "product": "chatgpt",
+    "surface": "web"
+  },
+  "prompt": "Audit Mostorm-Labs/aegis PR #9 against its Gate evidence.",
+  "distribution_provenance": "PLUGIN",
+  "plugin_id": "aegis",
+  "source_commit": "a27667c89db9563535c8006f5d957f4d66f2efd5",
+  "release_version": "0.1.0-beta.2",
+  "catalog_state": "FULL_SPECIALIST",
+  "capture": {
+    "screenshot_sha256": [
+      "a57f7b1eb07a65ffc108d7d3868cc3ca65a4c558c72b3dfd94cc88338a96e15c",
+      "1ac7119afa16171cda731607f1a81c272e011cc9a381fd4ee2528819c4c34c7b"
+    ],
+    "ui_observation": "The completed ChatGPT Web response is a P34 Gate audit for Mostorm-Labs/aegis PR #9 and explicitly states that aegis-gate-review was the sole Primary and final-answer owner for the protected direct Gate request.",
+    "final_verdict_text": "PASS",
+    "response_summary": "The Gate audit resolves the current Skill Decomposition v0.2 decision as PASS, preserves the historical nonconforming PR #9 integration occurrence, and reports no new blocking P35 defect or P36 repair requirement."
+  },
+  "trace": {
+    "terminal": true,
+    "invocations": [
+      {
+        "skill": "aegis-gate-review",
+        "role": "primary"
+      }
+    ],
+    "final_answer_owner": "aegis-gate-review",
+    "genuine_ambiguity": false,
+    "earlier_blocker_conclusively_established": false,
+    "ownership_edges": [],
+    "handoff_edges": [],
+    "forbidden_downstream_substantive_execution": 0,
+    "primary_substantive_result_emitted": true
+  }
+}
