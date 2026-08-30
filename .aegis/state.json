@@ -43,6 +43,11 @@
       "verdict": "BLOCKED_ENVIRONMENT"
     },
     {
+      "decision_id": "gate-plugin-distribution-v01-pr13::decision::0001",
+      "gate_id": "gate-plugin-distribution-v01-pr13",
+      "verdict": "PASS"
+    },
+    {
       "decision_id": "gate-project-state-pr4::decision::0001",
       "gate_id": "gate-project-state-pr4",
       "verdict": "PASS"
@@ -94,6 +99,10 @@
     {
       "applicability": "historical",
       "integration_id": "int-pr11"
+    },
+    {
+      "applicability": "current",
+      "integration_id": "int-pr13"
     },
     {
       "applicability": "current",
@@ -150,6 +159,11 @@
     },
     {
       "conformance": "conforming",
+      "gate_decision_id": "gate-plugin-distribution-v01-pr13::decision::0001",
+      "integration_id": "int-pr13"
+    },
+    {
+      "conformance": "conforming",
       "gate_decision_id": "gate-project-state-v05-pr14::decision::0001",
       "integration_id": "int-pr14"
     },
@@ -189,7 +203,7 @@
       "integration_id": "int-pr9"
     }
   ],
-  "manifest_digest": "968aaeabd1e04a305f75abfb9f758918144dbf97163c040470ba47155e8df4c2",
+  "manifest_digest": "f1d1010378f3fd7adbbf6c73d5123321a21fca9261b88a86b6655946456800cc",
   "needs_review_authorities": [],
   "needs_review_gates": [],
   "nonconforming_integrations": [

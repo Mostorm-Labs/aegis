@@ -12,7 +12,8 @@
     {"id":"gate-project-state-v04-pr11","stage":"P34","authority_ids":["aegis-project-state-v0.4"]},
     {"id":"gate-execution-surface-v01-pr10","stage":"P34","authority_ids":["aegis-execution-surface-v0.1"]},
     {"id":"gate-project-state-v05-pr14","stage":"P34","authority_ids":["aegis-project-state-v0.5"]},
-    {"id":"gate-execution-surface-v02-pr16","stage":"P34","authority_ids":["aegis-execution-surface-v0.2"]}
+    {"id":"gate-execution-surface-v02-pr16","stage":"P34","authority_ids":["aegis-execution-surface-v0.2"]},
+    {"id":"gate-plugin-distribution-v01-pr13","stage":"P34","authority_ids":["aegis-plugin-distribution-v0.1"]}
   ],
   "decisions": [
     {"id":"gate-eval-framework-pr1::decision::0001","gate_id":"gate-eval-framework-pr1","verdict":"PASS","evidence_ids":["ev-pr1-merged","ev-pr1-ci"]},
@@ -27,6 +28,7 @@
     {"id":"gate-project-state-v04-pr11::decision::0001","gate_id":"gate-project-state-v04-pr11","verdict":"PASS","evidence_ids":["ev-f09-06-authority","ev-pr11-project-state-ci-33163536074","ev-pr11-skillset-ci-33163536133","ev-pr11-p34"]},
     {"id":"gate-execution-surface-v01-pr10::decision::0001","gate_id":"gate-execution-surface-v01-pr10","verdict":"PASS","evidence_ids":["ev-pr10-es-bd-001","ev-pr10-project-state-ci-33184095219","ev-pr10-skillset-ci-33184095315","ev-pr10-p34"]},
     {"id":"gate-project-state-v05-pr14::decision::0001","gate_id":"gate-project-state-v05-pr14","verdict":"PASS","evidence_ids":["ev-f09-07-authority","ev-pr14-project-state-ci-33236194931","ev-pr14-p34"]},
-    {"id":"gate-execution-surface-v02-pr16::decision::0001","gate_id":"gate-execution-surface-v02-pr16","verdict":"PASS","evidence_ids":["ev-pr16-execution-position-dogfood","ev-pr16-project-state-ci-33248782773","ev-pr16-skillset-ci-33248782758","ev-pr16-p34"]}
+    {"id":"gate-execution-surface-v02-pr16::decision::0001","gate_id":"gate-execution-surface-v02-pr16","verdict":"PASS","evidence_ids":["ev-pr16-execution-position-dogfood","ev-pr16-project-state-ci-33248782773","ev-pr16-skillset-ci-33248782758","ev-pr16-p34"]},
+    {"id":"gate-plugin-distribution-v01-pr13::decision::0001","gate_id":"gate-plugin-distribution-v01-pr13","verdict":"PASS","evidence_ids":["ev-pr13-p34","ev-pr13-post-merge-project-state-ci-33291923091","ev-pr13-post-merge-skillset-ci-33291923094"]}
   ]
 }
