@@ -15,9 +15,12 @@ class OwnershipTests(unittest.TestCase):
         self.assertEqual(
             {
                 "read_latest",
+                "read_exact",
                 "read_revisions",
                 "read_lane_head",
                 "read_lane_latest_records",
+                "read_latest_stage_occurrences",
+                "read_latest_escalations",
                 "read_idempotency",
                 "read_outbox",
                 "snapshot_counts",
