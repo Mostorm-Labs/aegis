@@ -32,15 +32,55 @@ def _snapshot_fixture():
     return key, payload, vh.issue_snapshot_token(payload, key)
 
 
-def snapshot_mutant_provenance() -> list[dict[str, object]]:
+def snapshot_qualification_cases() -> dict[str, dict[str, object]]:
+    """Return the exact M16-M18 inputs consumed by qualification and evidence."""
     key, payload, token = _snapshot_fixture()
-    m16 = vh.mutate_snapshot_payload_without_resigning(token, "resource_version", "deadbeef")
-    m17_binding = dict(payload, adapter="slack", source_kind="channel")
-    m18_binding = dict(payload, resource_id="Mostorm-Labs/aegis#30", resource_version="other")
+    return {
+        "M16": {
+            "key": key,
+            "token": vh.mutate_snapshot_payload_without_resigning(token, "resource_version", "deadbeef"),
+            "expected_binding": dict(payload),
+            "actual_binding": dict(payload, resource_version="deadbeef"),
+            "expected_reason": "INVALID_INTEGRITY",
+        },
+        "M17": {
+            "key": key,
+            "token": token,
+            "expected_binding": dict(payload, adapter="slack", source_kind="channel"),
+            "actual_binding": dict(payload),
+            "expected_reason": "BINDING_MISMATCH",
+        },
+        "M18": {
+            "key": key,
+            "token": token,
+            "expected_binding": dict(payload, resource_id="Mostorm-Labs/aegis#30", resource_version="other"),
+            "actual_binding": dict(payload),
+            "expected_reason": "BINDING_MISMATCH",
+        },
+    }
+
+
+def snapshot_mutant_provenance() -> list[dict[str, object]]:
+    cases = snapshot_qualification_cases()
     return [
-        {"mutant_id": "M16", "mutated_token_hex": m16.hex(), "expected_binding": payload},
-        {"mutant_id": "M17", "token_hex": token.hex(), "expected_binding": m17_binding, "actual_binding": payload},
-        {"mutant_id": "M18", "token_hex": token.hex(), "expected_binding": m18_binding, "actual_binding": payload},
+        {
+            "mutant_id": "M16",
+            "mutated_token_hex": cases["M16"]["token"].hex(),
+            "expected_binding": cases["M16"]["expected_binding"],
+            "actual_binding": cases["M16"]["actual_binding"],
+        },
+        {
+            "mutant_id": "M17",
+            "token_hex": cases["M17"]["token"].hex(),
+            "expected_binding": cases["M17"]["expected_binding"],
+            "actual_binding": cases["M17"]["actual_binding"],
+        },
+        {
+            "mutant_id": "M18",
+            "token_hex": cases["M18"]["token"].hex(),
+            "expected_binding": cases["M18"]["expected_binding"],
+            "actual_binding": cases["M18"]["actual_binding"],
+        },
     ]
 
 
@@ -55,14 +95,17 @@ def run_qualification() -> dict[str, object]:
     for mutant_id, (trace, expected_violation) in _M01_M15_CASES.items():
         violations = crm.detect_semantic_violations(trace)
         results[mutant_id] = {"detected": expected_violation in violations, "observed": sorted(violations), "expected": expected_violation}
-    key, payload, token = _snapshot_fixture()
-    m16 = vh.mutate_snapshot_payload_without_resigning(token, "resource_version", "deadbeef")
-    m16_result = vh.verify_snapshot_token(m16, key, payload)
-    results["M16"] = {"detected": not m16_result.ok, "observed": m16_result.reason, "expected": "INVALID_INTEGRITY"}
-    m17_result = vh.verify_snapshot_token(token, key, dict(payload, adapter="slack"))
-    results["M17"] = {"detected": not m17_result.ok, "observed": m17_result.reason, "expected": "BINDING_MISMATCH"}
-    m18_result = vh.verify_snapshot_token(token, key, dict(payload, resource_version="other"))
-    results["M18"] = {"detected": not m18_result.ok, "observed": m18_result.reason, "expected": "BINDING_MISMATCH"}
+
+    cases = snapshot_qualification_cases()
+    for mutant_id in ("M16", "M17", "M18"):
+        case = cases[mutant_id]
+        verification = vh.verify_snapshot_token(case["token"], case["key"], case["expected_binding"])
+        results[mutant_id] = {
+            "detected": not verification.ok,
+            "observed": verification.reason,
+            "expected": case["expected_reason"],
+        }
+
     m19_detected = not vh.supports_autonomous_trust_sensitive_provider(supports_callback=True, supports_durable_query=False, supports_correlation=False)
     results["M19"] = {"detected": m19_detected, "observed": "DEGRADED" if m19_detected else "FULL", "expected": "DEGRADED"}
     m20 = m20_provenance()
