@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import unittest
 
 from tools import aegis_control
@@ -19,7 +19,14 @@ def exact_ref(object_type: str, object_id: str, value: str):
 
 
 class CpI04SnapshotTrustTests(unittest.TestCase):
-    def _adapter(self, *, adapter_id="project-state-a", query_correlation=True):
+    def _adapter(
+        self,
+        *,
+        adapter_id="project-state-a",
+        source_kind="PROJECT_STATE",
+        query_correlation=True,
+        clock=None,
+    ):
         required = (
             "DeterministicExternalAdapter",
             "TrustFactRequest",
@@ -29,12 +36,12 @@ class CpI04SnapshotTrustTests(unittest.TestCase):
         if missing:
             self.fail(f"CP-I04 public trust surface missing: {missing}")
         return aegis_control.DeterministicExternalAdapter(
-            source_kind="PROJECT_STATE",
+            source_kind=source_kind,
             adapter_id=adapter_id,
             secret=b"cp-i04-test-secret",
             callback_available=True,
             query_correlation_available=query_correlation,
-            clock=lambda: NOW,
+            clock=clock or (lambda: NOW),
         )
 
     def test_snapshot_token_rejects_tamper_wrong_adapter_and_version_drift(self):
@@ -50,8 +57,17 @@ class CpI04SnapshotTrustTests(unittest.TestCase):
         self.assertTrue(adapter.verify_snapshot(snapshot.snapshot_token, expected_resource_key="gate/main").valid)
 
         replacement = "A" if snapshot.snapshot_token[-1] != "A" else "B"
-        tampered = snapshot.snapshot_token[:-1] + replacement
-        self.assertFalse(adapter.verify_snapshot(tampered, expected_resource_key="gate/main").valid)
+        tampered_tag = snapshot.snapshot_token[:-1] + replacement
+        result = adapter.verify_snapshot(tampered_tag, expected_resource_key="gate/main")
+        self.assertFalse(result.valid)
+        self.assertEqual("SNAPSHOT_INTEGRITY_INVALID", result.code)
+
+        prefix, payload, tag = snapshot.snapshot_token.split(".")
+        payload_replacement = "A" if payload[-1] != "A" else "B"
+        tampered_payload = f"{prefix}.{payload[:-1]}{payload_replacement}.{tag}"
+        result = adapter.verify_snapshot(tampered_payload, expected_resource_key="gate/main")
+        self.assertFalse(result.valid)
+        self.assertEqual("SNAPSHOT_INTEGRITY_INVALID", result.code)
 
         wrong_adapter = self._adapter(adapter_id="project-state-b")
         wrong_adapter.set_resource(
@@ -61,7 +77,32 @@ class CpI04SnapshotTrustTests(unittest.TestCase):
             resolved_refs=[exact_ref("GATE_DECISION", "gate-1", "sha256:" + "1" * 64)],
             satisfies=True,
         )
-        self.assertFalse(wrong_adapter.verify_snapshot(snapshot.snapshot_token, expected_resource_key="gate/main").valid)
+        result = wrong_adapter.verify_snapshot(snapshot.snapshot_token, expected_resource_key="gate/main")
+        self.assertFalse(result.valid)
+        self.assertEqual("SNAPSHOT_ADAPTER_MISMATCH", result.code)
+
+        wrong_source = self._adapter(source_kind="PROOF_PLANE")
+        wrong_source.set_resource(
+            "gate/main",
+            version_scheme="git-commit+blob",
+            version_value="v1",
+            resolved_refs=[exact_ref("GATE_DECISION", "gate-1", "sha256:" + "1" * 64)],
+            satisfies=True,
+        )
+        result = wrong_source.verify_snapshot(snapshot.snapshot_token, expected_resource_key="gate/main")
+        self.assertFalse(result.valid)
+        self.assertEqual("SNAPSHOT_SOURCE_KIND_MISMATCH", result.code)
+
+        adapter.set_resource(
+            "gate/other",
+            version_scheme="git-commit+blob",
+            version_value="v1",
+            resolved_refs=[exact_ref("GATE_DECISION", "gate-other", "sha256:" + "2" * 64)],
+            satisfies=True,
+        )
+        result = adapter.verify_snapshot(snapshot.snapshot_token, expected_resource_key="gate/other")
+        self.assertFalse(result.valid)
+        self.assertEqual("SNAPSHOT_RESOURCE_MISMATCH", result.code)
 
         adapter.set_resource(
             "gate/main",
@@ -73,6 +114,22 @@ class CpI04SnapshotTrustTests(unittest.TestCase):
         stale = adapter.verify_snapshot(snapshot.snapshot_token, expected_resource_key="gate/main")
         self.assertFalse(stale.valid)
         self.assertEqual("SNAPSHOT_VERSION_STALE", stale.code)
+
+    def test_snapshot_token_rejects_expired_currentness_window(self):
+        observed = [NOW]
+        adapter = self._adapter(clock=lambda: observed[0])
+        adapter.set_resource(
+            "gate/expiring",
+            version_scheme="gate-version",
+            version_value="v1",
+            resolved_refs=[exact_ref("GATE_DECISION", "gate-expiring", "sha256:" + "b" * 64)],
+            satisfies=True,
+        )
+        snapshot = adapter.resolve("gate/expiring")
+        observed[0] = NOW + timedelta(seconds=11)
+        result = adapter.verify_snapshot(snapshot.snapshot_token, expected_resource_key="gate/expiring")
+        self.assertFalse(result.valid)
+        self.assertEqual("SNAPSHOT_EXPIRED", result.code)
 
     def test_trust_resolver_bundle_becomes_stale_when_provider_version_changes(self):
         adapter = self._adapter()
