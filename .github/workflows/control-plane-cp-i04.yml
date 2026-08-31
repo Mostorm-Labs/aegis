@@ -39,3 +39,26 @@ jobs:
           python-version: "3.12"
       - name: Run CP-I04 focused tests
         run: python3 -m unittest discover -s tests/control_plane -p 'test_cp_i04_*.py' -v
+      - name: Run full Control Plane regression suite
+        run: python3 -m unittest discover -s tests/control_plane -v
+      - name: Run Project State regression suite
+        run: python3 -m unittest discover -s tests/project_state -v
+      - name: Run Skillset regression suite
+        run: python3 -m unittest discover -s tests/skillset -v
+      - name: Materialize CP-I04 evidence bundle
+        env:
+          PACKAGE_REF: 28e89118b68b3cf3eab1cf94ab65a20271e32c80
+          RESULT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python3 tests/control_plane/generate_cp_i04_evidence.py \
+            --result-revision "$RESULT_REVISION" \
+            --package-ref "$PACKAGE_REF" \
+            --output-dir artifacts/cp-i04
+          for file in artifacts/cp-i04/*.json; do python3 -m json.tool "$file" >/dev/null; done
+      - name: Upload CP-I04 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp-i04-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/cp-i04
+          if-no-files-found: error
+          retention-days: 30
