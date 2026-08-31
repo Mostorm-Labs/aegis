@@ -1,3 +1,4 @@
+import sqlite3
 import tempfile
 import threading
 import unittest
@@ -10,6 +11,7 @@ from tests.control_plane.cp_i02_fixtures import (
     terminal_facts,
 )
 from tests.control_plane.store_oracle import audit_database
+from tools.aegis_control.canonical import canonical_digest, canonical_dumps
 from tools.aegis_control.mutation import MutationRejected, MutationService
 from tools.aegis_control.store import ControlStore
 
@@ -179,6 +181,61 @@ class P36ContinuationRegressionTests(unittest.TestCase):
         self.assertEqual([1, 2], audit["lineages"]["STAGE_OCCURRENCE:so_oracle_a"]["revisions"])
         self.assertEqual([1], audit["lineages"]["STAGE_OCCURRENCE:so_oracle_b"]["revisions"])
         self.assertEqual(2, audit["lane_heads"]["lane_oracle_p36"]["version"])
+
+    def test_store_oracle_flags_true_two_open_same_lane_corruption(self):
+        db = self._db("oracle-double-winner.db")
+        store = ControlStore(db)
+        service = MutationService(store)
+        self._schedule(service, "req_oracle_good", "lane_oracle_bad", "so_oracle_good")
+
+        injected = occurrence_record("so_oracle_injected", "lane_oracle_bad")
+        canonical_json = canonical_dumps(injected)
+        digest = canonical_digest(injected)
+        injected_ref = f"STAGE_OCCURRENCE:so_oracle_injected@1#{digest}"
+        outbox_payload = {
+            "occurrence_ref": injected_ref,
+            "control_lane_id": "lane_oracle_bad",
+            "operation_request_id": "req_oracle_injected",
+        }
+        conn = sqlite3.connect(db)
+        try:
+            conn.execute(
+                "INSERT INTO canonical_records "
+                "(kind, id_scheme, record_id, record_revision, control_lane_id, stage_state, canonical_json, digest) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    injected["kind"],
+                    injected["id_scheme"],
+                    injected["id"],
+                    injected["record_revision"],
+                    injected["control_lane_id"],
+                    injected["state"],
+                    canonical_json,
+                    digest,
+                ),
+            )
+            conn.execute(
+                "INSERT INTO outbox(outbox_id, occurrence_id, control_lane_id, payload_json) VALUES (?, ?, ?, ?)",
+                (
+                    "out_oracle_injected",
+                    injected["id"],
+                    injected["control_lane_id"],
+                    canonical_dumps(outbox_payload),
+                ),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+        audit = audit_database(db)
+        self.assertFalse(audit["passed"])
+        self.assertEqual(1, audit["metrics"]["same_lane_double_winners"])
+        self.assertIn("SAME_LANE_DOUBLE_WINNER", audit["findings"])
+        self.assertEqual(
+            ["so_oracle_good", "so_oracle_injected"],
+            audit["open_occurrences_by_lane"]["lane_oracle_bad"],
+        )
+        self.assertEqual(0, audit["metrics"]["orphan_schedule_pairs"])
 
 
 if __name__ == "__main__":
