@@ -4,8 +4,8 @@ CP-I01 supplies canonical encoding/validation. CP-I02 adds the local durable
 Control Store mechanics and the single canonical MutationService writer.
 CP-I03 adds deterministic projection, fail-closed policy, and transient
 scheduler candidates while preserving MutationService as the only writer.
-Remote dispatch, provider adapters, and later Control Plane slices remain out
-of scope.
+CP-I04 adds bounded external-trust read ports and opaque snapshot guards;
+remote dispatch and later Control Plane slices remain out of scope.
 """
 
 from .canonical import (
@@ -17,6 +17,11 @@ from .canonical import (
     validate_record,
     validate_revision_lineage,
 )
+from .external_ports import (
+    DeterministicExternalAdapter,
+    ProviderCapability,
+    SourceSnapshot,
+)
 from .mutation import MutationRejected, MutationService, semantic_fingerprint
 from .policy import PolicyDecision, PolicyEvaluator
 from .projection import (
@@ -27,13 +32,16 @@ from .projection import (
     ProjectionEngine,
 )
 from .scheduler import ScheduleCandidate, Scheduler, SchedulingDenied
+from .snapshot import SnapshotVerification, SourceSnapshotTokenCodec
 from .store import ControlStore, LaneHead, StoredRecord
+from .trust import TrustFactRequest, TrustResolution, TrustResolver
 
 __all__ = [
     "CanonicalValidationError",
     "ControlCursor",
     "ControlProjection",
     "ControlStore",
+    "DeterministicExternalAdapter",
     "LaneHead",
     "LifecycleSummary",
     "MutationRejected",
@@ -42,10 +50,17 @@ __all__ = [
     "PolicyEvaluator",
     "ProjectionCache",
     "ProjectionEngine",
+    "ProviderCapability",
     "ScheduleCandidate",
     "Scheduler",
     "SchedulingDenied",
+    "SnapshotVerification",
+    "SourceSnapshot",
+    "SourceSnapshotTokenCodec",
     "StoredRecord",
+    "TrustFactRequest",
+    "TrustResolution",
+    "TrustResolver",
     "canonical_digest",
     "canonical_dumps",
     "canonical_json_bytes",
