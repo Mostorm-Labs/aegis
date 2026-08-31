@@ -34,6 +34,18 @@ class CpI03EvidenceTests(unittest.TestCase):
             self.assertEqual("5475361166", manifest["accepted_cp_i02"]["p34_comment"])
             self.assertEqual(
                 {
+                    "original_blocker_id": "CP-I03-P34-B1",
+                    "source_p34_comment": "5476589682",
+                    "source_p35_comment": "5476782049",
+                    "source_p36_comment": "5477531093",
+                    "rereview_blocker_id": "CP-I03-P34-B2",
+                    "source_p34_rereview_comment": "5479230527",
+                    "source_p35_b2_comment": "5480059914",
+                },
+                manifest["repair_lineage"],
+            )
+            self.assertEqual(
+                {
                     "CPV-E-OWNERSHIP-ROLLOUT",
                     "CPV-E-DERIVED-STATE",
                     "CPV-E-CANONICAL-CONFORMANCE",
@@ -47,6 +59,7 @@ class CpI03EvidenceTests(unittest.TestCase):
                     "pinned_policy_mismatch_commits": 0,
                     "stale_projection_authorization": 0,
                     "stale_policy_authorization": 0,
+                    "ambiguous_policy_authorization": 0,
                     "cache_pause_lease_only_canonical_mutations": 0,
                 },
                 manifest["metrics"],
@@ -69,6 +82,28 @@ class CpI03EvidenceTests(unittest.TestCase):
             self.assertTrue(derived["stale_policy_rejected"])
             self.assertEqual(1, canonical["scheduler_cas_race"]["winner_count"])
             self.assertEqual(1, canonical["scheduler_cas_race"]["loser_count"])
+
+            rejection = canonical["policy_rejection_zero_residue"]
+            self.assertTrue(rejection["passed"])
+            self.assertEqual(
+                {
+                    "pinned_policy_mismatch": "CANDIDATE_POLICY_BINDING_MISMATCH",
+                    "allow_to_deny": "POLICY_REVALIDATION_DENIED",
+                    "changed_policy_digest": "STALE_POLICY_AUTHORIZATION",
+                    "stale_current_basis": "POLICY_REVALIDATION_DENIED",
+                    "ambiguous_current_basis": "POLICY_REVALIDATION_DENIED",
+                },
+                rejection["rejection_codes"],
+            )
+            self.assertTrue(all(rejection["zero_residue"].values()))
+            self.assertEqual(
+                {
+                    "pinned_policy_mismatch_commits": 0,
+                    "stale_policy_authorization": 0,
+                    "ambiguous_policy_authorization": 0,
+                },
+                rejection["metrics"],
+            )
 
     def test_generator_is_directly_executable_from_repository_root(self):
         repo_root = Path(__file__).resolve().parents[2]
