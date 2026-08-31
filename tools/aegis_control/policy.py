@@ -15,6 +15,7 @@ class PolicyDecision:
     policy_digest: str
     source_primary_owner: str
     target_primary_owner: str
+    control_autonomy: str
     gate_decision: bool = False
 
 
@@ -50,6 +51,7 @@ class PolicyEvaluator:
                 digest,
                 source_primary_owner,
                 target_primary_owner,
+                control_autonomy,
             )
         if next_legal_action not in {"SCHEDULE_INITIAL", "SCHEDULE_SUCCESSOR"}:
             return self._decision(
@@ -59,6 +61,7 @@ class PolicyEvaluator:
                 digest,
                 source_primary_owner,
                 target_primary_owner,
+                control_autonomy,
             )
         if control_autonomy == "HUMAN_DECISION":
             return self._decision(
@@ -68,6 +71,7 @@ class PolicyEvaluator:
                 digest,
                 source_primary_owner,
                 target_primary_owner,
+                control_autonomy,
             )
         if control_autonomy == "REVIEW_GUARDED":
             return self._decision(
@@ -77,6 +81,7 @@ class PolicyEvaluator:
                 digest,
                 source_primary_owner,
                 target_primary_owner,
+                control_autonomy,
             )
         if control_autonomy != "AUTONOMOUS":
             return self._decision(
@@ -86,6 +91,7 @@ class PolicyEvaluator:
                 digest,
                 source_primary_owner,
                 target_primary_owner,
+                control_autonomy,
             )
         if source_primary_owner != target_primary_owner:
             return self._decision(
@@ -95,6 +101,7 @@ class PolicyEvaluator:
                 digest,
                 source_primary_owner,
                 target_primary_owner,
+                control_autonomy,
             )
         if policy_basis.get("rollout_authorized") is not True:
             return self._decision(
@@ -104,6 +111,7 @@ class PolicyEvaluator:
                 digest,
                 source_primary_owner,
                 target_primary_owner,
+                control_autonomy,
             )
         return self._decision(
             "AUTONOMOUS",
@@ -112,6 +120,7 @@ class PolicyEvaluator:
             digest,
             source_primary_owner,
             target_primary_owner,
+            control_autonomy,
         )
 
     @staticmethod
@@ -122,6 +131,7 @@ class PolicyEvaluator:
         digest: str,
         source_primary_owner: str,
         target_primary_owner: str,
+        control_autonomy: str,
     ) -> PolicyDecision:
         return PolicyDecision(
             mode=mode,
@@ -130,5 +140,6 @@ class PolicyEvaluator:
             policy_digest=digest,
             source_primary_owner=source_primary_owner,
             target_primary_owner=target_primary_owner,
+            control_autonomy=control_autonomy,
             gate_decision=False,
         )
