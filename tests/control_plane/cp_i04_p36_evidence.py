@@ -8,6 +8,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 from pathlib import Path
+import sys
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from tests.control_plane import generate_cp_i04_evidence as base
 from tests.control_plane.test_cp_i04_required_child_barrier import exact_ref, root_scope
