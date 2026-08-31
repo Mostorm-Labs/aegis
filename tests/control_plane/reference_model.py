@@ -24,6 +24,24 @@ ALLOWED_OPERATIONS = (
     "RECOMPUTE_CONTROL_PROJECTION",
 )
 
+FROZEN_OCCURRENCE_FIELDS = (
+    "control_lane_id",
+    "stage_span",
+    "primary_owner",
+    "trusted_basis",
+    "policy_binding",
+    "schedule_basis",
+    "input_refs",
+    "repair_context",
+)
+
+_OCCURRENCE_SCHEDULE_OPERATIONS = {
+    "SCHEDULE_STAGE_OCCURRENCE",
+    "SCHEDULE_REPAIR_OCCURRENCE",
+    "SCHEDULE_REVERIFICATION_OCCURRENCE",
+    "SCHEDULE_REREVIEW_OCCURRENCE",
+}
+
 
 def is_legal_operation(operation_name: str) -> bool:
     return operation_name in ALLOWED_OPERATIONS
@@ -122,6 +140,115 @@ def detect_semantic_violations(trace: Mapping[str, object]) -> set[str]:
     return violations
 
 
+def _record_identity_matches(current: Mapping[str, object], proposed: Mapping[str, object]) -> bool:
+    for field in ("kind", "id", "id_scheme"):
+        if field in current or field in proposed:
+            if current.get(field) != proposed.get(field):
+                return False
+    return True
+
+
+def _expected_revision_matches(current: Mapping[str, object], expected_state: Mapping[str, object] | None) -> bool:
+    if not expected_state or "target_record_revision" not in expected_state:
+        return True
+    return expected_state.get("target_record_revision") == current.get("record_revision")
+
+
+def _next_revision_matches(current: Mapping[str, object], proposed: Mapping[str, object]) -> bool:
+    current_revision = current.get("record_revision")
+    proposed_revision = proposed.get("record_revision")
+    return isinstance(current_revision, int) and proposed_revision == current_revision + 1
+
+
+def _frozen_occurrence_facts_match(current: Mapping[str, object], proposed: Mapping[str, object]) -> bool:
+    return all(current.get(field) == proposed.get(field) for field in FROZEN_OCCURRENCE_FIELDS)
+
+
+def transition_violations(
+    operation_name: str,
+    current_record: Mapping[str, object] | None,
+    proposed_record: Mapping[str, object] | None,
+    expected_state: Mapping[str, object] | None = None,
+) -> set[str]:
+    """Independently classify representative P13 record-transition legality.
+
+    This models semantic preconditions only; it is not a production mutation
+    implementation and has no database, scheduler, policy, or dispatch dependency.
+    """
+    violations: set[str] = set()
+    if operation_name not in ALLOWED_OPERATIONS:
+        return {"UNKNOWN_OPERATION"}
+
+    if operation_name == "RECOMPUTE_CONTROL_PROJECTION":
+        if proposed_record is not None:
+            violations.add("PROJECTION_MUTATED_CANONICAL")
+        return violations
+
+    if operation_name == "MATERIALIZE_IMPLEMENTATION_PACKAGE":
+        if current_record is not None:
+            violations.add("PACKAGE_ALREADY_EXISTS")
+        if proposed_record is None or proposed_record.get("kind") != "VERIFICATION_BOUND_IMPLEMENTATION_PACKAGE":
+            violations.add("WRONG_TARGET_KIND")
+        elif proposed_record.get("record_revision") != 1:
+            violations.add("INVALID_INITIAL_REVISION")
+        return violations
+
+    if operation_name in _OCCURRENCE_SCHEDULE_OPERATIONS:
+        if proposed_record is None or proposed_record.get("kind") != "STAGE_OCCURRENCE":
+            violations.add("WRONG_TARGET_KIND")
+        else:
+            if proposed_record.get("record_revision") != 1:
+                violations.add("INVALID_INITIAL_REVISION")
+            if proposed_record.get("state") != "OPEN":
+                violations.add("SCHEDULE_MUST_CREATE_OPEN")
+        return violations
+
+    if operation_name == "RAISE_ESCALATION":
+        if proposed_record is None or proposed_record.get("kind") != "ESCALATION":
+            violations.add("WRONG_TARGET_KIND")
+        elif proposed_record.get("record_revision") != 1:
+            violations.add("ESCALATION_IMMUTABLE")
+        return violations
+
+    if current_record is None or proposed_record is None:
+        return {"MISSING_TRANSITION_RECORD"}
+
+    if not _record_identity_matches(current_record, proposed_record):
+        violations.add("LINEAGE_IDENTITY_CHANGED")
+    if not _expected_revision_matches(current_record, expected_state):
+        violations.add("EXPECTED_REVISION_MISMATCH")
+    if not _next_revision_matches(current_record, proposed_record):
+        violations.add("NON_CONTIGUOUS_REVISION")
+
+    if operation_name == "REVISE_IMPLEMENTATION_PACKAGE":
+        if current_record.get("kind") != "VERIFICATION_BOUND_IMPLEMENTATION_PACKAGE" or proposed_record.get("kind") != "VERIFICATION_BOUND_IMPLEMENTATION_PACKAGE":
+            violations.add("WRONG_TARGET_KIND")
+        return violations
+
+    if operation_name in {"RECORD_EXECUTION_PROGRESS", "TERMINATE_STAGE_OCCURRENCE", "RECORD_ESCALATION_RESOLUTION"}:
+        if current_record.get("kind") != "STAGE_OCCURRENCE" or proposed_record.get("kind") != "STAGE_OCCURRENCE":
+            violations.add("WRONG_TARGET_KIND")
+            return violations
+        if current_record.get("state") != "OPEN":
+            violations.add("TARGET_NOT_OPEN")
+        if not _frozen_occurrence_facts_match(current_record, proposed_record):
+            violations.add("FROZEN_START_FACT_CHANGED")
+
+        if operation_name == "RECORD_EXECUTION_PROGRESS":
+            if proposed_record.get("state") != "OPEN":
+                violations.add("PROGRESS_MUST_REMAIN_OPEN")
+            if proposed_record.get("terminal") is not None:
+                violations.add("PROGRESS_CANNOT_TERMINATE")
+        else:
+            if proposed_record.get("state") != "TERMINAL":
+                violations.add("TERMINATION_MUST_BE_TERMINAL")
+            if not isinstance(proposed_record.get("terminal"), Mapping):
+                violations.add("TERMINAL_FACTS_REQUIRED")
+        return violations
+
+    return violations
+
+
 def successor_allowed(required_child_ids: Iterable[str], accepted_child_ids: Iterable[str]) -> bool:
     return set(required_child_ids).issubset(set(accepted_child_ids))
 
@@ -160,23 +287,46 @@ def lineage_violations(records: Iterable[Mapping[str, object]]) -> set[str]:
     violations: set[str] = set()
     if not items:
         return {"EMPTY_LINEAGE"}
-    stable_id = items[0].get("id")
-    terminal_seen = False
-    terminal_count = 0
+
+    first = items[0]
+    stable_id = first.get("id")
+    stable_kind = first.get("kind")
+    stable_id_scheme = first.get("id_scheme")
+
     for expected_revision, record in enumerate(items, start=1):
         if record.get("id") != stable_id:
             violations.add("LINEAGE_ID_CHANGED")
+        if stable_kind is not None or record.get("kind") is not None:
+            if record.get("kind") != stable_kind:
+                violations.add("LINEAGE_KIND_CHANGED")
+        if stable_id_scheme is not None or record.get("id_scheme") is not None:
+            if record.get("id_scheme") != stable_id_scheme:
+                violations.add("LINEAGE_ID_SCHEME_CHANGED")
         if record.get("record_revision") != expected_revision:
             violations.add("NON_CONTIGUOUS_REVISION")
-        if record.get("state") == "TERMINAL":
-            terminal_count += 1
-            if terminal_seen:
-                violations.add("REVISION_AFTER_TERMINAL")
-            terminal_seen = True
-        elif terminal_seen:
+
+    if stable_kind == "ESCALATION":
+        if len(items) != 1 or first.get("record_revision") != 1:
+            violations.add("ESCALATION_IMMUTABLE")
+        return violations
+
+    if stable_kind in {None, "STAGE_OCCURRENCE"}:
+        terminal_indexes = [index for index, record in enumerate(items) if record.get("state") == "TERMINAL"]
+        if len(terminal_indexes) > 1:
+            violations.add("MULTIPLE_TERMINAL_REVISIONS")
+        if terminal_indexes and terminal_indexes[0] != len(items) - 1:
             violations.add("REVISION_AFTER_TERMINAL")
-    if terminal_count > 1:
-        violations.add("MULTIPLE_TERMINAL_REVISIONS")
+        if stable_kind == "STAGE_OCCURRENCE":
+            if first.get("state") != "OPEN":
+                violations.add("LINEAGE_MUST_START_OPEN")
+            for record in items[1:]:
+                if not _frozen_occurrence_facts_match(first, record):
+                    violations.add("FROZEN_START_FACT_CHANGED")
+        return violations
+
+    if stable_kind == "VERIFICATION_BOUND_IMPLEMENTATION_PACKAGE":
+        return violations
+
     return violations
 
 
