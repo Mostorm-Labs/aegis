@@ -146,6 +146,7 @@ class DeterministicExternalAdapter:
             expected_source_kind=self.source_kind,
             expected_adapter_id=self.adapter_id,
             expected_resource_key=expected_resource_key,
+            current_version_scheme=state.version_scheme,
             current_version_value=state.version_value,
             now=self._clock(),
         )

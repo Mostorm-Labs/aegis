@@ -70,6 +70,7 @@ class SourceSnapshotTokenCodec:
         expected_source_kind: str,
         expected_adapter_id: str,
         expected_resource_key: str,
+        current_version_scheme: str | None = None,
         current_version_value: str | None = None,
         now: datetime | None = None,
     ) -> SnapshotVerification:
@@ -94,6 +95,8 @@ class SourceSnapshotTokenCodec:
             return SnapshotVerification(False, "SNAPSHOT_ADAPTER_MISMATCH", payload)
         if payload.get("resource_key") != expected_resource_key:
             return SnapshotVerification(False, "SNAPSHOT_RESOURCE_MISMATCH", payload)
+        if current_version_scheme is not None and payload.get("version_scheme") != current_version_scheme:
+            return SnapshotVerification(False, "SNAPSHOT_VERSION_STALE", payload)
         if current_version_value is not None and payload.get("version_value") != current_version_value:
             return SnapshotVerification(False, "SNAPSHOT_VERSION_STALE", payload)
 

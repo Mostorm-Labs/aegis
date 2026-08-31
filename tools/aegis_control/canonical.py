@@ -47,6 +47,33 @@ KIND_ID_SCHEME = {
     "VERIFICATION_BOUND_IMPLEMENTATION_PACKAGE": "verification-bound-package-v0.2",
     "ESCALATION": "escalation-v0.2",
 }
+PRIMARY_OWNER_BY_STAGE = {
+    "P00": "aegis-discovery",
+    "P01": "aegis-discovery",
+    "P02": "aegis-discovery",
+    "P03": "aegis-discovery",
+    "P10": "aegis-modeling",
+    "P11": "aegis-modeling",
+    "P12": "aegis-modeling",
+    "P13": "aegis-modeling",
+    "P14": "aegis-architecture",
+    "P15": "aegis-architecture",
+    "P16": "aegis-architecture",
+    "P17": "aegis-architecture",
+    "P18": "aegis-architecture",
+    "P20": "aegis-verification",
+    "P21": "aegis-governance",
+    "P22": "aegis-governance",
+    "P23": "aegis-governance",
+    "P24": "aegis-governance",
+    "P30": "aegis-implementation",
+    "P31": "aegis-implementation",
+    "P32": "aegis-implementation",
+    "P33": "aegis-implementation",
+    "P34": "aegis-gate-review",
+    "P35": "aegis-gate-review",
+    "P36": "aegis-gate-review",
+}
 
 
 class CanonicalValidationError(ValueError):
@@ -238,6 +265,27 @@ def _validate_ref_list(values: Sequence[Mapping[str, Any]], *, object_type: str 
         seen.add(digest)
 
 
+def _validate_stage_ownership(record: Mapping[str, Any]) -> None:
+    stage_span = record.get("stage_span")
+    if not isinstance(stage_span, Mapping) or set(stage_span) != {"stages"}:
+        raise CanonicalValidationError("StageOccurrence stage_span must contain exactly stages")
+    stages = stage_span.get("stages")
+    if not isinstance(stages, list) or not stages or any(not isinstance(stage, str) for stage in stages):
+        raise CanonicalValidationError("StageOccurrence stages must be a non-empty string list")
+    if len(set(stages)) != len(stages):
+        raise CanonicalValidationError("StageOccurrence stages must be unique")
+    owners = []
+    for stage in stages:
+        owner = PRIMARY_OWNER_BY_STAGE.get(stage)
+        if owner is None:
+            raise CanonicalValidationError("StageOccurrence contains unknown stage")
+        owners.append(owner)
+    if len(set(owners)) != 1:
+        raise CanonicalValidationError("StageOccurrence may not cross Primary owners")
+    if record.get("primary_owner") != owners[0]:
+        raise CanonicalValidationError("StageOccurrence primary_owner does not match stage ownership")
+
+
 def validate_record(record: Mapping[str, Any]) -> None:
     if not isinstance(record, Mapping):
         raise CanonicalValidationError("canonical record must be an object")
@@ -269,6 +317,7 @@ def validate_record(record: Mapping[str, Any]) -> None:
             raise CanonicalValidationError("work_scope_ref is required")
         validate_work_scope_ref(record["work_scope_ref"])
     if kind == "STAGE_OCCURRENCE":
+        _validate_stage_ownership(record)
         state = record.get("state")
         if state not in {"OPEN", "TERMINAL"}:
             raise CanonicalValidationError("StageOccurrence state must be OPEN or TERMINAL")
