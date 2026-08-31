@@ -3,10 +3,48 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
+import re
 from typing import Any, Mapping, Sequence
 
-from .canonical import canonical_digest, validate_canonical_ref
+from .canonical import canonical_digest, validate_canonical_ref, validate_digest
 from .external_ports import DeterministicExternalAdapter, SourceSnapshot
+
+
+_GIT_SHA_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
+_SEMVER_RE = re.compile(
+    r"^(?:0|[1-9][0-9]*)\."
+    r"(?:0|[1-9][0-9]*)\."
+    r"(?:0|[1-9][0-9]*)"
+    r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
+    r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$"
+)
+
+
+def _validate_exact_trust_ref(ref: Mapping[str, Any]) -> None:
+    """Fail closed unless a CanonicalRef carries an exact trust-boundary identity.
+
+    Generic CanonicalRef structure deliberately remains broader. CP-I04 authorization
+    only accepts identity schemes whose exactness can be established locally from the
+    accepted P12 contract. Native/governed schemes require an owning provider contract
+    that can prove immutability; this bounded fake-adapter slice does not invent one.
+    """
+
+    validate_canonical_ref(ref)
+    identity = ref["identity"]
+    scheme = identity["scheme"]
+    value = identity["value"]
+    if scheme == "sha256":
+        validate_digest(value)
+        return
+    if scheme == "git-sha":
+        if not _GIT_SHA_RE.fullmatch(value):
+            raise ValueError("git-sha trust identity must pin an exact commit/object id")
+        return
+    if scheme == "semantic-version":
+        if not _SEMVER_RE.fullmatch(value):
+            raise ValueError("semantic-version trust identity must pin an exact version")
+        return
+    raise ValueError("trust-boundary identity scheme is not proven exact/immutable")
 
 
 @dataclass(frozen=True)
@@ -45,6 +83,8 @@ class TrustResolver:
         acceptance_contract_sources: Mapping[str, TrustFactRequest] | None = None,
     ):
         self._adapters = dict(adapters)
+        # Keys are canonical digests of the exact CONTRACT CanonicalRef. A stable
+        # semantic contract id alone is intentionally insufficient to authorize.
         self._acceptance_contract_sources = dict(acceptance_contract_sources or {})
 
     def resolve_for_projection(self, requests: Sequence[TrustFactRequest]) -> TrustResolution:
@@ -63,13 +103,15 @@ class TrustResolver:
             validate_canonical_ref(child_completion_occurrence_ref)
             contracts = []
             requests = []
-            seen_contracts: set[str] = set()
+            seen_contract_ids: set[str] = set()
+            seen_contract_keys: set[str] = set()
             for contract in acceptance_contract_refs:
-                validate_canonical_ref(contract)
+                _validate_exact_trust_ref(contract)
                 if contract.get("object_type") != "CONTRACT":
                     raise ValueError("acceptance contract ref must target CONTRACT")
                 contract_id = contract.get("id")
-                if contract_id in seen_contracts:
+                contract_key = canonical_digest(contract)
+                if contract_id in seen_contract_ids or contract_key in seen_contract_keys:
                     return self._child_support(
                         False,
                         "CHILD_ACCEPTANCE_BASIS_AMBIGUOUS",
@@ -78,8 +120,9 @@ class TrustResolver:
                         acceptance_contract_refs,
                         TrustResolution(False, "TRUST_FACT_DUPLICATE"),
                     )
-                seen_contracts.add(contract_id)
-                request = self._acceptance_contract_sources.get(contract_id)
+                seen_contract_ids.add(contract_id)
+                seen_contract_keys.add(contract_key)
+                request = self._acceptance_contract_sources.get(contract_key)
                 if request is None:
                     return self._child_support(
                         False,
@@ -87,7 +130,7 @@ class TrustResolver:
                         child_work_scope_ref,
                         child_completion_occurrence_ref,
                         acceptance_contract_refs,
-                        TrustResolution(False, "TRUST_RESOURCE_MISSING"),
+                        TrustResolution(False, "TRUST_CONTRACT_BINDING_MISSING"),
                     )
                 contracts.append(deepcopy(dict(contract)))
                 requests.append(request)
@@ -118,6 +161,32 @@ class TrustResolver:
                 contracts,
                 resolution,
             )
+
+        try:
+            if len(resolution.snapshots) != len(contracts):
+                raise ValueError("acceptance contract resolution cardinality mismatch")
+            for snapshot in resolution.snapshots:
+                if not snapshot.resolved_refs:
+                    return self._child_support(
+                        False,
+                        "REQUIRED_CHILD_WORK_NOT_ACCEPTED",
+                        child_work_scope_ref,
+                        child_completion_occurrence_ref,
+                        contracts,
+                        TrustResolution(False, "TRUST_ACCEPTANCE_FACT_MISSING"),
+                    )
+                for ref in snapshot.resolved_refs:
+                    _validate_exact_trust_ref(ref)
+        except (TypeError, ValueError):
+            return self._child_support(
+                False,
+                "CHILD_ACCEPTANCE_BASIS_AMBIGUOUS",
+                child_work_scope_ref,
+                child_completion_occurrence_ref,
+                contracts,
+                TrustResolution(False, "TRUST_BASIS_AMBIGUOUS"),
+            )
+
         return self._child_support(
             True,
             "CHILD_ACCEPTED_FOR_PARENT",
