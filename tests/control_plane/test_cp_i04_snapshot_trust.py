@@ -44,7 +44,7 @@ class CpI04SnapshotTrustTests(unittest.TestCase):
             clock=clock or (lambda: NOW),
         )
 
-    def test_snapshot_token_rejects_tamper_wrong_adapter_and_version_drift(self):
+    def test_snapshot_token_rejects_tamper_wrong_adapter_and_complete_version_drift(self):
         adapter = self._adapter()
         adapter.set_resource(
             "gate/main",
@@ -106,14 +106,25 @@ class CpI04SnapshotTrustTests(unittest.TestCase):
 
         adapter.set_resource(
             "gate/main",
+            version_scheme="semantic-version",
+            version_value="v1",
+            resolved_refs=[exact_ref("GATE_DECISION", "gate-1", "sha256:" + "1" * 64)],
+            satisfies=True,
+        )
+        stale_scheme = adapter.verify_snapshot(snapshot.snapshot_token, expected_resource_key="gate/main")
+        self.assertFalse(stale_scheme.valid)
+        self.assertEqual("SNAPSHOT_VERSION_STALE", stale_scheme.code)
+
+        adapter.set_resource(
+            "gate/main",
             version_scheme="git-commit+blob",
             version_value="v2",
             resolved_refs=[exact_ref("GATE_DECISION", "gate-2", "sha256:" + "2" * 64)],
             satisfies=True,
         )
-        stale = adapter.verify_snapshot(snapshot.snapshot_token, expected_resource_key="gate/main")
-        self.assertFalse(stale.valid)
-        self.assertEqual("SNAPSHOT_VERSION_STALE", stale.code)
+        stale_value = adapter.verify_snapshot(snapshot.snapshot_token, expected_resource_key="gate/main")
+        self.assertFalse(stale_value.valid)
+        self.assertEqual("SNAPSHOT_VERSION_STALE", stale_value.code)
 
     def test_snapshot_token_rejects_expired_currentness_window(self):
         observed = [NOW]
@@ -147,6 +158,25 @@ class CpI04SnapshotTrustTests(unittest.TestCase):
         self.assertTrue(bundle.valid)
         self.assertTrue(resolver.verify_freshness(bundle).valid)
 
+        adapter.set_resource(
+            "proof/result",
+            version_scheme="proof-version-v2",
+            version_value="p1",
+            resolved_refs=[exact_ref("PROOF_EVALUATION", "proof-1", "sha256:" + "3" * 64)],
+            satisfies=True,
+        )
+        self.assertFalse(resolver.verify_freshness(bundle).valid)
+
+        adapter.set_resource(
+            "proof/result",
+            version_scheme="proof-version",
+            version_value="p1",
+            resolved_refs=[exact_ref("PROOF_EVALUATION", "proof-1", "sha256:" + "3" * 64)],
+            satisfies=True,
+        )
+        bundle = resolver.resolve_for_mutation(
+            [aegis_control.TrustFactRequest("PROJECT_STATE", "proof/result")]
+        )
         adapter.set_resource(
             "proof/result",
             version_scheme="proof-version",
