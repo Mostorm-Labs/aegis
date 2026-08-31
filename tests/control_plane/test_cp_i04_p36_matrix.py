@@ -77,7 +77,9 @@ class CpI04P36MandatoryMatrixTests(unittest.TestCase):
         return aegis_control.TrustResolver(
             {"PROJECT_STATE": adapter},
             acceptance_contract_sources={
-                contract["id"]: aegis_control.TrustFactRequest("PROJECT_STATE", RESOURCE)
+                aegis_control.canonical_digest(contract): aegis_control.TrustFactRequest(
+                    "PROJECT_STATE", RESOURCE
+                )
             },
         )
 
@@ -228,30 +230,51 @@ class CpI04P36MandatoryMatrixTests(unittest.TestCase):
             self.assertIsNone(store.read_latest("STAGE_OCCURRENCE", future["id"]))
 
     def test_missing_exact_acceptance_fact_fails_closed(self):
-        adapter = ReplaySnapshotAdapter()
-        contract = exact_ref("CONTRACT", "contract-missing-fact", "5")
-        adapter.set_resource(
-            RESOURCE,
-            version_scheme="gate-decision",
-            version_value="d1",
-            resolved_refs=[],
-            satisfies=True,
-        )
-        resolver = self._resolver(adapter, contract)
-        support = resolver.resolve_child_acceptance(
-            root_scope("ws_missing_fact"),
-            exact_ref("STAGE_OCCURRENCE", "so_missing_fact", "6"),
-            [contract],
-        )
-        self.assertFalse(support.accepted)
-        self.assertEqual((), support.acceptance_fact_refs)
+        with tempfile.TemporaryDirectory() as tmp:
+            store = aegis_control.ControlStore(str(Path(tmp) / "control.db"))
+            adapter = ReplaySnapshotAdapter()
+            contract = exact_ref("CONTRACT", "contract-missing-fact", "5")
+            adapter.set_resource(
+                RESOURCE,
+                version_scheme="gate-decision",
+                version_value="d1",
+                resolved_refs=[],
+                satisfies=True,
+            )
+            resolver = self._resolver(adapter, contract)
+            support = resolver.resolve_child_acceptance(
+                root_scope("ws_missing_fact"),
+                exact_ref("STAGE_OCCURRENCE", "so_missing_fact", "6"),
+                [contract],
+            )
+            self.assertFalse(support.accepted)
+            self.assertEqual((), support.acceptance_fact_refs)
+
+            service = aegis_control.MutationService(store, trust_resolver=resolver)
+            parent_scope, _, parent_terminal, _, _ = self._materialize_barrier(
+                store, service, contract, "missing_fact"
+            )
+            successor = scoped_occurrence(
+                "so_missing_fact_successor", "lane_missing_fact_parent", parent_scope
+            )
+            before = dict(store.snapshot_counts())
+            with self.assertRaises(aegis_control.MutationRejected):
+                self._schedule(
+                    service,
+                    successor,
+                    "req_missing_fact_successor",
+                    predecessor_ref=internal_ref(parent_terminal),
+                )
+            self.assertEqual(before, dict(store.snapshot_counts()))
+            self.assertIsNone(store.read_latest("STAGE_OCCURRENCE", successor["id"]))
 
     def test_mutable_unpinned_acceptance_fact_fails_closed(self):
-        adapter = ReplaySnapshotAdapter()
-        contract = exact_ref("CONTRACT", "contract-mutable-fact", "7")
-        mutable_fact = exact_ref("GATE_DECISION", "gate-mutable", "8")
-        mutable_fact["identity"] = {"scheme": "git-ref", "value": "refs/heads/main"}
-        try:
+        with tempfile.TemporaryDirectory() as tmp:
+            store = aegis_control.ControlStore(str(Path(tmp) / "control.db"))
+            adapter = ReplaySnapshotAdapter()
+            contract = exact_ref("CONTRACT", "contract-mutable-fact", "7")
+            mutable_fact = exact_ref("GATE_DECISION", "gate-mutable", "8")
+            mutable_fact["identity"] = {"scheme": "git-ref", "value": "refs/heads/main"}
             adapter.set_resource(
                 RESOURCE,
                 version_scheme="gate-decision",
@@ -259,35 +282,61 @@ class CpI04P36MandatoryMatrixTests(unittest.TestCase):
                 resolved_refs=[mutable_fact],
                 satisfies=True,
             )
-        except aegis_control.CanonicalValidationError:
-            return
-        resolver = self._resolver(adapter, contract)
-        support = resolver.resolve_child_acceptance(
-            root_scope("ws_mutable_fact"),
-            exact_ref("STAGE_OCCURRENCE", "so_mutable_fact", "9"),
-            [contract],
-        )
-        self.assertFalse(support.accepted)
+            resolver = self._resolver(adapter, contract)
+            support = resolver.resolve_child_acceptance(
+                root_scope("ws_mutable_fact"),
+                exact_ref("STAGE_OCCURRENCE", "so_mutable_fact", "9"),
+                [contract],
+            )
+            self.assertFalse(support.accepted)
+
+            service = aegis_control.MutationService(store, trust_resolver=resolver)
+            parent_scope, _, parent_terminal, _, _ = self._materialize_barrier(
+                store, service, contract, "mutable_fact"
+            )
+            successor = scoped_occurrence(
+                "so_mutable_fact_successor", "lane_mutable_fact_parent", parent_scope
+            )
+            before = dict(store.snapshot_counts())
+            with self.assertRaises(aegis_control.MutationRejected):
+                self._schedule(
+                    service,
+                    successor,
+                    "req_mutable_fact_successor",
+                    predecessor_ref=internal_ref(parent_terminal),
+                )
+            self.assertEqual(before, dict(store.snapshot_counts()))
+            self.assertIsNone(store.read_latest("STAGE_OCCURRENCE", successor["id"]))
 
     def test_acceptance_contract_exact_identity_not_just_id_is_required(self):
-        adapter = ReplaySnapshotAdapter()
-        configured_contract = exact_ref("CONTRACT", "contract-exact-identity", "a")
-        altered_contract = exact_ref("CONTRACT", "contract-exact-identity", "b")
-        gate = exact_ref("GATE_DECISION", "gate-exact-identity", "c")
-        adapter.set_resource(
-            RESOURCE,
-            version_scheme="gate-decision",
-            version_value="d1",
-            resolved_refs=[gate],
-            satisfies=True,
-        )
-        resolver = self._resolver(adapter, configured_contract)
-        support = resolver.resolve_child_acceptance(
-            root_scope("ws_wrong_contract_identity"),
-            exact_ref("STAGE_OCCURRENCE", "so_wrong_contract_identity", "d"),
-            [altered_contract],
-        )
-        self.assertFalse(support.accepted)
+        for index, fact_type in enumerate(("GATE_DECISION", "PROOF_EVALUATION", "RESULT")):
+            with self.subTest(fact_type=fact_type):
+                adapter = ReplaySnapshotAdapter(adapter_id=f"p36-provider-{index}")
+                configured_contract = exact_ref("CONTRACT", f"contract-exact-identity-{index}", "a")
+                altered_contract = exact_ref("CONTRACT", f"contract-exact-identity-{index}", "b")
+                fact = exact_ref(fact_type, f"fact-exact-identity-{index}", "c")
+                adapter.set_resource(
+                    RESOURCE,
+                    version_scheme="acceptance-fact",
+                    version_value=f"d{index}",
+                    resolved_refs=[fact],
+                    satisfies=True,
+                )
+                resolver = self._resolver(adapter, configured_contract)
+                wrong = resolver.resolve_child_acceptance(
+                    root_scope(f"ws_wrong_contract_identity_{index}"),
+                    exact_ref("STAGE_OCCURRENCE", f"so_wrong_contract_identity_{index}", "d"),
+                    [altered_contract],
+                )
+                self.assertFalse(wrong.accepted)
+
+                exact = resolver.resolve_child_acceptance(
+                    root_scope(f"ws_exact_contract_identity_{index}"),
+                    exact_ref("STAGE_OCCURRENCE", f"so_exact_contract_identity_{index}", "e"),
+                    [configured_contract],
+                )
+                self.assertTrue(exact.accepted)
+                self.assertEqual((fact,), exact.acceptance_fact_refs)
 
     def test_duplicate_and_contradictory_exact_facts_fail_closed(self):
         duplicate_adapter = ReplaySnapshotAdapter()
@@ -329,8 +378,12 @@ class CpI04P36MandatoryMatrixTests(unittest.TestCase):
         resolver = aegis_control.TrustResolver(
             {"PROJECT_STATE": adapter},
             acceptance_contract_sources={
-                contract_a["id"]: aegis_control.TrustFactRequest("PROJECT_STATE", "acceptance/a"),
-                contract_b["id"]: aegis_control.TrustFactRequest("PROJECT_STATE", "acceptance/b"),
+                aegis_control.canonical_digest(contract_a): aegis_control.TrustFactRequest(
+                    "PROJECT_STATE", "acceptance/a"
+                ),
+                aegis_control.canonical_digest(contract_b): aegis_control.TrustFactRequest(
+                    "PROJECT_STATE", "acceptance/b"
+                ),
             },
         )
         support = resolver.resolve_child_acceptance(
