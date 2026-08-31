@@ -34,10 +34,16 @@ from .projection import (
 from .scheduler import ScheduleCandidate, Scheduler, SchedulingDenied
 from .snapshot import SnapshotVerification, SourceSnapshotTokenCodec
 from .store import ControlStore, LaneHead, StoredRecord
-from .trust import TrustFactRequest, TrustResolution, TrustResolver
+from .trust import (
+    ChildAcceptanceSupport,
+    TrustFactRequest,
+    TrustResolution,
+    TrustResolver,
+)
 
 __all__ = [
     "CanonicalValidationError",
+    "ChildAcceptanceSupport",
     "ControlCursor",
     "ControlProjection",
     "ControlStore",
