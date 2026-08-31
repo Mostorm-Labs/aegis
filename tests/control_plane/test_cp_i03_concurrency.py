@@ -16,6 +16,12 @@ def _stored_ref(stored) -> str:
     )
 
 
+def _autonomous_occurrence(occurrence_id: str, lane_id: str):
+    record = occurrence_record(occurrence_id, lane_id)
+    record["policy_binding"] = {"control_autonomy": "AUTONOMOUS"}
+    return record
+
+
 class CpI03ConcurrentSchedulerTests(unittest.TestCase):
     def test_same_projection_candidates_reach_cp_i02_cas_and_exactly_one_wins(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -48,19 +54,24 @@ class CpI03ConcurrentSchedulerTests(unittest.TestCase):
             ))
 
             projection = ProjectionEngine(store).project_lane("lane_i03_concurrent")
+            basis = {"current": True, "rollout_authorized": True}
             policy = PolicyEvaluator().evaluate_next_action(
                 next_legal_action=projection.next_legal_action,
                 source_primary_owner="aegis-implementation",
                 target_primary_owner="aegis-implementation",
                 control_autonomy="AUTONOMOUS",
-                policy_basis={"current": True, "rollout_authorized": True},
+                policy_basis=basis,
             )
-            planner = Scheduler(store, mutation)
+            planner = Scheduler(
+                store,
+                mutation,
+                policy_basis_resolver=lambda candidate: dict(basis),
+            )
             candidates = [
                 planner.derive_candidate(
                     projection,
                     policy,
-                    occurrence_record(occurrence_id, "lane_i03_concurrent"),
+                    _autonomous_occurrence(occurrence_id, "lane_i03_concurrent"),
                 )
                 for occurrence_id in ("so_i03_concurrent_b", "so_i03_concurrent_c")
             ]
@@ -72,7 +83,11 @@ class CpI03ConcurrentSchedulerTests(unittest.TestCase):
             def submit(candidate) -> None:
                 local_store = ControlStore(db)
                 local_mutation = MutationService(local_store, before_transaction=lambda: barrier.wait())
-                local_scheduler = Scheduler(local_store, local_mutation)
+                local_scheduler = Scheduler(
+                    local_store,
+                    local_mutation,
+                    policy_basis_resolver=lambda current_candidate: dict(basis),
+                )
                 try:
                     result = local_scheduler.submit_candidate(candidate)
                     outcome = ("APPLIED", result["canonical_records"][0])
