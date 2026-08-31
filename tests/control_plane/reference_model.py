@@ -48,7 +48,12 @@ def _is_ancestor(ancestor: str, descendant: str, ancestry: Iterable[tuple[str, s
     return False
 
 
-def classify_p33(task_anchor_revision: str, observed_revision: str, cursor_revision: str | None, ancestry: Iterable[tuple[str, str]]) -> str:
+def classify_p33(
+    task_anchor_revision: str,
+    observed_revision: str,
+    cursor_revision: str | None,
+    ancestry: Iterable[tuple[str, str]],
+) -> str:
     if cursor_revision is not None:
         if observed_revision == cursor_revision:
             return "EXACT_CURSOR"
@@ -62,41 +67,58 @@ def classify_p33(task_anchor_revision: str, observed_revision: str, cursor_revis
 
 def detect_semantic_violations(trace: Mapping[str, object]) -> set[str]:
     violations: set[str] = set()
+
     event_order = list(trace.get("event_order", []))
-    if "DISPATCH" in event_order and "OPEN_OUTBOX_COMMIT" in event_order and event_order.index("DISPATCH") < event_order.index("OPEN_OUTBOX_COMMIT"):
-        violations.add("DISPATCH_BEFORE_COMMIT")
+    if "DISPATCH" in event_order and "OPEN_OUTBOX_COMMIT" in event_order:
+        if event_order.index("DISPATCH") < event_order.index("OPEN_OUTBOX_COMMIT"):
+            violations.add("DISPATCH_BEFORE_COMMIT")
+
     delivery_ids = list(trace.get("delivery_occurrence_ids", []))
     if delivery_ids and len(set(delivery_ids)) > 1:
         violations.add("DELIVERY_CREATED_SEMANTIC_RETRY")
+
     writers = set(trace.get("canonical_writers", []))
     if writers - {"control-mutation"}:
         violations.add("SECOND_CANONICAL_WRITER")
+
     if trace.get("snapshot_accepted") and trace.get("snapshot_version") != trace.get("current_provider_version"):
         violations.add("STALE_SNAPSHOT_ACCEPTED")
+
     required = set(trace.get("required_child_ids", []))
     bindings = set(trace.get("required_child_acceptance_bindings", []))
     if trace.get("successor_scheduled") and not required.issubset(bindings):
         violations.add("REQUIRED_CHILD_BARRIER_BYPASS")
+
     if trace.get("historical_basis_source") == "CURRENT_PROJECTION":
         violations.add("HISTORICAL_FACT_FROM_CURRENT_PROJECTION")
+
     if trace.get("terminal_and_successor_same_transaction"):
         violations.add("TERMINAL_SUCCESSOR_COLLAPSED")
+
     if trace.get("restart_created_new_occurrence"):
         violations.add("RESTART_CREATED_SEMANTIC_RETRY")
+
     if trace.get("gate_pass_inferred") and trace.get("gate_source") in {"CI", "PROOF_EVALUATION"}:
         violations.add("GATE_INFERRED_FROM_NON_GATE_SOURCE")
+
     if trace.get("execution_cursor_authorizes_scope"):
         violations.add("EXECUTION_CURSOR_USED_AS_AUTHORITY")
+
     if trace.get("cross_primary_auto_dispatch") and not trace.get("rollout_authorized"):
         violations.add("UNAUTHORIZED_CROSS_PRIMARY_DISPATCH")
+
     if trace.get("stale_projection_authorized_mutation"):
         violations.add("STALE_PROJECTION_AUTHORIZED_MUTATION")
+
     if trace.get("schedule_acknowledged") and not trace.get("outbox_persisted"):
         violations.add("ACKNOWLEDGED_SCHEDULE_WITHOUT_OUTBOX")
+
     if trace.get("manual_duplicate_active_work"):
         violations.add("UNSAFE_MANUAL_DUPLICATE")
+
     if trace.get("terminal_history_rewritten"):
         violations.add("TERMINAL_HISTORY_REWRITTEN")
+
     return violations
 
 
@@ -105,6 +127,7 @@ def successor_allowed(required_child_ids: Iterable[str], accepted_child_ids: Ite
 
 
 def derive_projection(occurrences: Iterable[Mapping[str, object]]) -> dict[str, object]:
+    """Derive a tiny deterministic expected projection for fixture comparison."""
     records = list(occurrences)
     if not records:
         return {"active_occurrence_id": None, "last_terminal_occurrence_id": None}
@@ -114,3 +137,50 @@ def derive_projection(occurrences: Iterable[Mapping[str, object]]) -> dict[str, 
         "active_occurrence_id": active[-1].get("id") if active else None,
         "last_terminal_occurrence_id": terminal[-1].get("id") if terminal else None,
     }
+
+
+def idempotency_expectation(existing_requests: Mapping[str, str], operation_request_id: str, fingerprint: str) -> str:
+    existing = existing_requests.get(operation_request_id)
+    if existing is None:
+        return "EXECUTE"
+    if existing == fingerprint:
+        return "REPLAY"
+    return "CONFLICT"
+
+
+def lane_guard_matches(current_state: Mapping[str, object], expected_state: Mapping[str, object]) -> bool:
+    for field in ("active_occurrence_ref", "predecessor_occurrence_ref"):
+        if expected_state.get(field) != current_state.get(field):
+            return False
+    return True
+
+
+def lineage_violations(records: Iterable[Mapping[str, object]]) -> set[str]:
+    items = list(records)
+    violations: set[str] = set()
+    if not items:
+        return {"EMPTY_LINEAGE"}
+    stable_id = items[0].get("id")
+    terminal_seen = False
+    terminal_count = 0
+    for expected_revision, record in enumerate(items, start=1):
+        if record.get("id") != stable_id:
+            violations.add("LINEAGE_ID_CHANGED")
+        if record.get("record_revision") != expected_revision:
+            violations.add("NON_CONTIGUOUS_REVISION")
+        if record.get("state") == "TERMINAL":
+            terminal_count += 1
+            if terminal_seen:
+                violations.add("REVISION_AFTER_TERMINAL")
+            terminal_seen = True
+        elif terminal_seen:
+            violations.add("REVISION_AFTER_TERMINAL")
+    if terminal_count > 1:
+        violations.add("MULTIPLE_TERMINAL_REVISIONS")
+    return violations
+
+
+def specialized_attempt_identity_is_legal(reason_code: str, previous_occurrence_id: str, new_occurrence_id: str) -> bool:
+    if reason_code not in {"REPAIR", "REVERIFY", "REREVIEW"}:
+        return False
+    return bool(previous_occurrence_id and new_occurrence_id and previous_occurrence_id != new_occurrence_id)
