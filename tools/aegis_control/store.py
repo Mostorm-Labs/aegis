@@ -1,7 +1,8 @@
-"""Durable SQLite persistence mechanics for Control Plane CP-I02.
+"""Durable SQLite persistence mechanics for Control Plane CP-I02/CP-I03.
 
 This module owns storage, transaction, CAS, idempotency, and outbox mechanics.
 It intentionally owns no lifecycle, Authority, Gate, proof, or policy decisions.
+CP-I03 adds only a read-only latest-records-by-lane query used by projection.
 """
 from __future__ import annotations
 
@@ -145,6 +146,33 @@ class ControlStore:
             if not row:
                 return LaneHead(lane_id, 0, None)
             return LaneHead(lane_id, int(row["version"]), row["occurrence_ref"])
+        finally:
+            conn.close()
+
+    def read_lane_latest_records(self, lane_id: str) -> list[StoredRecord]:
+        """Return the latest immutable revision for every canonical lineage in one lane.
+
+        This is a read-only projection input. It does not infer lifecycle order or
+        authorize mutation; callers must use canonical refs/lane CAS for that.
+        """
+        conn = self._connect(readonly=True)
+        try:
+            rows = conn.execute(
+                "SELECT c.canonical_json, c.digest "
+                "FROM canonical_records AS c "
+                "JOIN ("
+                "  SELECT kind, record_id, MAX(record_revision) AS max_revision "
+                "  FROM canonical_records WHERE control_lane_id = ? "
+                "  GROUP BY kind, record_id"
+                ") AS latest "
+                "ON latest.kind = c.kind "
+                "AND latest.record_id = c.record_id "
+                "AND latest.max_revision = c.record_revision "
+                "WHERE c.control_lane_id = ? "
+                "ORDER BY c.kind, c.record_id",
+                (lane_id, lane_id),
+            ).fetchall()
+            return [_stored(row) for row in rows]
         finally:
             conn.close()
 
