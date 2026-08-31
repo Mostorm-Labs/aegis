@@ -1,0 +1,41 @@
+name: Aegis Control Plane CP-I04 Historical Trust
+
+on:
+  push:
+    paths:
+      - "tools/aegis_control/**"
+      - "tests/control_plane/test_cp_i04_*.py"
+      - "tests/control_plane/cp_i04_*.py"
+      - "tests/control_plane/generate_cp_i04_evidence.py"
+      - "tests/control_plane/cp_i02_fixtures.py"
+      - "tests/control_plane/reference_model.py"
+      - "tests/control_plane/verifier_helpers.py"
+      - ".github/workflows/control-plane-cp-i04.yml"
+  pull_request:
+    paths:
+      - "tools/aegis_control/**"
+      - "tests/control_plane/test_cp_i04_*.py"
+      - "tests/control_plane/cp_i04_*.py"
+      - "tests/control_plane/generate_cp_i04_evidence.py"
+      - "tests/control_plane/cp_i02_fixtures.py"
+      - "tests/control_plane/reference_model.py"
+      - "tests/control_plane/verifier_helpers.py"
+      - ".github/workflows/control-plane-cp-i04.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: control-plane-cp-i04-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run CP-I04 focused tests
+        run: python3 -m unittest discover -s tests/control_plane -p 'test_cp_i04_*.py' -v
