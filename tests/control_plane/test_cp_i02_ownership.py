@@ -13,7 +13,15 @@ class OwnershipTests(unittest.TestCase):
             if not name.startswith("_")
         }
         self.assertEqual(
-            {"read_latest", "read_revisions", "read_lane_head", "read_idempotency", "read_outbox", "snapshot_counts"},
+            {
+                "read_latest",
+                "read_revisions",
+                "read_lane_head",
+                "read_lane_latest_records",
+                "read_idempotency",
+                "read_outbox",
+                "snapshot_counts",
+            },
             public,
         )
 
