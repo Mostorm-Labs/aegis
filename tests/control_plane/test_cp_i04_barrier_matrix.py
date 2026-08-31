@@ -45,7 +45,9 @@ class CpI04BarrierMatrixTests(unittest.TestCase):
         self.resolver = aegis_control.TrustResolver(
             {"PROJECT_STATE": self.adapter},
             acceptance_contract_sources={
-                "contract-matrix": aegis_control.TrustFactRequest("PROJECT_STATE", "matrix/acceptance")
+                aegis_control.canonical_digest(self.contract): aegis_control.TrustFactRequest(
+                    "PROJECT_STATE", "matrix/acceptance"
+                )
             },
         )
         self.mutation = aegis_control.MutationService(self.store, trust_resolver=self.resolver)
@@ -175,8 +177,12 @@ class CpI04BarrierMatrixTests(unittest.TestCase):
         self.resolver = aegis_control.TrustResolver(
             {"PROJECT_STATE": self.adapter},
             acceptance_contract_sources={
-                "contract-matrix": aegis_control.TrustFactRequest("PROJECT_STATE", "matrix/acceptance"),
-                "contract-matrix-two": aegis_control.TrustFactRequest("PROJECT_STATE", "matrix/acceptance-two"),
+                aegis_control.canonical_digest(self.contract): aegis_control.TrustFactRequest(
+                    "PROJECT_STATE", "matrix/acceptance"
+                ),
+                aegis_control.canonical_digest(contract_two): aegis_control.TrustFactRequest(
+                    "PROJECT_STATE", "matrix/acceptance-two"
+                ),
             },
         )
         self.mutation = aegis_control.MutationService(self.store, trust_resolver=self.resolver)
