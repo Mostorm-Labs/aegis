@@ -20,11 +20,10 @@ def exact_ref(object_type: str, object_id: str, digit: str):
 
 
 class CpI04ChildAcceptanceResolverTests(unittest.TestCase):
-    def test_resolver_derives_child_acceptance_from_exact_contract_facts(self):
+    def _fixture(self):
         params = inspect.signature(aegis_control.TrustResolver).parameters
         if "acceptance_contract_sources" not in params or not hasattr(aegis_control.TrustResolver, "resolve_child_acceptance"):
             self.fail("CP-I04 child acceptance resolver contract is not implemented")
-
         adapter = aegis_control.DeterministicExternalAdapter(
             source_kind="PROJECT_STATE",
             adapter_id="project-state-child",
@@ -50,16 +49,31 @@ class CpI04ChildAcceptanceResolverTests(unittest.TestCase):
                 )
             },
         )
-        support = resolver.resolve_child_acceptance(
-            {"id_scheme": "control-work-scope-v0.2", "id": "ws-child", "child_work_binding": None},
-            exact_ref("STAGE_OCCURRENCE", "so-child-terminal", "7"),
-            [contract_ref],
-        )
+        scope = {"id_scheme": "control-work-scope-v0.2", "id": "ws-child", "child_work_binding": None}
+        completion = exact_ref("STAGE_OCCURRENCE", "so-child-terminal", "7")
+        return resolver, contract_ref, gate_ref, scope, completion
+
+    def test_resolver_derives_child_acceptance_from_exact_contract_facts(self):
+        resolver, contract_ref, gate_ref, scope, completion = self._fixture()
+        support = resolver.resolve_child_acceptance(scope, completion, [contract_ref])
         self.assertTrue(support.accepted)
         self.assertEqual((gate_ref,), support.acceptance_fact_refs)
         self.assertEqual((contract_ref,), support.acceptance_contract_refs)
         self.assertTrue(support.snapshot_resolution.valid)
         self.assertTrue(support.acceptance_basis_digest.startswith("sha256:"))
+
+    def test_wrong_or_duplicate_acceptance_contract_fails_closed(self):
+        resolver, contract_ref, _, scope, completion = self._fixture()
+        wrong_contract = exact_ref("CONTRACT", "contract-other", "8")
+        wrong = resolver.resolve_child_acceptance(scope, completion, [wrong_contract])
+        self.assertFalse(wrong.accepted)
+        self.assertEqual("REQUIRED_CHILD_WORK_NOT_ACCEPTED", wrong.code)
+        self.assertEqual((), wrong.acceptance_fact_refs)
+
+        duplicate = resolver.resolve_child_acceptance(scope, completion, [contract_ref, contract_ref])
+        self.assertFalse(duplicate.accepted)
+        self.assertEqual("CHILD_ACCEPTANCE_BASIS_AMBIGUOUS", duplicate.code)
+        self.assertEqual((), duplicate.acceptance_fact_refs)
 
 
 if __name__ == "__main__":
