@@ -165,10 +165,21 @@ def audit_database(db_path: str) -> dict[str, Any]:
     if orphan_escalation_companions:
         findings.append("ORPHAN_ESCALATION_COMPANION")
 
-    lane_occurrence_counts: dict[str, int] = defaultdict(int)
-    for item in occurrence_r1.values():
-        lane_occurrence_counts[item["control_lane_id"]] += 1
-    same_lane_double_winners = sum(max(0, count - 1) for count in lane_occurrence_counts.values())
+    # A lane may have many historical occurrence lineages. A true scheduling
+    # double-winner exists only when more than one lineage is currently OPEN
+    # on the same lane boundary. TERMINAL predecessors are valid history and
+    # must not be counted as active winners.
+    open_occurrences_by_lane: dict[str, list[str]] = defaultdict(list)
+    for (kind, record_id), items in grouped.items():
+        if kind != "STAGE_OCCURRENCE" or not items:
+            continue
+        latest = items[-1]
+        if latest["stage_state"] == "OPEN":
+            open_occurrences_by_lane[latest["control_lane_id"]].append(record_id)
+    same_lane_double_winners = sum(
+        max(0, len(occurrence_ids) - 1)
+        for occurrence_ids in open_occurrences_by_lane.values()
+    )
     if same_lane_double_winners:
         findings.append("SAME_LANE_DOUBLE_WINNER")
 
@@ -194,6 +205,10 @@ def audit_database(db_path: str) -> dict[str, Any]:
         "canonical_records": canonical_records,
         "lineages": lineages,
         "lane_heads": lane_heads,
+        "open_occurrences_by_lane": {
+            lane_id: sorted(occurrence_ids)
+            for lane_id, occurrence_ids in sorted(open_occurrences_by_lane.items())
+        },
         "idempotency": idempotency,
         "outbox": outbox,
         "metrics": metrics,
