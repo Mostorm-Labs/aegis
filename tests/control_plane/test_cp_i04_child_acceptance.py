@@ -44,7 +44,7 @@ class CpI04ChildAcceptanceResolverTests(unittest.TestCase):
         resolver = aegis_control.TrustResolver(
             {"PROJECT_STATE": adapter},
             acceptance_contract_sources={
-                "contract-child": aegis_control.TrustFactRequest(
+                aegis_control.canonical_digest(contract_ref): aegis_control.TrustFactRequest(
                     "PROJECT_STATE", "child/ws-child/acceptance"
                 )
             },
