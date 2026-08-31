@@ -189,11 +189,11 @@ class MutationService:
         expected = request["expected_state"]
         if expected["target_record_revision"] != current.record["record_revision"] or expected["target_record_digest"] != current.digest:
             raise MutationRejected("STALE_PACKAGE_REVISION")
+        if record["control_lane_id"] != request["control_lane_id"] or record["control_lane_id"] != current.record["control_lane_id"]:
+            raise MutationRejected("PACKAGE_LANE_MISMATCH")
         self._require_expected_scope(expected, current.record["work_scope_ref"])
         if record["work_scope_ref"] != current.record["work_scope_ref"]:
             raise MutationRejected("PACKAGE_WORK_SCOPE_MISMATCH")
-        if record["control_lane_id"] != request["control_lane_id"] or record["control_lane_id"] != current.record["control_lane_id"]:
-            raise MutationRejected("PACKAGE_LANE_MISMATCH")
         if record["record_revision"] != current.record["record_revision"] + 1:
             raise MutationRejected("PACKAGE_REVISION_NOT_CONTIGUOUS")
         if record["id_scheme"] != current.record["id_scheme"]:
@@ -531,11 +531,14 @@ class MutationService:
             raise MutationRejected("INVALID_TERMINAL_FACTS")
         if outcome == "BLOCKED" and status not in BLOCKED_STATUSES:
             raise MutationRejected("INVALID_TERMINAL_FACTS")
-        if outcome == "ESCALATED":
-            if not terminal["raised_escalation_ids"]:
-                raise MutationRejected("INVALID_TERMINAL_FACTS")
-            if not require_escalation:
-                raise MutationRejected("ESCALATION_REQUIRES_COMPANION_OPERATION")
+        if outcome == "ESCALATED" and status not in BLOCKED_STATUSES:
+            raise MutationRejected("INVALID_TERMINAL_FACTS")
+        if outcome == "FAILED_WITH_FINDING" and status not in BLOCKED_STATUSES | {"READY_WITH_FINDINGS"}:
+            raise MutationRejected("INVALID_TERMINAL_FACTS")
+        if require_escalation and (outcome != "ESCALATED" or not terminal["raised_escalation_ids"]):
+            raise MutationRejected("INVALID_TERMINAL_FACTS")
+        if not require_escalation and (outcome == "ESCALATED" or terminal["raised_escalation_ids"]):
+            raise MutationRejected("INVALID_TERMINAL_FACTS")
         if outcome == "FAILED_WITH_FINDING" and not terminal["finding_refs"]:
             raise MutationRejected("INVALID_TERMINAL_FACTS")
         return deepcopy(terminal)
