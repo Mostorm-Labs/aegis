@@ -191,13 +191,12 @@ class MutationService:
         if tx.read_latest("STAGE_OCCURRENCE", record["id"]):
             raise MutationRejected("OCCURRENCE_IDENTITY_CONFLICT")
         expected = request["expected_state"]
-        if expected["active_occurrence_ref"] is not None or expected["predecessor_occurrence_ref"] is not None:
-            raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT")
+        expected_lane_ref = self._schedule_expected_lane_ref(tx, expected, lane_id)
         stored = tx.append_canonical(record)
         self._checkpoint("after_canonical")
         ref = self._record_ref(stored)
         try:
-            lane = tx.compare_and_advance_lane(lane_id, None, ref)
+            lane = tx.compare_and_advance_lane(lane_id, expected_lane_ref, ref)
         except StoreConflict as exc:
             raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT") from exc
         self._checkpoint("after_lane")
@@ -210,6 +209,33 @@ class MutationService:
         tx.append_outbox(outbox_id, record["id"], lane_id, outbox_payload)
         self._checkpoint("after_outbox")
         return self._result(request, [stored], lane=lane, outbox_ids=[outbox_id])
+
+    def _schedule_expected_lane_ref(self, tx, expected, lane_id):
+        if expected["active_occurrence_ref"] is not None:
+            raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT")
+        predecessor_ref = expected["predecessor_occurrence_ref"]
+        if predecessor_ref is None:
+            return None
+
+        kind, occurrence_id, _, _ = self._parse_record_ref(predecessor_ref)
+        if kind != "STAGE_OCCURRENCE":
+            raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT")
+        predecessor = tx.read_latest("STAGE_OCCURRENCE", occurrence_id)
+        if (
+            predecessor is None
+            or predecessor.record.get("state") != "TERMINAL"
+            or predecessor.record.get("control_lane_id") != lane_id
+            or self._record_ref(predecessor) != predecessor_ref
+        ):
+            raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT")
+
+        lane = self._store.read_lane_head(lane_id)
+        if lane.occurrence_ref is None:
+            raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT")
+        lane_kind, lane_occurrence_id, _, _ = self._parse_record_ref(lane.occurrence_ref)
+        if lane_kind != "STAGE_OCCURRENCE" or lane_occurrence_id != occurrence_id:
+            raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT")
+        return lane.occurrence_ref
 
     def _terminate_occurrence(self, tx, request):
         occurrence_id = request["payload"].get("occurrence_id")
@@ -265,7 +291,6 @@ class MutationService:
         stored_occurrence = tx.append_canonical(occurrence)
         self._checkpoint("after_terminal")
         return self._result(request, [stored_escalation, stored_occurrence])
-
 
     def _validate_terminal_facts(self, terminal, *, require_escalation: bool):
         if not isinstance(terminal, Mapping) or set(terminal) != TERMINAL_FIELDS:
@@ -344,6 +369,20 @@ class MutationService:
     @staticmethod
     def _record_ref(record: StoredRecord) -> str:
         return f"{record.record['kind']}:{record.record['id']}@{record.record['record_revision']}#{record.digest}"
+
+    @staticmethod
+    def _parse_record_ref(ref: str) -> tuple[str, str, int, str]:
+        try:
+            prefix, digest = ref.rsplit("#", 1)
+            kind_and_id, revision_text = prefix.rsplit("@", 1)
+            kind, record_id = kind_and_id.split(":", 1)
+            revision = int(revision_text)
+            validate_digest(digest)
+        except (AttributeError, ValueError, CanonicalValidationError) as exc:
+            raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT") from exc
+        if not kind or not record_id or revision < 1:
+            raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT")
+        return kind, record_id, revision, digest
 
     def _checkpoint(self, name: str) -> None:
         if self._fault_injector is not None:
