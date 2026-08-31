@@ -1,0 +1,47 @@
+name: Aegis Control Plane CP-I03 Projection Policy Scheduler
+
+on:
+  push:
+    paths:
+      - "tools/aegis_control/projection.py"
+      - "tools/aegis_control/policy.py"
+      - "tools/aegis_control/scheduler.py"
+      - "tools/aegis_control/__init__.py"
+      - "tests/control_plane/cp_i03_*.py"
+      - "tests/control_plane/generate_cp_i03_evidence.py"
+      - "tests/control_plane/test_cp_i03_*.py"
+      - ".github/workflows/control-plane-cp-i03.yml"
+  pull_request:
+    paths:
+      - "tools/aegis_control/projection.py"
+      - "tools/aegis_control/policy.py"
+      - "tools/aegis_control/scheduler.py"
+      - "tools/aegis_control/__init__.py"
+      - "tests/control_plane/cp_i03_*.py"
+      - "tests/control_plane/generate_cp_i03_evidence.py"
+      - "tests/control_plane/test_cp_i03_*.py"
+      - ".github/workflows/control-plane-cp-i03.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: control-plane-cp-i03-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run CP-I03 focused tests
+        run: python3 -m unittest discover -s tests/control_plane -p 'test_cp_i03_*.py' -v
+      - name: Run full Control Plane regression suite
+        run: python3 -m unittest discover -s tests/control_plane -v
+      - name: Run Project State regression suite
+        run: python3 -m unittest discover -s tests/project_state -v
+      - name: Run Skillset regression suite
+        run: python3 -m unittest discover -s tests/skillset -v
