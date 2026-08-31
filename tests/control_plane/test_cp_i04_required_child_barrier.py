@@ -97,7 +97,7 @@ class CpI04RequiredChildBarrierTests(unittest.TestCase):
         self.resolver = aegis_control.TrustResolver(
             {"PROJECT_STATE": self.adapter},
             acceptance_contract_sources={
-                "contract-child-gate": aegis_control.TrustFactRequest(
+                aegis_control.canonical_digest(self.contract_ref): aegis_control.TrustFactRequest(
                     "PROJECT_STATE", "child/acceptance"
                 )
             },
