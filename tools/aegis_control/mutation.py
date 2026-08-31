@@ -1,13 +1,21 @@
-"""Single canonical mutation boundary for the CP-I02 P13 subset."""
+"""Single canonical mutation boundary for the accepted CP-I02..CP-I04 subset."""
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, Sequence
 
 from .canonical import (
-    CanonicalValidationError, canonical_digest, validate_canonical_ref, validate_digest, validate_record,
+    CanonicalValidationError,
+    canonical_digest,
+    canonical_dumps,
+    validate_canonical_ref,
+    validate_digest,
+    validate_record,
+    validate_required_child_acceptance_binding,
+    validate_work_scope_ref,
 )
 from .store import ControlStore, StoreConflict, StoredRecord
+from .trust import TrustResolver
 
 SUPPORTED_OPERATIONS = {
     "MATERIALIZE_IMPLEMENTATION_PACKAGE",
@@ -26,7 +34,7 @@ KNOWN_LATER_OPERATIONS = {
 }
 EXPECTED_STATE_KEYS = {
     "active_occurrence_ref", "predecessor_occurrence_ref", "target_record_revision",
-    "target_record_digest", "trusted_basis_digest", "package_ref",
+    "target_record_digest", "trusted_basis_digest", "package_ref", "work_scope_ref",
 }
 ACTOR_CLASSES = {
     "CONTROL_PLANE", "PRIMARY_OWNER", "EXECUTION_SURFACE", "REVIEW_SURFACE",
@@ -34,12 +42,12 @@ ACTOR_CLASSES = {
 }
 PACKAGE_FIELDS = {
     "schema_version", "kind", "id_scheme", "id", "record_revision", "recorded_at",
-    "extensions", "control_lane_id", "trusted_basis", "scope", "verification_binding",
-    "policy_binding", "task_anchor", "package_digest",
+    "extensions", "control_lane_id", "work_scope_ref", "trusted_basis", "scope",
+    "verification_binding", "policy_binding", "task_anchor", "package_digest",
 }
 OCCURRENCE_FIELDS = {
     "schema_version", "kind", "id_scheme", "id", "record_revision", "recorded_at",
-    "extensions", "control_lane_id", "stage_span", "primary_owner", "state",
+    "extensions", "control_lane_id", "work_scope_ref", "stage_span", "primary_owner", "state",
     "trusted_basis", "policy_binding", "schedule_basis", "input_refs", "repair_context",
     "execution_navigation", "terminal",
 }
@@ -52,11 +60,11 @@ BLOCKED_STATUSES = {
     "BLOCKED_AUTHORITY", "BLOCKED_MISSING_INPUT", "BLOCKED_UNRESOLVED_DECISION",
     "BLOCKED_EVIDENCE", "BLOCKED_IMPLEMENTATION", "BLOCKED_ENVIRONMENT",
 }
-
 ESCALATION_FIELDS = {
     "schema_version", "kind", "id_scheme", "id", "record_revision", "recorded_at",
-    "extensions", "control_lane_id", "raised_from_occurrence_ref", "trusted_basis_digest",
-    "category", "owning_layer", "required_decision", "evidence_snapshot_refs",
+    "extensions", "control_lane_id", "work_scope_ref", "raised_from_occurrence_ref",
+    "trusted_basis_digest", "category", "owning_layer", "required_decision",
+    "evidence_snapshot_refs",
 }
 
 
@@ -80,10 +88,12 @@ class MutationService:
         self,
         store: ControlStore,
         *,
+        trust_resolver: TrustResolver | None = None,
         fault_injector: Callable[[str], None] | None = None,
         before_transaction: Callable[[], None] | None = None,
     ):
         self._store = store
+        self._trust_resolver = trust_resolver
         self._fault_injector = fault_injector
         self._before_transaction = before_transaction
 
@@ -140,8 +150,14 @@ class MutationService:
             raise MutationRejected("INVALID_OPERATION_ACTOR")
         if not isinstance(request["control_lane_id"], str) or not request["control_lane_id"]:
             raise MutationRejected("INVALID_CONTROL_LANE")
-        if not isinstance(request["expected_state"], Mapping) or set(request["expected_state"]) != EXPECTED_STATE_KEYS:
+        expected = request["expected_state"]
+        if not isinstance(expected, Mapping) or set(expected) != EXPECTED_STATE_KEYS:
             raise MutationRejected("INVALID_EXPECTED_STATE")
+        if expected["work_scope_ref"] is not None:
+            try:
+                validate_work_scope_ref(expected["work_scope_ref"])
+            except CanonicalValidationError as exc:
+                raise MutationRejected("INVALID_EXPECTED_STATE", str(exc)) from exc
         if not isinstance(request["payload"], Mapping):
             raise MutationRejected("INVALID_OPERATION_PAYLOAD")
         try:
@@ -157,6 +173,8 @@ class MutationService:
             raise MutationRejected("PACKAGE_REVISION_MUST_START_AT_ONE")
         if record["control_lane_id"] != request["control_lane_id"]:
             raise MutationRejected("PACKAGE_LANE_MISMATCH")
+        self._require_expected_scope(request["expected_state"], record["work_scope_ref"])
+        self._validate_existing_scope_lane(tx, record["work_scope_ref"], record["control_lane_id"])
         if tx.read_latest("VERIFICATION_BOUND_IMPLEMENTATION_PACKAGE", record["id"]):
             raise MutationRejected("PACKAGE_IDENTITY_CONFLICT")
         stored = tx.append_canonical(record)
@@ -171,6 +189,9 @@ class MutationService:
         expected = request["expected_state"]
         if expected["target_record_revision"] != current.record["record_revision"] or expected["target_record_digest"] != current.digest:
             raise MutationRejected("STALE_PACKAGE_REVISION")
+        self._require_expected_scope(expected, current.record["work_scope_ref"])
+        if record["work_scope_ref"] != current.record["work_scope_ref"]:
+            raise MutationRejected("PACKAGE_WORK_SCOPE_MISMATCH")
         if record["control_lane_id"] != request["control_lane_id"] or record["control_lane_id"] != current.record["control_lane_id"]:
             raise MutationRejected("PACKAGE_LANE_MISMATCH")
         if record["record_revision"] != current.record["record_revision"] + 1:
@@ -182,16 +203,24 @@ class MutationService:
         return self._result(request, [stored])
 
     def _schedule_occurrence(self, tx, request):
-        record = self._require_complete_record(request["payload"].get("occurrence"), OCCURRENCE_FIELDS, "STAGE_OCCURRENCE")
+        record = self._require_complete_record(
+            request["payload"].get("occurrence"), OCCURRENCE_FIELDS, "STAGE_OCCURRENCE"
+        )
         if record["record_revision"] != 1 or record["state"] != "OPEN" or record["terminal"] is not None:
             raise MutationRejected("SCHEDULE_REQUIRES_OPEN_REVISION_ONE")
         lane_id = request["control_lane_id"]
         if record["control_lane_id"] != lane_id:
             raise MutationRejected("OCCURRENCE_LANE_MISMATCH")
+        self._require_expected_scope(request["expected_state"], record["work_scope_ref"])
         if tx.read_latest("STAGE_OCCURRENCE", record["id"]):
             raise MutationRejected("OCCURRENCE_IDENTITY_CONFLICT")
-        expected = request["expected_state"]
-        expected_lane_ref = self._schedule_expected_lane_ref(tx, expected, lane_id)
+
+        self._validate_work_scope_for_schedule(tx, record)
+        self._validate_expected_package_scope(tx, request["expected_state"], record["work_scope_ref"])
+        expected_lane_ref = self._schedule_expected_lane_ref(tx, request["expected_state"], lane_id)
+        if request["expected_state"]["predecessor_occurrence_ref"] is not None:
+            record = self._bind_required_children(tx, record)
+
         stored = tx.append_canonical(record)
         self._checkpoint("after_canonical")
         ref = self._record_ref(stored)
@@ -210,13 +239,62 @@ class MutationService:
         self._checkpoint("after_outbox")
         return self._result(request, [stored], lane=lane, outbox_ids=[outbox_id])
 
+    def _validate_work_scope_for_schedule(self, tx, record):
+        scope = record["work_scope_ref"]
+        scope_id = scope["id"]
+        lane_id = record["control_lane_id"]
+        existing_lane_scope = self._lane_scope(tx, lane_id)
+        if existing_lane_scope is not None and existing_lane_scope != scope:
+            raise MutationRejected("WORK_SCOPE_MISMATCH")
+        existing_scope_lane = self._work_scope_lane(tx, scope_id)
+        if existing_scope_lane is not None and existing_scope_lane != lane_id:
+            raise MutationRejected("WORK_SCOPE_LANE_CONFLICT")
+
+        binding = scope.get("child_work_binding")
+        if binding is None:
+            return
+        if existing_scope_lane is not None:
+            existing_scope = self._scope_by_id(tx, scope_id)
+            if existing_scope != scope:
+                raise MutationRejected("WORK_SCOPE_MISMATCH")
+            return
+
+        parent_ref = binding["parent_work_scope_ref"]
+        parent_id = parent_ref["id"]
+        parent_lane = self._work_scope_lane(tx, parent_id)
+        if parent_lane is None:
+            raise MutationRejected("WORK_SCOPE_MISMATCH")
+        if parent_lane == lane_id or parent_id == scope_id:
+            raise MutationRejected("WORK_SCOPE_LANE_CONFLICT")
+        spawned = self._resolve_exact_occurrence_ref(tx, binding["spawned_by_occurrence_ref"])
+        if spawned is None:
+            raise MutationRejected("WORK_SCOPE_MISMATCH")
+        spawned_scope = spawned.record.get("work_scope_ref")
+        if not isinstance(spawned_scope, Mapping) or spawned_scope.get("id") != parent_id:
+            raise MutationRejected("WORK_SCOPE_MISMATCH")
+        if self._would_create_scope_cycle(tx, scope_id, parent_id):
+            raise MutationRejected("WORK_SCOPE_MISMATCH")
+
+    def _validate_expected_package_scope(self, tx, expected, work_scope_ref):
+        package_ref = expected.get("package_ref")
+        if package_ref is None:
+            return
+        try:
+            kind, package_id, revision, digest = self._parse_record_ref(package_ref)
+        except MutationRejected as exc:
+            raise MutationRejected("PACKAGE_WORK_SCOPE_MISMATCH") from exc
+        if kind != "VERIFICATION_BOUND_IMPLEMENTATION_PACKAGE":
+            raise MutationRejected("PACKAGE_WORK_SCOPE_MISMATCH")
+        package = tx.read_exact(kind, package_id, revision, digest=digest)
+        if package is None or package.record.get("work_scope_ref") != work_scope_ref:
+            raise MutationRejected("PACKAGE_WORK_SCOPE_MISMATCH")
+
     def _schedule_expected_lane_ref(self, tx, expected, lane_id):
         if expected["active_occurrence_ref"] is not None:
             raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT")
         predecessor_ref = expected["predecessor_occurrence_ref"]
         if predecessor_ref is None:
             return None
-
         kind, occurrence_id, _, _ = self._parse_record_ref(predecessor_ref)
         if kind != "STAGE_OCCURRENCE":
             raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT")
@@ -228,14 +306,156 @@ class MutationService:
             or self._record_ref(predecessor) != predecessor_ref
         ):
             raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT")
-
-        lane = self._store.read_lane_head(lane_id)
+        expected_scope = expected.get("work_scope_ref")
+        if predecessor.record.get("work_scope_ref") != expected_scope:
+            raise MutationRejected("WORK_SCOPE_MISMATCH")
+        lane = tx.read_lane_head(lane_id)
         if lane.occurrence_ref is None:
             raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT")
         lane_kind, lane_occurrence_id, _, _ = self._parse_record_ref(lane.occurrence_ref)
         if lane_kind != "STAGE_OCCURRENCE" or lane_occurrence_id != occurrence_id:
             raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT")
         return lane.occurrence_ref
+
+    def _bind_required_children(self, tx, record):
+        schedule_basis = record.get("schedule_basis")
+        if not isinstance(schedule_basis, Mapping):
+            raise MutationRejected("STAGE_OCCURRENCE_INVALID")
+        if schedule_basis.get("required_child_acceptance_bindings"):
+            raise MutationRejected("CHILD_ACCEPTANCE_BASIS_CONFLICT")
+        parent_scope = record["work_scope_ref"]
+        uncrossed = self._uncrossed_required_children(tx, parent_scope)
+        if not uncrossed:
+            return record
+
+        record = deepcopy(record)
+        bindings = []
+        input_refs = list(record.get("input_refs") or [])
+        for child_scope in uncrossed:
+            child_binding = child_scope["child_work_binding"]
+            completion = self._child_completion_record(tx, child_scope)
+            if completion is None:
+                raise MutationRejected("REQUIRED_CHILD_WORK_NOT_ACCEPTED")
+            completion_ref = self._canonical_occurrence_ref(completion)
+            contracts = self._sorted_refs(child_binding["acceptance_contract_refs"])
+            facts: list[Mapping[str, Any]] = []
+            if contracts:
+                if self._trust_resolver is None:
+                    raise MutationRejected("REQUIRED_CHILD_WORK_NOT_ACCEPTED")
+                support = self._trust_resolver.resolve_child_acceptance(
+                    child_scope, completion_ref, contracts
+                )
+                if not support.accepted:
+                    raise MutationRejected(support.code)
+                self._checkpoint("after_child_acceptance_resolution")
+                fresh = self._trust_resolver.verify_freshness(support.snapshot_resolution)
+                if not fresh.valid:
+                    raise MutationRejected(self._trust_failure_code(fresh.code))
+                facts = self._sorted_refs(support.acceptance_fact_refs)
+            barrier_ref = deepcopy(child_binding["spawned_by_occurrence_ref"])
+            payload = {
+                "child_work_scope_ref": deepcopy(child_scope),
+                "barrier_after_occurrence_ref": barrier_ref,
+                "child_completion_occurrence_ref": completion_ref,
+                "acceptance_contract_refs": contracts,
+                "acceptance_fact_refs": facts,
+            }
+            binding = {
+                **payload,
+                "acceptance_basis_digest": canonical_digest(payload),
+            }
+            try:
+                validate_required_child_acceptance_binding(binding)
+            except CanonicalValidationError as exc:
+                raise MutationRejected("CHILD_ACCEPTANCE_BASIS_CONFLICT", str(exc)) from exc
+            bindings.append(binding)
+            input_refs = self._append_unique_refs(input_refs, [completion_ref, *facts])
+
+        bindings.sort(key=lambda item: item["child_work_scope_ref"]["id"])
+        record["schedule_basis"] = deepcopy(dict(record["schedule_basis"]))
+        record["schedule_basis"]["required_child_acceptance_bindings"] = bindings
+        record["input_refs"] = input_refs
+        try:
+            validate_record(record)
+        except CanonicalValidationError as exc:
+            raise MutationRejected("STAGE_OCCURRENCE_INVALID", str(exc)) from exc
+        return record
+
+    def _uncrossed_required_children(self, tx, parent_scope):
+        parent_id = parent_scope["id"]
+        children: dict[str, Mapping[str, Any]] = {}
+        for occurrence in tx.read_latest_stage_occurrences():
+            scope = occurrence.record.get("work_scope_ref")
+            if not isinstance(scope, Mapping):
+                continue
+            binding = scope.get("child_work_binding")
+            if not isinstance(binding, Mapping):
+                continue
+            parent_ref = binding.get("parent_work_scope_ref")
+            if (
+                isinstance(parent_ref, Mapping)
+                and parent_ref.get("id") == parent_id
+                and binding.get("parent_gate") == "REQUIRED"
+            ):
+                children.setdefault(scope["id"], deepcopy(dict(scope)))
+
+        crossed: set[tuple[str, str]] = set()
+        for occurrence in tx.read_latest_stage_occurrences():
+            if occurrence.record.get("work_scope_ref") != parent_scope:
+                continue
+            basis = occurrence.record.get("schedule_basis")
+            if not isinstance(basis, Mapping):
+                continue
+            for binding in basis.get("required_child_acceptance_bindings") or []:
+                child = binding.get("child_work_scope_ref")
+                barrier = binding.get("barrier_after_occurrence_ref")
+                if isinstance(child, Mapping) and isinstance(barrier, Mapping):
+                    crossed.add((child.get("id"), barrier.get("identity", {}).get("value")))
+
+        uncrossed = []
+        for child in children.values():
+            binding = child["child_work_binding"]
+            key = (
+                child["id"],
+                binding["spawned_by_occurrence_ref"].get("identity", {}).get("value"),
+            )
+            if key not in crossed:
+                uncrossed.append(child)
+        return sorted(uncrossed, key=lambda item: item["id"])
+
+    def _child_completion_record(self, tx, child_scope):
+        child_id = child_scope["id"]
+        occurrences = [
+            item for item in tx.read_latest_stage_occurrences()
+            if isinstance(item.record.get("work_scope_ref"), Mapping)
+            and item.record["work_scope_ref"].get("id") == child_id
+        ]
+        if not occurrences:
+            return None
+        lanes = {item.record.get("control_lane_id") for item in occurrences}
+        if len(lanes) != 1:
+            raise MutationRejected("WORK_SCOPE_LANE_CONFLICT")
+        lane_id = next(iter(lanes))
+        lane = tx.read_lane_head(lane_id)
+        occurrence_id = self._occurrence_id_from_internal_ref(lane.occurrence_ref)
+        if occurrence_id is None:
+            return None
+        current = tx.read_latest("STAGE_OCCURRENCE", occurrence_id)
+        if current is None or current.record.get("state") != "TERMINAL":
+            return None
+        terminal = current.record.get("terminal")
+        if not isinstance(terminal, Mapping) or terminal.get("outcome_category") != "COMPLETED":
+            return None
+        resolved: set[str] = set()
+        for occurrence in occurrences:
+            terminal_facts = occurrence.record.get("terminal")
+            if isinstance(terminal_facts, Mapping):
+                resolved.update(terminal_facts.get("resolved_escalation_ids") or [])
+        for escalation in tx.read_latest_escalations():
+            scope = escalation.record.get("work_scope_ref")
+            if isinstance(scope, Mapping) and scope.get("id") == child_id and escalation.record["id"] not in resolved:
+                return None
+        return current
 
     def _terminate_occurrence(self, tx, request):
         occurrence_id = request["payload"].get("occurrence_id")
@@ -264,6 +484,8 @@ class MutationService:
             raise MutationRejected("ESCALATION_IDENTITY_CONFLICT")
         if escalation["control_lane_id"] != request["control_lane_id"]:
             raise MutationRejected("ESCALATION_LANE_MISMATCH")
+        if escalation["work_scope_ref"] != current.record["work_scope_ref"]:
+            raise MutationRejected("WORK_SCOPE_MISMATCH")
         if escalation["trusted_basis_digest"] != canonical_digest(current.record["trusted_basis"]):
             raise MutationRejected("ESCALATION_TRUSTED_BASIS_MISMATCH")
         source_ref = escalation.get("raised_from_occurrence_ref")
@@ -309,14 +531,11 @@ class MutationService:
             raise MutationRejected("INVALID_TERMINAL_FACTS")
         if outcome == "BLOCKED" and status not in BLOCKED_STATUSES:
             raise MutationRejected("INVALID_TERMINAL_FACTS")
-        if outcome == "ESCALATED" and status not in BLOCKED_STATUSES:
-            raise MutationRejected("INVALID_TERMINAL_FACTS")
-        if outcome == "FAILED_WITH_FINDING" and status not in BLOCKED_STATUSES | {"READY_WITH_FINDINGS"}:
-            raise MutationRejected("INVALID_TERMINAL_FACTS")
-        if require_escalation and (outcome != "ESCALATED" or not terminal["raised_escalation_ids"]):
-            raise MutationRejected("INVALID_TERMINAL_FACTS")
-        if not require_escalation and (outcome == "ESCALATED" or terminal["raised_escalation_ids"]):
-            raise MutationRejected("INVALID_TERMINAL_FACTS")
+        if outcome == "ESCALATED":
+            if not terminal["raised_escalation_ids"]:
+                raise MutationRejected("INVALID_TERMINAL_FACTS")
+            if not require_escalation:
+                raise MutationRejected("ESCALATION_REQUIRES_COMPANION_OPERATION")
         if outcome == "FAILED_WITH_FINDING" and not terminal["finding_refs"]:
             raise MutationRejected("INVALID_TERMINAL_FACTS")
         return deepcopy(terminal)
@@ -328,11 +547,14 @@ class MutationService:
             raise MutationRejected("OCCURRENCE_ALREADY_TERMINAL")
         if current.record.get("control_lane_id") != lane_id:
             raise MutationRejected("OCCURRENCE_LANE_MISMATCH")
+        self._require_expected_scope(expected, current.record.get("work_scope_ref"))
         if expected["target_record_revision"] != current.record["record_revision"] or expected["target_record_digest"] != current.digest:
             raise MutationRejected("STALE_OCCURRENCE_REVISION")
 
     def _complete_package(self, record):
-        record = self._require_complete_record(record, PACKAGE_FIELDS, "VERIFICATION_BOUND_IMPLEMENTATION_PACKAGE")
+        record = self._require_complete_record(
+            record, PACKAGE_FIELDS, "VERIFICATION_BOUND_IMPLEMENTATION_PACKAGE"
+        )
         record = deepcopy(record)
         record["package_digest"] = canonical_digest(record, self_digest_field="package_digest")
         validate_record(record)
@@ -349,6 +571,105 @@ class MutationService:
         except CanonicalValidationError as exc:
             raise MutationRejected(f"{kind}_INVALID", str(exc)) from exc
         return record
+
+    def _require_expected_scope(self, expected, actual_scope):
+        guarded = expected.get("work_scope_ref")
+        if guarded is None or guarded != actual_scope:
+            raise MutationRejected("WORK_SCOPE_MISMATCH")
+
+    def _lane_scope(self, tx, lane_id):
+        scopes = {
+            canonical_dumps(item.record["work_scope_ref"]): item.record["work_scope_ref"]
+            for item in tx.read_lane_latest_records(lane_id)
+            if item.record.get("kind") == "STAGE_OCCURRENCE"
+            and isinstance(item.record.get("work_scope_ref"), Mapping)
+        }
+        if len(scopes) > 1:
+            raise MutationRejected("WORK_SCOPE_LANE_CONFLICT")
+        return deepcopy(next(iter(scopes.values()))) if scopes else None
+
+    def _work_scope_lane(self, tx, scope_id):
+        lanes = {
+            item.record.get("control_lane_id")
+            for item in tx.read_latest_stage_occurrences()
+            if isinstance(item.record.get("work_scope_ref"), Mapping)
+            and item.record["work_scope_ref"].get("id") == scope_id
+        }
+        lanes.discard(None)
+        if len(lanes) > 1:
+            raise MutationRejected("WORK_SCOPE_LANE_CONFLICT")
+        return next(iter(lanes)) if lanes else None
+
+    def _scope_by_id(self, tx, scope_id):
+        scopes = {
+            canonical_dumps(item.record["work_scope_ref"]): item.record["work_scope_ref"]
+            for item in tx.read_latest_stage_occurrences()
+            if isinstance(item.record.get("work_scope_ref"), Mapping)
+            and item.record["work_scope_ref"].get("id") == scope_id
+        }
+        if len(scopes) > 1:
+            raise MutationRejected("WORK_SCOPE_MISMATCH")
+        return deepcopy(next(iter(scopes.values()))) if scopes else None
+
+    def _validate_existing_scope_lane(self, tx, scope, lane_id):
+        existing = self._work_scope_lane(tx, scope["id"])
+        if existing is not None and existing != lane_id:
+            raise MutationRejected("WORK_SCOPE_LANE_CONFLICT")
+
+    def _would_create_scope_cycle(self, tx, child_id, parent_id):
+        seen: set[str] = set()
+        cursor = parent_id
+        while cursor is not None:
+            if cursor == child_id:
+                return True
+            if cursor in seen:
+                return True
+            seen.add(cursor)
+            scope = self._scope_by_id(tx, cursor)
+            if scope is None:
+                return False
+            binding = scope.get("child_work_binding")
+            if not isinstance(binding, Mapping):
+                return False
+            parent_ref = binding.get("parent_work_scope_ref")
+            cursor = parent_ref.get("id") if isinstance(parent_ref, Mapping) else None
+        return False
+
+    def _resolve_exact_occurrence_ref(self, tx, ref):
+        try:
+            validate_canonical_ref(ref)
+        except CanonicalValidationError:
+            return None
+        if ref.get("object_type") != "STAGE_OCCURRENCE":
+            return None
+        digest = ref.get("identity", {}).get("value")
+        for revision in tx.read_revisions("STAGE_OCCURRENCE", ref.get("id")):
+            if revision.digest == digest:
+                return revision
+        return None
+
+    @staticmethod
+    def _trust_failure_code(code):
+        if code in {"TRUST_BASIS_AMBIGUOUS", "TRUST_FACT_DUPLICATE"}:
+            return "CHILD_ACCEPTANCE_BASIS_AMBIGUOUS"
+        if code == "TRUST_BASIS_CONFLICT":
+            return "CHILD_ACCEPTANCE_BASIS_CONFLICT"
+        return "REQUIRED_CHILD_WORK_NOT_ACCEPTED"
+
+    @staticmethod
+    def _sorted_refs(refs: Sequence[Mapping[str, Any]]):
+        return sorted((deepcopy(dict(ref)) for ref in refs), key=canonical_dumps)
+
+    @staticmethod
+    def _append_unique_refs(existing, additions):
+        result = [deepcopy(dict(ref)) for ref in existing]
+        digests = {canonical_digest(ref) for ref in result}
+        for ref in additions:
+            digest = canonical_digest(ref)
+            if digest not in digests:
+                result.append(deepcopy(dict(ref)))
+                digests.add(digest)
+        return result
 
     def _result(self, request, records, *, lane=None, outbox_ids=None):
         result = {
@@ -371,6 +692,15 @@ class MutationService:
         return f"{record.record['kind']}:{record.record['id']}@{record.record['record_revision']}#{record.digest}"
 
     @staticmethod
+    def _canonical_occurrence_ref(record: StoredRecord) -> Mapping[str, Any]:
+        return {
+            "object_type": "STAGE_OCCURRENCE",
+            "id": record.record["id"],
+            "ref": f"control:STAGE_OCCURRENCE:{record.record['id']}@{record.record['record_revision']}",
+            "identity": {"scheme": "sha256", "value": record.digest},
+        }
+
+    @staticmethod
     def _parse_record_ref(ref: str) -> tuple[str, str, int, str]:
         try:
             prefix, digest = ref.rsplit("#", 1)
@@ -383,6 +713,16 @@ class MutationService:
         if not kind or not record_id or revision < 1:
             raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT")
         return kind, record_id, revision, digest
+
+    @classmethod
+    def _occurrence_id_from_internal_ref(cls, ref):
+        if not isinstance(ref, str):
+            return None
+        try:
+            kind, occurrence_id, _, _ = cls._parse_record_ref(ref)
+        except MutationRejected:
+            return None
+        return occurrence_id if kind == "STAGE_OCCURRENCE" else None
 
     def _checkpoint(self, name: str) -> None:
         if self._fault_injector is not None:
