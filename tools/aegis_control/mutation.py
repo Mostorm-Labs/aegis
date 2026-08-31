@@ -90,8 +90,6 @@ class MutationService:
     def apply(self, request: Mapping[str, Any]) -> Mapping[str, Any]:
         self._validate_request(request)
         operation = request["operation_name"]
-        if operation in KNOWN_LATER_OPERATIONS or operation not in SUPPORTED_OPERATIONS:
-            raise MutationRejected("UNSUPPORTED_OPERATION_IN_CP_I02", operation)
         if self._before_transaction is not None:
             self._before_transaction()
         with self._store._mutation_transaction() as tx:
@@ -101,6 +99,8 @@ class MutationService:
                 if fingerprint != request["idempotency_fingerprint"]:
                     raise MutationRejected("OPERATION_IDEMPOTENCY_CONFLICT")
                 return result
+            if operation in KNOWN_LATER_OPERATIONS or operation not in SUPPORTED_OPERATIONS:
+                raise MutationRejected("UNSUPPORTED_OPERATION_IN_CP_I02", operation)
             try:
                 if operation == "MATERIALIZE_IMPLEMENTATION_PACKAGE":
                     result = self._materialize_package(tx, request)
@@ -191,7 +191,7 @@ class MutationService:
         if tx.read_latest("STAGE_OCCURRENCE", record["id"]):
             raise MutationRejected("OCCURRENCE_IDENTITY_CONFLICT")
         expected = request["expected_state"]
-        if expected["active_occurrence_ref"] is not None:
+        if expected["active_occurrence_ref"] is not None or expected["predecessor_occurrence_ref"] is not None:
             raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT")
         stored = tx.append_canonical(record)
         self._checkpoint("after_canonical")
