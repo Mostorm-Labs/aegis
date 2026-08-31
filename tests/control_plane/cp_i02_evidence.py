@@ -114,6 +114,7 @@ def compile_evidence(repo_root: Path) -> dict[str, Any]:
     with tempfile.TemporaryDirectory(prefix="cp-i02-evidence-") as tmp:
         root = Path(tmp)
 
+        # Package lineage and semantic idempotency.
         db = str(root / "package.db")
         store = ControlStore(db)
         mutation = MutationService(store)
@@ -150,6 +151,7 @@ def compile_evidence(repo_root: Path) -> dict[str, Any]:
         ))
         audits["package_lineage"] = audit_database(db)
 
+        # G01: terminalization does not create a successor/outbox.
         db = str(root / "lifecycle.db")
         store = ControlStore(db)
         mutation = MutationService(store)
@@ -171,6 +173,7 @@ def compile_evidence(repo_root: Path) -> dict[str, Any]:
             metrics["successor_before_terminal"] += 1
         audits["g01_lifecycle"] = audit
 
+        # G02: two writers start from same lane state; exactly one wins.
         db = str(root / "race.db")
         ControlStore(db)
         barrier = threading.Barrier(2)
@@ -201,6 +204,7 @@ def compile_evidence(repo_root: Path) -> dict[str, Any]:
             metrics["same_lane_double_winners"] += 1
         audits["g02_same_lane"] = audit
 
+        # G03: independent lanes both commit.
         db = str(root / "independent.db")
         store = ControlStore(db)
         mutation = MutationService(store)
@@ -213,6 +217,7 @@ def compile_evidence(repo_root: Path) -> dict[str, Any]:
             metrics["illegal_accepted_transitions"] += 1
         audits["g03_independent_lanes"] = audit
 
+        # Schedule crash matrix + reopen durability.
         for checkpoint in ("after_canonical", "after_lane", "after_outbox", "after_idempotency"):
             db = str(root / f"crash-{checkpoint}.db")
             store = ControlStore(db)
@@ -232,7 +237,9 @@ def compile_evidence(repo_root: Path) -> dict[str, Any]:
             if outcome != "ROLLED_BACK" or any(counts.values()):
                 metrics["half_committed_transactions"] += 1
             crash_rows.append({"transaction": "SCHEDULE_STAGE_OCCURRENCE", "failure_point": checkpoint,
-                               "expected": "ROLLBACK_ALL", "observed": outcome, "post_reopen_counts": counts})
+                               "expected": "ROLLBACK_ALL",
+                               "expected_counts": {"canonical_records": 0, "lane_heads": 0, "idempotency": 0, "outbox": 0},
+                               "observed": outcome, "post_reopen_counts": counts})
 
         db = str(root / "reopen.db")
         _schedule(MutationService(ControlStore(db)), "req_reopen", "lane_reopen", "so_reopen")
@@ -243,6 +250,7 @@ def compile_evidence(repo_root: Path) -> dict[str, Any]:
                            "expected": "FULL_COMMITTED_SET", "observed": reopen})
         audits["commit_reopen"] = audit
 
+        # G35: escalation and terminal revision are atomic companions.
         db = str(root / "escalation.db")
         store = ControlStore(db)
         mutation = MutationService(store)
@@ -265,6 +273,45 @@ def compile_evidence(repo_root: Path) -> dict[str, Any]:
         traces.append(_trace("G35-escalation-companion", {"escalation_revisions": [1], "occurrence_revisions": [1, 2], "orphan_companions": 0}, observed))
         audits["g35_escalation"] = audit
 
+        # Escalation companion rollback matrix: the pre-existing scheduled OPEN
+        # occurrence remains durable, but neither the escalation nor terminal
+        # companion nor raise-idempotency result may survive a failed raise.
+        for checkpoint in ("after_escalation", "after_terminal", "after_idempotency"):
+            db = str(root / f"escalation-crash-{checkpoint}.db")
+            store = ControlStore(db)
+            mutation = MutationService(store)
+            _schedule(mutation, f"req_esc_base_{checkpoint}", "lane_esc_crash", "so_esc_crash")
+            current = store.read_latest("STAGE_OCCURRENCE", "so_esc_crash")
+            baseline = dict(store.snapshot_counts())
+            request = make_request(
+                "RAISE_ESCALATION", f"req_esc_crash_{checkpoint}", "lane_esc_crash",
+                {"occurrence_id": "so_esc_crash", "recorded_at": "2026-08-31T07:11:00Z",
+                 "escalation": escalation_record("esc_crash", "so_esc_crash", "lane_esc_crash"),
+                 "terminal": terminal_facts("ESCALATED", "BLOCKED_UNRESOLVED_DECISION", raised=["esc_crash"], earliest="P21")},
+                expected_state(target_record_revision=1, target_record_digest=current.digest),
+            )
+            def inject_escalation(name: str, target: str = checkpoint):
+                if name == target:
+                    raise RuntimeError(target)
+            try:
+                MutationService(store, fault_injector=inject_escalation).apply(request)
+                outcome = "UNEXPECTED_COMMIT"
+            except RuntimeError:
+                outcome = "ROLLED_BACK"
+            audit = audit_database(db)
+            counts = {
+                "canonical_records": len(audit["canonical_records"]), "lane_heads": len(audit["lane_heads"]),
+                "idempotency": len(audit["idempotency"]), "outbox": len(audit["outbox"]),
+            }
+            if outcome != "ROLLED_BACK" or counts != baseline:
+                metrics["half_committed_transactions"] += 1
+            crash_rows.append({
+                "transaction": "RAISE_ESCALATION", "failure_point": checkpoint,
+                "expected": "ROLLBACK_TO_PREEXISTING_OPEN_BASELINE", "expected_counts": baseline,
+                "observed": outcome, "post_reopen_counts": counts,
+            })
+
+        # Unsupported later-slice operation must be zero mutation.
         db = str(root / "unsupported.db")
         store = ControlStore(db)
         before = dict(store.snapshot_counts())
@@ -297,9 +344,9 @@ def compile_evidence(repo_root: Path) -> dict[str, Any]:
 
     canonical_pass = all(value == 0 for value in metrics.values()) and all(t["status"] == "PASS" for t in traces)
     crash_pass = all(
-        (row["observed"] == "ROLLED_BACK" and not any(row["post_reopen_counts"].values()))
-        if row["failure_point"] != "AFTER_COMMIT_REOPEN"
-        else row["observed"] == {"canonical_records": 1, "lane_heads": 1, "idempotency": 1, "outbox": 1}
+        row["observed"] == {"canonical_records": 1, "lane_heads": 1, "idempotency": 1, "outbox": 1}
+        if row["failure_point"] == "AFTER_COMMIT_REOPEN"
+        else row["observed"] == "ROLLED_BACK" and row["post_reopen_counts"] == row["expected_counts"]
         for row in crash_rows
     )
     return {
