@@ -3,6 +3,7 @@ name: Aegis Control Plane CP-I03 Projection Policy Scheduler
 on:
   push:
     paths:
+      - "tools/aegis_control/store.py"
       - "tools/aegis_control/projection.py"
       - "tools/aegis_control/policy.py"
       - "tools/aegis_control/scheduler.py"
@@ -10,9 +11,11 @@ on:
       - "tests/control_plane/cp_i03_*.py"
       - "tests/control_plane/generate_cp_i03_evidence.py"
       - "tests/control_plane/test_cp_i03_*.py"
+      - "tests/control_plane/test_cp_i02_ownership.py"
       - ".github/workflows/control-plane-cp-i03.yml"
   pull_request:
     paths:
+      - "tools/aegis_control/store.py"
       - "tools/aegis_control/projection.py"
       - "tools/aegis_control/policy.py"
       - "tools/aegis_control/scheduler.py"
@@ -20,6 +23,7 @@ on:
       - "tests/control_plane/cp_i03_*.py"
       - "tests/control_plane/generate_cp_i03_evidence.py"
       - "tests/control_plane/test_cp_i03_*.py"
+      - "tests/control_plane/test_cp_i02_ownership.py"
       - ".github/workflows/control-plane-cp-i03.yml"
 
 permissions:
@@ -45,3 +49,20 @@ jobs:
         run: python3 -m unittest discover -s tests/project_state -v
       - name: Run Skillset regression suite
         run: python3 -m unittest discover -s tests/skillset -v
+      - name: Materialize CP-I03 evidence bundle
+        env:
+          PACKAGE_REF: 5be737ae11b226cde222044d31099224c23af81e
+          RESULT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python3 tests/control_plane/generate_cp_i03_evidence.py \
+            --result-revision "$RESULT_REVISION" \
+            --package-ref "$PACKAGE_REF" \
+            --output-dir artifacts/cp-i03
+          for file in artifacts/cp-i03/*.json; do python3 -m json.tool "$file" >/dev/null; done
+      - name: Upload CP-I03 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp-i03-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/cp-i03
+          if-no-files-found: error
+          retention-days: 30
