@@ -22,7 +22,7 @@ class CpI04EvidenceTests(unittest.TestCase):
             subprocess.run(
                 [
                     sys.executable,
-                    str(ROOT / "tests/control_plane/generate_cp_i04_evidence.py"),
+                    str(ROOT / "tests/control_plane/cp_i04_p36_evidence.py"),
                     "--result-revision",
                     result_revision,
                     "--package-ref",
@@ -39,17 +39,21 @@ class CpI04EvidenceTests(unittest.TestCase):
             self.assertEqual(result_revision, manifest["result_revision"])
             self.assertEqual(ACCEPTED_CP_I03, manifest["accepted_cp_i03"]["revision"])
             self.assertEqual(CP_I03_P34, manifest["accepted_cp_i03"]["p34_comment"])
-            self.assertEqual(
+            self.assertEqual("CP-I04-P36-02", manifest["repair"]["repair_package_id"])
+            self.assertTrue(
                 {
                     "CPV-E-TRUST-CURRENTNESS",
                     "CPV-E-HISTORICAL-REPLAY",
                     "CPV-E-SNAPSHOT-INTEGRITY",
                     "CPV-E-ASYNC-PROVIDER-CAPABILITY",
                     "CPV-E-CANONICAL-CONFORMANCE",
-                },
-                set(manifest["evidence"]),
+                    "CP-I04-P36-REPAIR-CLOSURE",
+                }.issubset(set(manifest["evidence"]))
             )
             self.assertTrue(all(value == 0 for value in manifest["metrics"].values()))
+            self.assertEqual(0, manifest["metrics"]["missing_exact_acceptance_fact_accepted"])
+            self.assertEqual(0, manifest["metrics"]["mutable_unpinned_trust_ref_accepted"])
+            self.assertEqual(0, manifest["metrics"]["wrong_acceptance_contract_identity_accepted"])
             self.assertFalse(manifest["claims"]["p34_gate_pass"])
             self.assertFalse(manifest["claims"]["CP_I05_plus"])
             self.assertEqual("DENIED", manifest["claims"]["current_cross_primary_rollout"])
@@ -63,7 +67,7 @@ class CpI04EvidenceTests(unittest.TestCase):
             subprocess.run(
                 [
                     sys.executable,
-                    str(ROOT / "tests/control_plane/generate_cp_i04_evidence.py"),
+                    str(ROOT / "tests/control_plane/cp_i04_p36_evidence.py"),
                     "--result-revision",
                     "2" * 40,
                     "--package-ref",
@@ -79,6 +83,7 @@ class CpI04EvidenceTests(unittest.TestCase):
             currentness = json.loads((output / "trust-currentness.json").read_text(encoding="utf-8"))
             snapshot = json.loads((output / "snapshot-integrity.json").read_text(encoding="utf-8"))
             provider = json.loads((output / "async-provider-capability.json").read_text(encoding="utf-8"))
+            repair = json.loads((output / "p36-repair-closure.json").read_text(encoding="utf-8"))
 
             self.assertTrue(canonical["passed"])
             self.assertTrue(canonical["child_spawn_atomicity"]["zero_residue"])
@@ -104,6 +109,12 @@ class CpI04EvidenceTests(unittest.TestCase):
             self.assertTrue(provider["passed"])
             self.assertFalse(provider["callback_only"]["full_autonomous_trust_capable"])
             self.assertTrue(provider["queryable"]["full_autonomous_trust_capable"])
+
+            self.assertTrue(repair["passed"])
+            self.assertFalse(repair["missing_exact_acceptance_fact"]["accepted"])
+            self.assertFalse(repair["mutable_unpinned_trust_ref"]["accepted"])
+            self.assertTrue(all(not value for value in repair["wrong_acceptance_contract_identity"].values()))
+            self.assertTrue(all(repair["exact_configured_contract_identity"].values()))
 
 
 if __name__ == "__main__":
