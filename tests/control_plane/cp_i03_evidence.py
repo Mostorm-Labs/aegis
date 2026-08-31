@@ -48,6 +48,12 @@ def _stored_ref(stored) -> str:
     )
 
 
+def _autonomous_occurrence(occurrence_id: str, lane_id: str):
+    record = occurrence_record(occurrence_id, lane_id)
+    record["policy_binding"] = {"control_autonomy": "AUTONOMOUS"}
+    return record
+
+
 def _schedule(service: MutationService, request_id: str, lane: str, occurrence_id: str, predecessor_ref=None):
     return service.apply(make_request(
         "SCHEDULE_STAGE_OCCURRENCE",
@@ -102,6 +108,31 @@ def _ownership_rollout() -> dict[str, Any]:
         except SchedulingDenied as exc:
             denied = exc.code == "POLICY_DENIED_AUTO_SCHEDULE"
         after = dict(store.snapshot_counts())
+
+        current_basis = {"current": True, "rollout_authorized": True}
+        same_owner_allowed = PolicyEvaluator().evaluate_next_action(
+            next_legal_action=projection.next_legal_action,
+            source_primary_owner="aegis-implementation",
+            target_primary_owner="aegis-implementation",
+            control_autonomy="AUTONOMOUS",
+            policy_basis=current_basis,
+        )
+        binding_before = dict(store.snapshot_counts())
+        binding_denied = False
+        try:
+            Scheduler(
+                store,
+                mutation,
+                policy_basis_resolver=lambda candidate: dict(current_basis),
+            ).derive_candidate(
+                projection,
+                same_owner_allowed,
+                occurrence_record("so_rollout_binding_mismatch", "lane_rollout"),
+            )
+        except SchedulingDenied as exc:
+            binding_denied = exc.code == "CANDIDATE_POLICY_BINDING_MISMATCH"
+        binding_after = dict(store.snapshot_counts())
+
         missing_basis = PolicyEvaluator().evaluate_next_action(
             next_legal_action=projection.next_legal_action,
             source_primary_owner="aegis-implementation",
@@ -112,12 +143,14 @@ def _ownership_rollout() -> dict[str, Any]:
         metrics = {
             "unauthorized_auto_schedules": 0 if denied and before == after else 1,
             "unofficial_gate_decisions_accepted": 0 if not decision.gate_decision and not missing_basis.gate_decision else 1,
+            "pinned_policy_mismatch_commits": 0 if binding_denied and binding_before == binding_after else 1,
         }
         return {
             "evidence_family": "CPV-E-OWNERSHIP-ROLLOUT",
             "current_cross_primary_rollout": decision.mode,
             "reason_codes": list(decision.reason_codes),
             "missing_policy_basis_mode": missing_basis.mode,
+            "pinned_policy_mismatch_denied": binding_denied,
             "canonical_counts_before_denied_candidate": before,
             "canonical_counts_after_denied_candidate": after,
             "metrics": metrics,
@@ -142,18 +175,23 @@ def _derived_state() -> dict[str, Any]:
         rebuilt = engine.project_lane("lane_derived")
         counts_after_cache = dict(store.snapshot_counts())
 
+        allowed_basis = {"current": True, "rollout_authorized": True}
         allowed = PolicyEvaluator().evaluate_next_action(
             next_legal_action=projection.next_legal_action,
             source_primary_owner="aegis-implementation",
             target_primary_owner="aegis-implementation",
             control_autonomy="AUTONOMOUS",
-            policy_basis={"current": True, "rollout_authorized": True},
+            policy_basis=allowed_basis,
         )
-        scheduler = Scheduler(store, mutation)
+        scheduler = Scheduler(
+            store,
+            mutation,
+            policy_basis_resolver=lambda candidate: dict(allowed_basis),
+        )
         stale_candidate = scheduler.derive_candidate(
             projection,
             allowed,
-            occurrence_record("so_derived_stale", "lane_derived"),
+            _autonomous_occurrence("so_derived_stale", "lane_derived"),
         )
         predecessor = store.read_latest("STAGE_OCCURRENCE", "so_derived_a")
         _schedule(mutation, "req_derived_winner", "lane_derived", "so_derived_winner", _stored_ref(predecessor))
@@ -164,6 +202,34 @@ def _derived_state() -> dict[str, Any]:
         except MutationRejected as exc:
             stale_rejected = exc.code == "STALE_SCHEDULER_CANDIDATE"
         counts_after_stale = dict(store.snapshot_counts())
+
+        policy_projection = _completed_projection(store, mutation, "lane_policy_stale", "so_policy_stale_a")
+        current_policy_basis = {"current": True, "rollout_authorized": True, "revision": "v1"}
+        policy_allowed = PolicyEvaluator().evaluate_next_action(
+            next_legal_action=policy_projection.next_legal_action,
+            source_primary_owner="aegis-implementation",
+            target_primary_owner="aegis-implementation",
+            control_autonomy="AUTONOMOUS",
+            policy_basis=current_policy_basis,
+        )
+        policy_scheduler = Scheduler(
+            store,
+            mutation,
+            policy_basis_resolver=lambda candidate: dict(current_policy_basis),
+        )
+        policy_candidate = policy_scheduler.derive_candidate(
+            policy_projection,
+            policy_allowed,
+            _autonomous_occurrence("so_policy_stale_b", "lane_policy_stale"),
+        )
+        counts_before_policy_stale = dict(store.snapshot_counts())
+        current_policy_basis["revision"] = "v2"
+        stale_policy_rejected = False
+        try:
+            policy_scheduler.submit_candidate(policy_candidate)
+        except MutationRejected as exc:
+            stale_policy_rejected = exc.code == "STALE_POLICY_AUTHORIZATION"
+        counts_after_policy_stale = dict(store.snapshot_counts())
 
         counts_before_ops = dict(store.snapshot_counts())
         scheduler.pause("lane_derived")
@@ -179,6 +245,8 @@ def _derived_state() -> dict[str, Any]:
         cache_match = cached_first == cached_second == rebuilt
         metrics = {
             "stale_projection_authorization": 0 if stale_rejected and counts_before_stale == counts_after_stale else 1,
+            "stale_policy_authorization": 0
+            if stale_policy_rejected and counts_before_policy_stale == counts_after_policy_stale else 1,
             "cache_pause_lease_only_canonical_mutations": 0
             if counts_before_cache == counts_after_cache and counts_before_ops == counts_after_ops else 1,
         }
@@ -188,6 +256,7 @@ def _derived_state() -> dict[str, Any]:
             "projection_oracle_match": oracle_match,
             "cache_rebuild_match": cache_match,
             "stale_candidate_rejected": stale_rejected,
+            "stale_policy_rejected": stale_policy_rejected,
             "metrics": metrics,
             "passed": oracle_match and cache_match and all(value == 0 for value in metrics.values()),
         }
@@ -224,16 +293,21 @@ def _scheduler_cas_race() -> dict[str, Any]:
         store = ControlStore(db)
         mutation = MutationService(store)
         projection = _completed_projection(store, mutation, "lane_race", "so_race_a")
+        current_basis = {"current": True, "rollout_authorized": True}
         allowed = PolicyEvaluator().evaluate_next_action(
             next_legal_action=projection.next_legal_action,
             source_primary_owner="aegis-implementation",
             target_primary_owner="aegis-implementation",
             control_autonomy="AUTONOMOUS",
-            policy_basis={"current": True, "rollout_authorized": True},
+            policy_basis=current_basis,
         )
-        planner = Scheduler(store, mutation)
+        planner = Scheduler(
+            store,
+            mutation,
+            policy_basis_resolver=lambda candidate: dict(current_basis),
+        )
         candidates = [
-            planner.derive_candidate(projection, allowed, occurrence_record(occurrence_id, "lane_race"))
+            planner.derive_candidate(projection, allowed, _autonomous_occurrence(occurrence_id, "lane_race"))
             for occurrence_id in ("so_race_b", "so_race_c")
         ]
         barrier = threading.Barrier(2)
@@ -245,6 +319,7 @@ def _scheduler_cas_race() -> dict[str, Any]:
             local_scheduler = Scheduler(
                 local_store,
                 MutationService(local_store, before_transaction=lambda: barrier.wait()),
+                policy_basis_resolver=lambda current_candidate: dict(current_basis),
             )
             try:
                 local_scheduler.submit_candidate(candidate)
@@ -316,7 +391,9 @@ def compile_evidence(repo_root: Path) -> dict[str, Any]:
         "zero_tolerance_metrics": {
             "unauthorized_auto_schedules": ownership["metrics"]["unauthorized_auto_schedules"],
             "unofficial_gate_decisions_accepted": ownership["metrics"]["unofficial_gate_decisions_accepted"],
+            "pinned_policy_mismatch_commits": ownership["metrics"]["pinned_policy_mismatch_commits"],
             "stale_projection_authorization": derived["metrics"]["stale_projection_authorization"],
+            "stale_policy_authorization": derived["metrics"]["stale_policy_authorization"],
             "cache_pause_lease_only_canonical_mutations": derived["metrics"]["cache_pause_lease_only_canonical_mutations"],
         },
     }
