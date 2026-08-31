@@ -1,0 +1,66 @@
+name: Aegis Control Plane CP-I02 Mutation
+
+on:
+  push:
+    paths:
+      - "tools/aegis_control/store.py"
+      - "tools/aegis_control/mutation.py"
+      - "tools/aegis_control/__init__.py"
+      - "tests/control_plane/store_oracle.py"
+      - "tests/control_plane/cp_i02_fixtures.py"
+      - "tests/control_plane/cp_i02_evidence.py"
+      - "tests/control_plane/generate_cp_i02_evidence.py"
+      - "tests/control_plane/test_cp_i02_*.py"
+      - ".github/workflows/control-plane-cp-i02.yml"
+  pull_request:
+    paths:
+      - "tools/aegis_control/store.py"
+      - "tools/aegis_control/mutation.py"
+      - "tools/aegis_control/__init__.py"
+      - "tests/control_plane/store_oracle.py"
+      - "tests/control_plane/cp_i02_fixtures.py"
+      - "tests/control_plane/cp_i02_evidence.py"
+      - "tests/control_plane/generate_cp_i02_evidence.py"
+      - "tests/control_plane/test_cp_i02_*.py"
+      - ".github/workflows/control-plane-cp-i02.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: control-plane-cp-i02-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run CP-I02 focused tests
+        run: python3 -m unittest discover -s tests/control_plane -p 'test_cp_i02_*.py' -v
+      - name: Run full Control Plane regression suite
+        run: python3 -m unittest discover -s tests/control_plane -v
+      - name: Run Project State regression suite
+        run: python3 -m unittest discover -s tests/project_state -v
+      - name: Run Skillset regression suite
+        run: python3 -m unittest discover -s tests/skillset -v
+      - name: Materialize CP-I02 evidence bundle
+        env:
+          PACKAGE_REF: 68a6eebec569b31a468743fd8cd4c1a21ac75952
+          RESULT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python3 tests/control_plane/generate_cp_i02_evidence.py \
+            --result-revision "$RESULT_REVISION" \
+            --package-ref "$PACKAGE_REF" \
+            --output-dir artifacts/cp-i02
+          for file in artifacts/cp-i02/*.json; do python3 -m json.tool "$file" >/dev/null; done
+      - name: Upload CP-I02 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp-i02-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/cp-i02
+          if-no-files-found: error
+          retention-days: 30
