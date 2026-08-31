@@ -33,7 +33,7 @@ COMMON_FIELDS = {
 
 KIND_FIELDS = {
     "STAGE_OCCURRENCE": COMMON_FIELDS | {
-        "control_lane_id", "stage_span", "primary_owner", "state",
+        "control_lane_id", "work_scope_ref", "stage_span", "primary_owner", "state",
         "trusted_basis", "policy_binding", "schedule_basis", "input_refs",
         "repair_context", "execution_navigation", "terminal",
     },
@@ -76,7 +76,7 @@ def _normalize_exponent(text: str) -> str:
     digits = exponent.lstrip("+-").lstrip("0") or "0"
     if "." in mantissa:
         mantissa = mantissa.rstrip("0").rstrip(".")
-    return f"{mantissa}e{sign}{digits}" if sign == "+" else f"{mantissa}e-{digits}"
+    return f"{mantissa}e+{digits}" if sign == "+" else f"{mantissa}e-{digits}"
 
 
 def _format_float(value: float) -> str:
