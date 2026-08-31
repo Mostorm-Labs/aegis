@@ -55,7 +55,28 @@ class CanonicalSemanticsTests(unittest.TestCase):
             validate_canonical_ref(bad)
 
     def test_validates_immutable_revision_lineage(self):
-        base = {"schema_version": "0.2", "kind": "STAGE_OCCURRENCE", "id_scheme": "stage-occurrence-v0.2", "id": "so_018f47b0-5d89-7baf-8c0a-111111111111", "recorded_at": "2026-08-31T00:00:00Z", "control_lane_id": "lane_018f47b0-5d89-7baf-8c0a-222222222222", "stage_span": {"stages": ["P32"]}, "primary_owner": "aegis-implementation", "trusted_basis": {}, "policy_binding": {}, "schedule_basis": {}, "input_refs": [], "repair_context": None, "execution_navigation": None, "extensions": {}}
+        base = {
+            "schema_version": "0.2",
+            "kind": "STAGE_OCCURRENCE",
+            "id_scheme": "stage-occurrence-v0.2",
+            "id": "so_018f47b0-5d89-7baf-8c0a-111111111111",
+            "recorded_at": "2026-08-31T00:00:00Z",
+            "control_lane_id": "lane_018f47b0-5d89-7baf-8c0a-222222222222",
+            "work_scope_ref": {
+                "id_scheme": "control-work-scope-v0.2",
+                "id": "ws_lineage",
+                "child_work_binding": None,
+            },
+            "stage_span": {"stages": ["P32"]},
+            "primary_owner": "aegis-implementation",
+            "trusted_basis": {},
+            "policy_binding": {},
+            "schedule_basis": {"required_child_acceptance_bindings": []},
+            "input_refs": [],
+            "repair_context": None,
+            "execution_navigation": None,
+            "extensions": {},
+        }
         open_record = dict(base, record_revision=1, state="OPEN", terminal=None)
         terminal_record = dict(base, record_revision=2, state="TERMINAL", terminal={"outcome_category": "COMPLETED", "status": "READY"})
         validate_revision_lineage([open_record, terminal_record])
