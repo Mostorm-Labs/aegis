@@ -68,6 +68,12 @@ class CpI03ProjectionPolicySchedulerTests(unittest.TestCase):
             f"@{stored.record['record_revision']}#{stored.digest}"
         )
 
+    @staticmethod
+    def _autonomous_occurrence(occurrence_id: str, lane_id: str):
+        record = occurrence_record(occurrence_id, lane_id)
+        record["policy_binding"] = {"control_autonomy": "AUTONOMOUS"}
+        return record
+
     def test_00_public_cp_i03_surface_exists(self):
         self.assertEqual(self.REQUIRED_SURFACE - set(dir(aegis_control)), set())
 
@@ -143,11 +149,10 @@ class CpI03ProjectionPolicySchedulerTests(unittest.TestCase):
                 self.assertEqual(decision.mode, "PROHIBITED")
                 self.assertFalse(decision.auto_schedule_authorized)
 
-    def test_stale_candidate_cannot_authorize_mutation(self):
-        self._schedule("so_i03_stale_a", "lane_stale")
-        self._terminate("so_i03_stale_a", "lane_stale")
-        engine = aegis_control.ProjectionEngine(self.store)
-        projection = engine.project_lane("lane_stale")
+    def test_candidate_rejects_autonomous_decision_when_pinned_policy_is_review_guarded(self):
+        self._schedule("so_i03_binding_a", "lane_binding")
+        self._terminate("so_i03_binding_a", "lane_binding")
+        projection = aegis_control.ProjectionEngine(self.store).project_lane("lane_binding")
         policy = aegis_control.PolicyEvaluator().evaluate_next_action(
             next_legal_action=projection.next_legal_action,
             source_primary_owner="aegis-implementation",
@@ -156,10 +161,117 @@ class CpI03ProjectionPolicySchedulerTests(unittest.TestCase):
             policy_basis={"current": True, "rollout_authorized": True},
         )
         scheduler = aegis_control.Scheduler(self.store, self.mutation)
+
+        with self.assertRaises(aegis_control.SchedulingDenied) as raised:
+            scheduler.derive_candidate(
+                projection,
+                policy,
+                occurrence_record("so_i03_binding_b", "lane_binding"),
+            )
+        self.assertEqual(raised.exception.code, "CANDIDATE_POLICY_BINDING_MISMATCH")
+        self.assertIsNone(self.store.read_latest("STAGE_OCCURRENCE", "so_i03_binding_b"))
+
+    def test_submit_fails_closed_without_fresh_current_policy_basis(self):
+        self._schedule("so_i03_policy_missing_a", "lane_policy_missing")
+        self._terminate("so_i03_policy_missing_a", "lane_policy_missing")
+        projection = aegis_control.ProjectionEngine(self.store).project_lane("lane_policy_missing")
+        basis = {"current": True, "rollout_authorized": True}
+        policy = aegis_control.PolicyEvaluator().evaluate_next_action(
+            next_legal_action=projection.next_legal_action,
+            source_primary_owner="aegis-implementation",
+            target_primary_owner="aegis-implementation",
+            control_autonomy="AUTONOMOUS",
+            policy_basis=basis,
+        )
+        scheduler = aegis_control.Scheduler(self.store, self.mutation)
         candidate = scheduler.derive_candidate(
             projection,
             policy,
-            occurrence_record("so_i03_stale_b", "lane_stale"),
+            self._autonomous_occurrence("so_i03_policy_missing_b", "lane_policy_missing"),
+        )
+        before = dict(self.store.snapshot_counts())
+
+        with self.assertRaises(aegis_control.MutationRejected) as raised:
+            scheduler.submit_candidate(candidate)
+        self.assertEqual(raised.exception.code, "MISSING_CURRENT_POLICY_BASIS")
+        self.assertEqual(before, dict(self.store.snapshot_counts()))
+        self.assertIsNone(self.store.read_latest("STAGE_OCCURRENCE", "so_i03_policy_missing_b"))
+
+    def test_submit_rejects_policy_that_changes_to_denied_without_canonical_change(self):
+        self._schedule("so_i03_policy_deny_a", "lane_policy_deny")
+        self._terminate("so_i03_policy_deny_a", "lane_policy_deny")
+        projection = aegis_control.ProjectionEngine(self.store).project_lane("lane_policy_deny")
+        basis = {"current": True, "rollout_authorized": True}
+        policy = aegis_control.PolicyEvaluator().evaluate_next_action(
+            next_legal_action=projection.next_legal_action,
+            source_primary_owner="aegis-implementation",
+            target_primary_owner="aegis-implementation",
+            control_autonomy="AUTONOMOUS",
+            policy_basis=basis,
+        )
+        scheduler = aegis_control.Scheduler(self.store, self.mutation)
+        scheduler._policy_basis_resolver = lambda candidate: dict(basis)
+        candidate = scheduler.derive_candidate(
+            projection,
+            policy,
+            self._autonomous_occurrence("so_i03_policy_deny_b", "lane_policy_deny"),
+        )
+        before = dict(self.store.snapshot_counts())
+        basis["rollout_authorized"] = False
+
+        with self.assertRaises(aegis_control.MutationRejected) as raised:
+            scheduler.submit_candidate(candidate)
+        self.assertEqual(raised.exception.code, "POLICY_REVALIDATION_DENIED")
+        self.assertEqual(before, dict(self.store.snapshot_counts()))
+        self.assertIsNone(self.store.read_latest("STAGE_OCCURRENCE", "so_i03_policy_deny_b"))
+
+    def test_submit_rejects_changed_policy_basis_even_if_still_allowed(self):
+        self._schedule("so_i03_policy_stale_a", "lane_policy_stale")
+        self._terminate("so_i03_policy_stale_a", "lane_policy_stale")
+        projection = aegis_control.ProjectionEngine(self.store).project_lane("lane_policy_stale")
+        basis = {"current": True, "rollout_authorized": True, "revision": "v1"}
+        policy = aegis_control.PolicyEvaluator().evaluate_next_action(
+            next_legal_action=projection.next_legal_action,
+            source_primary_owner="aegis-implementation",
+            target_primary_owner="aegis-implementation",
+            control_autonomy="AUTONOMOUS",
+            policy_basis=basis,
+        )
+        scheduler = aegis_control.Scheduler(self.store, self.mutation)
+        scheduler._policy_basis_resolver = lambda candidate: dict(basis)
+        candidate = scheduler.derive_candidate(
+            projection,
+            policy,
+            self._autonomous_occurrence("so_i03_policy_stale_b", "lane_policy_stale"),
+        )
+        before = dict(self.store.snapshot_counts())
+        basis["revision"] = "v2"
+
+        with self.assertRaises(aegis_control.MutationRejected) as raised:
+            scheduler.submit_candidate(candidate)
+        self.assertEqual(raised.exception.code, "STALE_POLICY_AUTHORIZATION")
+        self.assertEqual(before, dict(self.store.snapshot_counts()))
+        self.assertIsNone(self.store.read_latest("STAGE_OCCURRENCE", "so_i03_policy_stale_b"))
+
+    def test_stale_candidate_cannot_authorize_mutation(self):
+        self._schedule("so_i03_stale_a", "lane_stale")
+        self._terminate("so_i03_stale_a", "lane_stale")
+        engine = aegis_control.ProjectionEngine(self.store)
+        projection = engine.project_lane("lane_stale")
+        basis = {"current": True, "rollout_authorized": True}
+        policy = aegis_control.PolicyEvaluator().evaluate_next_action(
+            next_legal_action=projection.next_legal_action,
+            source_primary_owner="aegis-implementation",
+            target_primary_owner="aegis-implementation",
+            control_autonomy="AUTONOMOUS",
+            policy_basis=basis,
+        )
+        scheduler = aegis_control.Scheduler(self.store, self.mutation)
+        scheduler._policy_basis_resolver = lambda candidate: dict(basis)
+        candidate = scheduler.derive_candidate(
+            projection,
+            policy,
+            self._autonomous_occurrence("so_i03_stale_b", "lane_stale"),
         )
 
         predecessor = self.store.read_latest("STAGE_OCCURRENCE", "so_i03_stale_a")
@@ -174,16 +286,26 @@ class CpI03ProjectionPolicySchedulerTests(unittest.TestCase):
         self._schedule("so_i03_race_a", "lane_race")
         self._terminate("so_i03_race_a", "lane_race")
         projection = aegis_control.ProjectionEngine(self.store).project_lane("lane_race")
+        basis = {"current": True, "rollout_authorized": True}
         policy = aegis_control.PolicyEvaluator().evaluate_next_action(
             next_legal_action=projection.next_legal_action,
             source_primary_owner="aegis-implementation",
             target_primary_owner="aegis-implementation",
             control_autonomy="AUTONOMOUS",
-            policy_basis={"current": True, "rollout_authorized": True},
+            policy_basis=basis,
         )
         scheduler = aegis_control.Scheduler(self.store, self.mutation)
-        candidate_a = scheduler.derive_candidate(projection, policy, occurrence_record("so_i03_race_b", "lane_race"))
-        candidate_b = scheduler.derive_candidate(projection, policy, occurrence_record("so_i03_race_c", "lane_race"))
+        scheduler._policy_basis_resolver = lambda candidate: dict(basis)
+        candidate_a = scheduler.derive_candidate(
+            projection,
+            policy,
+            self._autonomous_occurrence("so_i03_race_b", "lane_race"),
+        )
+        candidate_b = scheduler.derive_candidate(
+            projection,
+            policy,
+            self._autonomous_occurrence("so_i03_race_c", "lane_race"),
+        )
 
         result = scheduler.submit_candidate(candidate_a)
         self.assertEqual(result["status"], "APPLIED")
