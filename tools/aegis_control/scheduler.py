@@ -1,4 +1,4 @@
-"""Transient CP-I03 scheduler candidates with fresh mutation revalidation."""
+"""Transient CP-I03 scheduler candidates with CP-I04 WorkScope guards."""
 from __future__ import annotations
 
 from copy import deepcopy
@@ -151,6 +151,7 @@ class Scheduler:
             "target_record_digest": None,
             "trusted_basis_digest": None,
             "package_ref": None,
+            "work_scope_ref": deepcopy(candidate.occurrence.get("work_scope_ref")),
         }
         semantic_request = {
             "operation_name": "SCHEDULE_STAGE_OCCURRENCE",
