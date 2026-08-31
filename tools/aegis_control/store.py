@@ -1,8 +1,8 @@
-"""Durable SQLite persistence mechanics for Control Plane CP-I02/CP-I03.
+"""Durable SQLite persistence mechanics for Control Plane CP-I02/CP-I04.
 
-This module owns storage, transaction, CAS, idempotency, and outbox mechanics.
-It intentionally owns no lifecycle, Authority, Gate, proof, or policy decisions.
-CP-I03 adds only a read-only latest-records-by-lane query used by projection.
+This module owns storage, transaction, CAS, idempotency, outbox, and read-only
+lookup mechanics. It intentionally owns no lifecycle, Authority, Gate, proof,
+policy, child-acceptance, or provider-currentness decisions.
 """
 from __future__ import annotations
 
@@ -115,64 +115,58 @@ class ControlStore:
     def read_latest(self, kind: str, record_id: str) -> StoredRecord | None:
         conn = self._connect(readonly=True)
         try:
-            row = conn.execute(
-                "SELECT canonical_json, digest FROM canonical_records "
-                "WHERE kind = ? AND record_id = ? ORDER BY record_revision DESC LIMIT 1",
-                (kind, record_id),
-            ).fetchone()
-            return _stored(row) if row else None
+            return _read_latest(conn, kind, record_id)
+        finally:
+            conn.close()
+
+    def read_exact(
+        self,
+        kind: str,
+        record_id: str,
+        record_revision: int,
+        *,
+        digest: str | None = None,
+    ) -> StoredRecord | None:
+        conn = self._connect(readonly=True)
+        try:
+            return _read_exact(conn, kind, record_id, record_revision, digest=digest)
         finally:
             conn.close()
 
     def read_revisions(self, kind: str, record_id: str) -> list[StoredRecord]:
         conn = self._connect(readonly=True)
         try:
-            rows = conn.execute(
-                "SELECT canonical_json, digest FROM canonical_records "
-                "WHERE kind = ? AND record_id = ? ORDER BY record_revision",
-                (kind, record_id),
-            ).fetchall()
-            return [_stored(row) for row in rows]
+            return _read_revisions(conn, kind, record_id)
         finally:
             conn.close()
 
     def read_lane_head(self, lane_id: str) -> LaneHead:
         conn = self._connect(readonly=True)
         try:
-            row = conn.execute(
-                "SELECT version, occurrence_ref FROM lane_heads WHERE lane_id = ?",
-                (lane_id,),
-            ).fetchone()
-            if not row:
-                return LaneHead(lane_id, 0, None)
-            return LaneHead(lane_id, int(row["version"]), row["occurrence_ref"])
+            return _read_lane_head(conn, lane_id)
         finally:
             conn.close()
 
     def read_lane_latest_records(self, lane_id: str) -> list[StoredRecord]:
-        """Return the latest immutable revision for every canonical lineage in one lane.
-
-        This is a read-only projection input. It does not infer lifecycle order or
-        authorize mutation; callers must use canonical refs/lane CAS for that.
-        """
+        """Return the latest immutable revision for every canonical lineage in one lane."""
         conn = self._connect(readonly=True)
         try:
-            rows = conn.execute(
-                "SELECT c.canonical_json, c.digest "
-                "FROM canonical_records AS c "
-                "JOIN ("
-                "  SELECT kind, record_id, MAX(record_revision) AS max_revision "
-                "  FROM canonical_records WHERE control_lane_id = ? "
-                "  GROUP BY kind, record_id"
-                ") AS latest "
-                "ON latest.kind = c.kind "
-                "AND latest.record_id = c.record_id "
-                "AND latest.max_revision = c.record_revision "
-                "WHERE c.control_lane_id = ? "
-                "ORDER BY c.kind, c.record_id",
-                (lane_id, lane_id),
-            ).fetchall()
-            return [_stored(row) for row in rows]
+            return _read_latest_records(conn, lane_id=lane_id)
+        finally:
+            conn.close()
+
+    def read_latest_stage_occurrences(self) -> list[StoredRecord]:
+        """Read-only global latest occurrence view for WorkScope/child projection."""
+        conn = self._connect(readonly=True)
+        try:
+            return _read_latest_records(conn, kind="STAGE_OCCURRENCE")
+        finally:
+            conn.close()
+
+    def read_latest_escalations(self) -> list[StoredRecord]:
+        conn = self._connect(readonly=True)
+        try:
+            return _read_latest_records(conn, kind="ESCALATION")
         finally:
             conn.close()
 
@@ -224,12 +218,32 @@ class _MutationTransaction:
         self._conn = conn
 
     def read_latest(self, kind: str, record_id: str) -> StoredRecord | None:
-        row = self._conn.execute(
-            "SELECT canonical_json, digest FROM canonical_records "
-            "WHERE kind = ? AND record_id = ? ORDER BY record_revision DESC LIMIT 1",
-            (kind, record_id),
-        ).fetchone()
-        return _stored(row) if row else None
+        return _read_latest(self._conn, kind, record_id)
+
+    def read_exact(
+        self,
+        kind: str,
+        record_id: str,
+        record_revision: int,
+        *,
+        digest: str | None = None,
+    ) -> StoredRecord | None:
+        return _read_exact(self._conn, kind, record_id, record_revision, digest=digest)
+
+    def read_revisions(self, kind: str, record_id: str) -> list[StoredRecord]:
+        return _read_revisions(self._conn, kind, record_id)
+
+    def read_lane_head(self, lane_id: str) -> LaneHead:
+        return _read_lane_head(self._conn, lane_id)
+
+    def read_lane_latest_records(self, lane_id: str) -> list[StoredRecord]:
+        return _read_latest_records(self._conn, lane_id=lane_id)
+
+    def read_latest_stage_occurrences(self) -> list[StoredRecord]:
+        return _read_latest_records(self._conn, kind="STAGE_OCCURRENCE")
+
+    def read_latest_escalations(self) -> list[StoredRecord]:
+        return _read_latest_records(self._conn, kind="ESCALATION")
 
     def read_idempotency(self, request_id: str) -> tuple[str, Mapping[str, Any]] | None:
         row = self._conn.execute(
@@ -270,10 +284,7 @@ class _MutationTransaction:
         )
         if cur.rowcount != 1:
             raise StoreConflict("lane compare-and-advance failed")
-        row = self._conn.execute(
-            "SELECT version, occurrence_ref FROM lane_heads WHERE lane_id = ?", (lane_id,)
-        ).fetchone()
-        return LaneHead(lane_id, int(row["version"]), row["occurrence_ref"])
+        return _read_lane_head(self._conn, lane_id)
 
     def append_idempotency(self, request_id: str, fingerprint: str, result: Mapping[str, Any]) -> None:
         try:
@@ -292,6 +303,86 @@ class _MutationTransaction:
             )
         except sqlite3.IntegrityError as exc:
             raise StoreConflict(str(exc)) from exc
+
+
+def _read_latest(conn: sqlite3.Connection, kind: str, record_id: str) -> StoredRecord | None:
+    row = conn.execute(
+        "SELECT canonical_json, digest FROM canonical_records "
+        "WHERE kind = ? AND record_id = ? ORDER BY record_revision DESC LIMIT 1",
+        (kind, record_id),
+    ).fetchone()
+    return _stored(row) if row else None
+
+
+def _read_exact(
+    conn: sqlite3.Connection,
+    kind: str,
+    record_id: str,
+    record_revision: int,
+    *,
+    digest: str | None = None,
+) -> StoredRecord | None:
+    row = conn.execute(
+        "SELECT canonical_json, digest FROM canonical_records "
+        "WHERE kind = ? AND record_id = ? AND record_revision = ?",
+        (kind, record_id, record_revision),
+    ).fetchone()
+    if not row:
+        return None
+    stored = _stored(row)
+    if digest is not None and stored.digest != digest:
+        return None
+    return stored
+
+
+def _read_revisions(conn: sqlite3.Connection, kind: str, record_id: str) -> list[StoredRecord]:
+    rows = conn.execute(
+        "SELECT canonical_json, digest FROM canonical_records "
+        "WHERE kind = ? AND record_id = ? ORDER BY record_revision",
+        (kind, record_id),
+    ).fetchall()
+    return [_stored(row) for row in rows]
+
+
+def _read_lane_head(conn: sqlite3.Connection, lane_id: str) -> LaneHead:
+    row = conn.execute(
+        "SELECT version, occurrence_ref FROM lane_heads WHERE lane_id = ?", (lane_id,)
+    ).fetchone()
+    if not row:
+        return LaneHead(lane_id, 0, None)
+    return LaneHead(lane_id, int(row["version"]), row["occurrence_ref"])
+
+
+def _read_latest_records(
+    conn: sqlite3.Connection,
+    *,
+    lane_id: str | None = None,
+    kind: str | None = None,
+) -> list[StoredRecord]:
+    where = []
+    params: list[Any] = []
+    if lane_id is not None:
+        where.append("control_lane_id = ?")
+        params.append(lane_id)
+    if kind is not None:
+        where.append("kind = ?")
+        params.append(kind)
+    predicate = " WHERE " + " AND ".join(where) if where else ""
+    rows = conn.execute(
+        "SELECT c.canonical_json, c.digest "
+        "FROM canonical_records AS c "
+        "JOIN ("
+        "  SELECT kind, record_id, MAX(record_revision) AS max_revision "
+        f"  FROM canonical_records{predicate} "
+        "  GROUP BY kind, record_id"
+        ") AS latest "
+        "ON latest.kind = c.kind "
+        "AND latest.record_id = c.record_id "
+        "AND latest.max_revision = c.record_revision "
+        "ORDER BY c.kind, c.record_id",
+        tuple(params),
+    ).fetchall()
+    return [_stored(row) for row in rows]
 
 
 def _stored(row: sqlite3.Row) -> StoredRecord:
