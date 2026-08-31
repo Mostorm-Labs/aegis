@@ -55,6 +55,7 @@ class CpI03ProjectionFieldTests(unittest.TestCase):
                 "recorded_at": occurrence["recorded_at"],
                 "extensions": {},
                 "control_lane_id": lane,
+                "work_scope_ref": occurrence["work_scope_ref"],
                 "raised_from_occurrence_ref": {
                     "object_type": "STAGE_OCCURRENCE",
                     "id": occurrence["id"],
