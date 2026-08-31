@@ -44,7 +44,9 @@ class CpI03EvidenceTests(unittest.TestCase):
                 {
                     "unauthorized_auto_schedules": 0,
                     "unofficial_gate_decisions_accepted": 0,
+                    "pinned_policy_mismatch_commits": 0,
                     "stale_projection_authorization": 0,
+                    "stale_policy_authorization": 0,
                     "cache_pause_lease_only_canonical_mutations": 0,
                 },
                 manifest["metrics"],
@@ -63,6 +65,8 @@ class CpI03EvidenceTests(unittest.TestCase):
             self.assertTrue(derived["passed"])
             self.assertTrue(canonical["passed"])
             self.assertEqual("PROHIBITED", ownership["current_cross_primary_rollout"])
+            self.assertTrue(ownership["pinned_policy_mismatch_denied"])
+            self.assertTrue(derived["stale_policy_rejected"])
             self.assertEqual(1, canonical["scheduler_cas_race"]["winner_count"])
             self.assertEqual(1, canonical["scheduler_cas_race"]["loser_count"])
 
