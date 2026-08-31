@@ -87,7 +87,7 @@ class CpI03ProjectionPolicySchedulerTests(unittest.TestCase):
         self.assertEqual(production.control_cursor.active_occurrence_id, expected["active_occurrence_id"])
         self.assertEqual(production.control_cursor.last_terminal_occurrence_id, expected["last_terminal_occurrence_id"])
         self.assertEqual(production.next_legal_action, "SCHEDULE_SUCCESSOR")
-        self.assertEqual(first["outbox_ids"], ["out_i03_a"])
+        self.assertEqual(first["outbox_ids"], ["out_so_i03_a"])
 
     def test_projection_cache_is_disposable_and_never_changes_canonical_history(self):
         self._schedule("so_i03_cache", "lane_cache")
