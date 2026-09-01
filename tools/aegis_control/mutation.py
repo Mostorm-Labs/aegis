@@ -14,6 +14,7 @@ from .canonical import (
     validate_required_child_acceptance_binding,
     validate_work_scope_ref,
 )
+from .execution_surface import ExecutionPositionResolver, validate_execution_navigation_shape
 from .store import ControlStore, StoreConflict, StoredRecord
 from .trust import TrustResolver
 
@@ -89,11 +90,17 @@ class MutationService:
         store: ControlStore,
         *,
         trust_resolver: TrustResolver | None = None,
+        execution_position_resolver: ExecutionPositionResolver | None = None,
+        implementation_package_id: str | None = None,
+        task_anchor_revision: str | None = None,
         fault_injector: Callable[[str], None] | None = None,
         before_transaction: Callable[[], None] | None = None,
     ):
         self._store = store
         self._trust_resolver = trust_resolver
+        self._execution_position_resolver = execution_position_resolver
+        self._implementation_package_id = implementation_package_id
+        self._task_anchor_revision = task_anchor_revision
         self._fault_injector = fault_injector
         self._before_transaction = before_transaction
 
@@ -216,6 +223,8 @@ class MutationService:
         self._require_expected_scope(request["expected_state"], record["work_scope_ref"])
         if tx.read_latest("STAGE_OCCURRENCE", record["id"]):
             raise MutationRejected("OCCURRENCE_IDENTITY_CONFLICT")
+        if record.get("execution_navigation") is not None:
+            self._validate_execution_navigation(record["execution_navigation"])
 
         self._validate_work_scope_for_schedule(tx, record)
         self._validate_expected_package_scope(tx, request["expected_state"], record["work_scope_ref"])
@@ -468,8 +477,7 @@ class MutationService:
         current = tx.read_latest("STAGE_OCCURRENCE", occurrence_id)
         self._validate_open_target(current, request["expected_state"], request["control_lane_id"])
         navigation = payload.get("execution_navigation")
-        if not isinstance(navigation, Mapping) or not navigation:
-            raise MutationRejected("INVALID_EXECUTION_NAVIGATION")
+        self._validate_execution_navigation(navigation)
         record = deepcopy(current.record)
         record["record_revision"] += 1
         record["recorded_at"] = payload.get("recorded_at") or current.record["recorded_at"]
@@ -482,12 +490,25 @@ class MutationService:
         self._checkpoint("after_canonical")
         return self._result(request, [stored])
 
+    def _validate_execution_navigation(self, navigation):
+        if not validate_execution_navigation_shape(navigation):
+            raise MutationRejected("INVALID_EXECUTION_NAVIGATION")
+        if (
+            self._task_anchor_revision is None
+            or navigation["task_anchor"]["revision"] != self._task_anchor_revision
+            or self._execution_position_resolver is None
+        ):
+            raise MutationRejected("EXECUTION_NAVIGATION_DIVERGENCE")
+        verification = self._execution_position_resolver.verify_checkpoint(navigation)
+        if not verification.valid:
+            raise MutationRejected(verification.code)
+
     def _terminate_occurrence(self, tx, request):
         occurrence_id = request["payload"].get("occurrence_id")
         current = tx.read_latest("STAGE_OCCURRENCE", occurrence_id)
         self._validate_open_target(current, request["expected_state"], request["control_lane_id"])
         terminal = self._validate_terminal_facts(request["payload"].get("terminal"), require_escalation=False)
-        self._validate_required_materialization(current.record.get("execution_navigation"), terminal)
+        self._validate_required_materialization(current.record, terminal)
         record = deepcopy(current.record)
         record["record_revision"] += 1
         record["recorded_at"] = request["payload"].get("recorded_at") or current.record["recorded_at"]
@@ -497,22 +518,42 @@ class MutationService:
         self._checkpoint("after_canonical")
         return self._result(request, [stored])
 
-    def _validate_required_materialization(self, navigation, terminal):
+    def _validate_required_materialization(self, occurrence, terminal):
         if terminal.get("outcome_category") != "COMPLETED":
             return
-        if not isinstance(navigation, Mapping) or navigation.get("materialization_required") is not True:
+        navigation = occurrence.get("execution_navigation")
+        if navigation is None:
             return
-        result_ref = navigation.get("result_ref")
-        if not isinstance(result_ref, Mapping) or navigation.get("reviewer_accessible") is not True:
-            raise MutationRejected("RESULT_MATERIALIZATION_REQUIRED")
+        result_refs = [
+            ref for ref in terminal.get("produced_refs") or []
+            if isinstance(ref, Mapping) and ref.get("object_type") == "RESULT"
+        ]
+        if len(result_refs) != 1:
+            raise MutationRejected(
+                "RESULT_MATERIALIZATION_REQUIRED" if not result_refs
+                else "RESULT_MATERIALIZATION_AMBIGUOUS"
+            )
+        result_ref = result_refs[0]
         try:
             validate_canonical_ref(result_ref)
         except CanonicalValidationError as exc:
-            raise MutationRejected("RESULT_MATERIALIZATION_REQUIRED", str(exc)) from exc
-        if result_ref.get("object_type") != "RESULT":
-            raise MutationRejected("RESULT_MATERIALIZATION_REQUIRED")
-        if not any(ref == result_ref for ref in terminal.get("produced_refs") or []):
-            raise MutationRejected("RESULT_MATERIALIZATION_MISMATCH")
+            raise MutationRejected("RESULT_MATERIALIZATION_UNPINNED", str(exc)) from exc
+        if (
+            self._trust_resolver is None
+            or not self._implementation_package_id
+            or not self._task_anchor_revision
+        ):
+            raise MutationRejected("RESULT_MATERIALIZATION_UNRESOLVABLE")
+        resolution = self._trust_resolver.resolve_result_materialization(
+            result_ref,
+            occurrence_id=occurrence["id"],
+            package_id=self._implementation_package_id,
+            task_anchor_revision=self._task_anchor_revision,
+        )
+        if not resolution.valid:
+            raise MutationRejected(resolution.code)
+        if resolution.result_ref != result_ref:
+            raise MutationRejected("RESULT_MATERIALIZATION_IDENTITY_MISMATCH")
 
     def _raise_escalation(self, tx, request):
         occurrence_id = request["payload"].get("occurrence_id")
