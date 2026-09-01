@@ -407,7 +407,30 @@ class MutationService:
         stages = record.get("stage_span", {}).get("stages") or []
         if "P34" not in stages or record.get("primary_owner") != "aegis-gate-review":
             raise MutationRejected("REREVIEW_OWNER_MISMATCH")
+        self._require_reverification_before_rereview(tx, request["expected_state"])
         return self._schedule_special_occurrence(tx, request, record, "REREVIEW")
+
+    def _require_reverification_before_rereview(self, tx, expected):
+        predecessor_ref = expected.get("predecessor_occurrence_ref")
+        if predecessor_ref is None:
+            return
+        try:
+            kind, occurrence_id, revision, digest = self._parse_record_ref(predecessor_ref)
+        except MutationRejected:
+            return
+        if kind != "STAGE_OCCURRENCE":
+            return
+        predecessor = tx.read_exact(kind, occurrence_id, revision, digest=digest)
+        if predecessor is None:
+            return
+        repair_context = predecessor.record.get("repair_context")
+        repair_policy = (
+            predecessor.record.get("policy_binding", {}).get("repair_policy", {})
+            if isinstance(predecessor.record.get("policy_binding"), Mapping)
+            else {}
+        )
+        if isinstance(repair_context, Mapping) and repair_policy.get("require_reverification") is True:
+            raise MutationRejected("REQUIRED_REVERIFICATION_NOT_COMPLETED")
 
     def _schedule_special_occurrence(self, tx, request, record, reason_code):
         if record["record_revision"] != 1 or record["state"] != "OPEN" or record["terminal"] is not None:
@@ -436,8 +459,6 @@ class MutationService:
         except StoreConflict as exc:
             raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT") from exc
         self._checkpoint("after_lane")
-        # Current cross-Primary rollout remains denied. CP-I06 special scheduling
-        # materializes semantic intent, but does not self-authorize dispatch/outbox.
         return self._result(request, [stored], lane=lane, outbox_ids=[])
 
     def _validate_work_scope_for_schedule(self, tx, record):
@@ -858,8 +879,6 @@ class MutationService:
             raise MutationRejected("HUMAN_DECISION_UNRESOLVABLE")
         if canonical_digest(fresh.resolved_refs[0]) != canonical_digest(decision_ref):
             raise MutationRejected("HUMAN_DECISION_IDENTITY_MISMATCH")
-        # The configured request key is escalation-specific in the adapter fixture;
-        # an exact decision bound to another question therefore has no mapping here.
         if not escalation_id:
             raise MutationRejected("HUMAN_DECISION_UNRESOLVABLE")
 
