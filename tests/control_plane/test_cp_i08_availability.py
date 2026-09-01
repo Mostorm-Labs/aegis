@@ -28,7 +28,13 @@ class CpI08AvailabilityRedTests(unittest.TestCase):
             AvailabilityObservation("probe-1", "CONTROL_API_AVAILABILITY", "SUCCESS", synthetic_probe=True),
             AvailabilityObservation("probe-1", "CONTROL_API_AVAILABILITY", "SUCCESS", synthetic_probe=True),
         ]
-        result = evaluate_window(rows, required_probe_intervals=2, complete_window=False)
+        result = evaluate_window(
+            rows,
+            window_id="window-test-incomplete",
+            required_probe_intervals=2,
+            complete_window=False,
+        )
+        self.assertEqual("window-test-incomplete", result.window_id)
         self.assertEqual(1, result.denominator)
         self.assertEqual(1, result.numerator)
         self.assertIn("MISSING_SYNTHETIC_PROBE_INTERVAL", result.evidence_gaps)
