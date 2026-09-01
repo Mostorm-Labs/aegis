@@ -192,6 +192,29 @@ class CpI06RepairRedTests(unittest.TestCase):
             ))
         self.assertEqual("REPAIR_FINDING_CLASSIFICATION_CONFLICT", reclassified.exception.code)
 
+    def test_required_reverification_cannot_be_skipped_before_rereview(self):
+        self._schedule_repair("so_skip_repair", 1, self.root_terminal)
+        repair_terminal = self._terminalize("so_skip_repair")
+        result_ref = exact_ref("RESULT", "repair-result-skip")
+        evidence_ref = exact_ref("EVIDENCE", "unverified-local-evidence")
+        rereview = occurrence_record("so_skip_rereview", "lane_cp_i06")
+        rereview["stage_span"] = {"stages": ["P34"]}
+        rereview["primary_owner"] = "aegis-gate-review"
+        rereview["schedule_basis"] = {"reason_code": "REREVIEW", "required_child_acceptance_bindings": []}
+        rereview["input_refs"] = [result_ref, evidence_ref]
+        before = self.store.snapshot_counts()
+        with self.assertRaises(MutationRejected) as blocked:
+            self.mutation.apply(make_request(
+                "SCHEDULE_REREVIEW_OCCURRENCE", "req_skip_rereview", "lane_cp_i06",
+                {"occurrence": rereview},
+                expected_state(
+                    predecessor_occurrence_ref=internal_ref(repair_terminal),
+                    work_scope_ref=rereview["work_scope_ref"],
+                ),
+            ))
+        self.assertEqual("REQUIRED_REVERIFICATION_NOT_COMPLETED", blocked.exception.code)
+        self.assertEqual(before, self.store.snapshot_counts())
+
     def test_reverify_then_rereview_are_separate_occurrences_without_gate_truth(self):
         self._schedule_repair("so_repair", 1, self.root_terminal)
         repair_terminal = self._terminalize("so_repair")
