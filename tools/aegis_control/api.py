@@ -29,16 +29,16 @@ def enforce_envelope_size(raw: bytes, *, max_bytes: int = REFERENCE_SUPPORTED_RE
     return bytes(raw)
 
 
-def _scan_secret_keys(value: Any, *, path: tuple[str, ...] = ()) -> None:
+def _scan_secret_keys(value: Any, *, path: tuple[str, ...] = (), code: str = "SECRET_MATERIAL_IN_SEMANTIC_PAYLOAD") -> None:
     if isinstance(value, Mapping):
         for key, child in value.items():
             normalized = str(key).strip().lower().replace("-", "_")
             if normalized in FORBIDDEN_SECRET_KEYS:
-                raise ApiRequestError("SECRET_MATERIAL_IN_SEMANTIC_PAYLOAD", {"path": ".".join(path + (str(key),))})
-            _scan_secret_keys(child, path=path + (str(key),))
+                raise ApiRequestError(code, {"path": ".".join(path + (str(key),))})
+            _scan_secret_keys(child, path=path + (str(key),), code=code)
     elif isinstance(value, list):
         for index, child in enumerate(value):
-            _scan_secret_keys(child, path=path + (str(index),))
+            _scan_secret_keys(child, path=path + (str(index),), code=code)
 
 
 def validate_transport_semantic_payload(value: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -46,6 +46,13 @@ def validate_transport_semantic_payload(value: Mapping[str, Any]) -> Mapping[str
         raise ApiRequestError("INVALID_OPERATION_ENVELOPE")
     _scan_secret_keys(value)
     return value
+
+
+def safe_audit_fields(value: Mapping[str, Any]) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ApiRequestError("INVALID_AUDIT_FIELDS")
+    _scan_secret_keys(value, code="SECRET_MATERIAL_IN_PROHIBITED_LOG")
+    return dict(value)
 
 
 @dataclass(frozen=True)
