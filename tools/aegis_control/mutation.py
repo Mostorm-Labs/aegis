@@ -1,4 +1,4 @@
-"""Single canonical mutation boundary for the accepted CP-I02..CP-I04 subset."""
+"""Single canonical mutation boundary for the accepted CP-I02..CP-I05 subset."""
 from __future__ import annotations
 
 from copy import deepcopy
@@ -21,11 +21,11 @@ SUPPORTED_OPERATIONS = {
     "MATERIALIZE_IMPLEMENTATION_PACKAGE",
     "REVISE_IMPLEMENTATION_PACKAGE",
     "SCHEDULE_STAGE_OCCURRENCE",
+    "RECORD_EXECUTION_PROGRESS",
     "TERMINATE_STAGE_OCCURRENCE",
     "RAISE_ESCALATION",
 }
 KNOWN_LATER_OPERATIONS = {
-    "RECORD_EXECUTION_PROGRESS",
     "RECORD_ESCALATION_RESOLUTION",
     "SCHEDULE_REPAIR_OCCURRENCE",
     "SCHEDULE_REVERIFICATION_OCCURRENCE",
@@ -118,6 +118,8 @@ class MutationService:
                     result = self._revise_package(tx, request)
                 elif operation == "SCHEDULE_STAGE_OCCURRENCE":
                     result = self._schedule_occurrence(tx, request)
+                elif operation == "RECORD_EXECUTION_PROGRESS":
+                    result = self._record_execution_progress(tx, request)
                 elif operation == "TERMINATE_STAGE_OCCURRENCE":
                     result = self._terminate_occurrence(tx, request)
                 elif operation == "RAISE_ESCALATION":
@@ -456,6 +458,29 @@ class MutationService:
             if isinstance(scope, Mapping) and scope.get("id") == child_id and escalation.record["id"] not in resolved:
                 return None
         return current
+
+    def _record_execution_progress(self, tx, request):
+        payload = request["payload"]
+        expected_fields = {"occurrence_id", "recorded_at", "execution_navigation"}
+        if set(payload) != expected_fields:
+            raise MutationRejected("INVALID_EXECUTION_PROGRESS_PAYLOAD")
+        occurrence_id = payload.get("occurrence_id")
+        current = tx.read_latest("STAGE_OCCURRENCE", occurrence_id)
+        self._validate_open_target(current, request["expected_state"], request["control_lane_id"])
+        navigation = payload.get("execution_navigation")
+        if not isinstance(navigation, Mapping) or not navigation:
+            raise MutationRejected("INVALID_EXECUTION_NAVIGATION")
+        record = deepcopy(current.record)
+        record["record_revision"] += 1
+        record["recorded_at"] = payload.get("recorded_at") or current.record["recorded_at"]
+        record["execution_navigation"] = deepcopy(dict(navigation))
+        try:
+            validate_record(record)
+        except CanonicalValidationError as exc:
+            raise MutationRejected("INVALID_EXECUTION_NAVIGATION", str(exc)) from exc
+        stored = tx.append_canonical(record)
+        self._checkpoint("after_canonical")
+        return self._result(request, [stored])
 
     def _terminate_occurrence(self, tx, request):
         occurrence_id = request["payload"].get("occurrence_id")
