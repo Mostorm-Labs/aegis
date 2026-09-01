@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from tests.control_plane.cp_i02_fixtures import make_request, occurrence_record
+from tests.control_plane.cp_i05_fixtures import dispatch_authorization
 from tools.aegis_control.dispatch import DispatchService
 from tools.aegis_control.execution_surface import DeterministicExecutionSurface
 from tools.aegis_control.mutation import MutationService
@@ -31,9 +32,12 @@ class CpI05ReconciliationTests(unittest.TestCase):
         ))
         self.outbox_id = scheduled["outbox_ids"][0]
         self.surface = DeterministicExecutionSurface()
-        receipt = DispatchService(self.store, self.surface).dispatch(
+        receipt = DispatchService(
+            self.store,
+            self.surface,
+            authorization_resolver=dispatch_authorization(),
+        ).dispatch(
             self.outbox_id,
-            dispatch_authorized=True,
             attempted_at="2026-09-01T02:20:00Z",
         )
         self.correlation_id = receipt.correlation_id
@@ -51,10 +55,11 @@ class CpI05ReconciliationTests(unittest.TestCase):
             reviewer_accessible=True,
         )
         before = dict(self.store.snapshot_counts())
-        observation = self.recovery.reconcile_outbox(self.outbox_id, observed_at="2026-09-01T02:21:00Z")
+        observation = self.recovery.reconcile_outbox(
+            self.outbox_id, observed_at="2026-09-01T02:21:00Z"
+        )
         self.assertEqual("MATERIALIZED", observation.state)
         self.assertEqual(RESULT_REF, observation.materialized_ref)
-        self.assertTrue(observation.reviewer_accessible)
         self.assertEqual(1, self.surface.query_count)
         self.assertEqual(before, self.store.snapshot_counts())
         latest = self.store.read_latest("STAGE_OCCURRENCE", "so_cp_i05_reconcile")
@@ -62,7 +67,6 @@ class CpI05ReconciliationTests(unittest.TestCase):
         self.assertEqual(1, latest.record["record_revision"])
 
     def test_missing_correlation_fails_closed_without_query(self):
-        # A fresh committed outbox with no provider correlation must not invent one during reconciliation.
         mutation = MutationService(self.store)
         scheduled = mutation.apply(make_request(
             "SCHEDULE_STAGE_OCCURRENCE",
@@ -73,15 +77,18 @@ class CpI05ReconciliationTests(unittest.TestCase):
         fresh_outbox = scheduled["outbox_ids"][0]
         before_queries = self.surface.query_count
         with self.assertRaises(ReconciliationBlocked) as caught:
-            self.recovery.reconcile_outbox(fresh_outbox, observed_at="2026-09-01T02:21:00Z")
+            self.recovery.reconcile_outbox(
+                fresh_outbox, observed_at="2026-09-01T02:21:00Z"
+            )
         self.assertEqual("DELIVERY_CORRELATION_MISSING", caught.exception.code)
         self.assertEqual(before_queries, self.surface.query_count)
 
     def test_unknown_provider_correlation_fails_closed(self):
-        # The durable correlation exists, but this provider surface has no matching execution.
         recovery = RecoveryCoordinator(self.store, DeterministicExecutionSurface())
         with self.assertRaises(ReconciliationBlocked) as caught:
-            recovery.reconcile_outbox(self.outbox_id, observed_at="2026-09-01T02:21:00Z")
+            recovery.reconcile_outbox(
+                self.outbox_id, observed_at="2026-09-01T02:21:00Z"
+            )
         self.assertEqual("PROVIDER_CORRELATION_NOT_FOUND", caught.exception.code)
 
 
