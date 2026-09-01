@@ -20,12 +20,17 @@ from tools.aegis_control.store import ControlStore
 from tools.aegis_control.trust import TrustFactRequest, TrustResolver
 
 
-def decision_ref(decision_id="decision_cp_i06"):
+def decision_ref(decision_id="decision_cp_i06", *, scheme="sha256"):
+    value = (
+        canonical_digest({"decision": decision_id})
+        if scheme == "sha256"
+        else "draft-v1"
+    )
     return {
         "object_type": "EXTERNAL_DECISION",
         "id": decision_id,
         "ref": f"decision://{decision_id}",
-        "identity": {"scheme": "sha256", "value": canonical_digest({"decision": decision_id})},
+        "identity": {"scheme": scheme, "value": value},
     }
 
 
@@ -39,7 +44,7 @@ class CpI06HumanDecisionRedTests(unittest.TestCase):
         self.store = ControlStore(str(Path(self.tmp.name) / "control.db"))
         self.decision = decision_ref()
         clock = lambda: datetime(2026, 9, 1, 9, 30, tzinfo=timezone.utc)
-        adapter = DeterministicExternalAdapter(
+        self.adapter = DeterministicExternalAdapter(
             source_kind="HUMAN_DECISION",
             adapter_id="fixture-human",
             secret=b"cp-i06-human-secret",
@@ -47,14 +52,14 @@ class CpI06HumanDecisionRedTests(unittest.TestCase):
             query_correlation_available=True,
             clock=clock,
         )
-        adapter.set_resource(
+        self.adapter.set_resource(
             "escalation/esc_cp_i06",
             version_scheme="native-immutable-id",
             version_value="decision-v1",
             resolved_refs=[self.decision],
             satisfies=True,
         )
-        trust = TrustResolver({"HUMAN_DECISION": adapter})
+        trust = TrustResolver({"HUMAN_DECISION": self.adapter})
         self.mutation = MutationService(
             self.store,
             trust_resolver=trust,
@@ -155,13 +160,34 @@ class CpI06HumanDecisionRedTests(unittest.TestCase):
         resolved = self.store.read_latest("STAGE_OCCURRENCE", "so_resolve")
         self.assertEqual(["esc_cp_i06"], resolved.record["terminal"]["resolved_escalation_ids"])
 
-    def test_chat_or_boolean_acknowledgement_cannot_resolve(self):
+    def test_chat_boolean_or_missing_acknowledgement_cannot_resolve(self):
         current = self._seed_resolver(inputs=[])
-        for invalid in ("approved", True, {"approved": True}):
+        for invalid in (None, "approved", True, {"approved": True}):
             with self.subTest(invalid=invalid):
                 with self.assertRaises(MutationRejected) as blocked:
                     self.mutation.apply(self._resolution_request(current, invalid))
                 self.assertEqual("HUMAN_DECISION_EXACT_REF_REQUIRED", blocked.exception.code)
+
+    def test_mutable_unpinned_decision_ref_fails_closed(self):
+        mutable = decision_ref("decision_cp_i06", scheme="semantic-version")
+        current = self._seed_resolver(inputs=[mutable])
+        with self.assertRaises(MutationRejected) as blocked:
+            self.mutation.apply(self._resolution_request(current, mutable))
+        self.assertEqual("HUMAN_DECISION_EXACT_REF_REQUIRED", blocked.exception.code)
+
+    def test_stale_decision_identity_after_provider_change_fails_closed(self):
+        current = self._seed_resolver(inputs=[self.decision])
+        replacement = decision_ref("decision_replacement")
+        self.adapter.set_resource(
+            "escalation/esc_cp_i06",
+            version_scheme="native-immutable-id",
+            version_value="decision-v2",
+            resolved_refs=[replacement],
+            satisfies=True,
+        )
+        with self.assertRaises(MutationRejected) as blocked:
+            self.mutation.apply(self._resolution_request(current, self.decision))
+        self.assertEqual("HUMAN_DECISION_IDENTITY_MISMATCH", blocked.exception.code)
 
     def test_wrong_or_unmaterialized_decision_ref_fails_closed(self):
         wrong = decision_ref("other")
