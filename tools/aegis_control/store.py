@@ -3,8 +3,8 @@
 This module owns storage, transaction, CAS, idempotency, outbox, and read-only
 lookup mechanics. CP-I05/CP-I06 operational state is deliberately outside
 canonical records, lane heads, and semantic idempotency. Backup/restore here is
-persistence recovery only; it never invents lifecycle, Authority, Gate, proof,
-policy, child-acceptance, or provider-currentness truth.
+private persistence recovery mechanics; control-recovery exposes the bounded
+coordination surface without widening ControlStore's frozen public contract.
 """
 from __future__ import annotations
 
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS delivery_state (
 
 
 class ControlStore:
-    """Public read/recovery surface plus private canonical mutation transaction factory."""
+    """Public read/operational surface plus private persistence mechanics."""
 
     def __init__(self, db_path: str, *, timeout: float = 10.0):
         self.db_path = str(Path(db_path))
@@ -360,8 +360,8 @@ class ControlStore:
         assert state is not None
         return state
 
-    def integrity_check(self) -> str:
-        """Return SQLite integrity_check result without mutating semantic state."""
+    def _integrity_check(self) -> str:
+        """Private storage integrity probe used only by control-recovery."""
         conn = self._connect(readonly=True)
         try:
             row = conn.execute("PRAGMA integrity_check").fetchone()
@@ -371,8 +371,8 @@ class ControlStore:
         finally:
             conn.close()
 
-    def backup_to(self, destination_path: str) -> Mapping[str, Any]:
-        """Materialize a verified point-in-time backup using SQLite's backup API."""
+    def _backup_to(self, destination_path: str) -> Mapping[str, Any]:
+        """Private verified point-in-time backup mechanic for control-recovery."""
         destination = Path(destination_path)
         if destination.resolve() == Path(self.db_path).resolve():
             raise StoreConflict("backup destination must differ from source")
@@ -404,14 +404,14 @@ class ControlStore:
         return {"path": str(destination), "integrity_check": integrity}
 
     @classmethod
-    def restore_backup(
+    def _restore_backup(
         cls,
         backup_path: str,
         destination_path: str,
         *,
         timeout: float = 10.0,
     ) -> "ControlStore":
-        """Restore a verified backup into a new store path, fail-closed on corruption."""
+        """Private verified restore mechanic for control-recovery."""
         source_path = Path(backup_path)
         destination = Path(destination_path)
         if not source_path.is_file():
