@@ -39,14 +39,15 @@ jobs:
         run: python3 -m unittest discover -s tests/project_state -v
       - name: Run Skillset regression suite
         run: python3 -m unittest discover -s tests/skillset -v
-      - name: Materialize CP-I08 exact evidence bundle
+      - name: Materialize CP-I08 P36 exact evidence bundle
         run: |
           rm -rf artifacts/cp-i08
           python3 -m tests.control_plane.generate_cp_i08_evidence \
             --result-revision "${{ github.event.pull_request.head.sha || github.sha }}" \
             --workflow-run "${{ github.run_id }}" \
+            --workflow-job "verify" \
             --output-dir artifacts/cp-i08
-      - name: Validate CP-I08 JSON evidence
+      - name: Validate CP-I08 P36 JSON evidence
         run: |
           python3 - <<'PY'
           import json
@@ -72,15 +73,32 @@ jobs:
               raise SystemExit("CP-I08 package provenance mismatch")
           if manifest.get("result_revision") != "${{ github.event.pull_request.head.sha || github.sha }}":
               raise SystemExit("CP-I08 result revision mismatch")
-          if manifest.get("workflow_run") != "${{ github.run_id }}":
-              raise SystemExit("CP-I08 workflow run mismatch")
+          if manifest.get("workflow_run") != "${{ github.run_id }}" or manifest.get("workflow_job") != "verify":
+              raise SystemExit("CP-I08 workflow execution provenance mismatch")
+          repair = manifest.get("p36_repair", {})
+          if repair.get("repair_package_id") != "CP-I08-P36-01":
+              raise SystemExit("CP-I08 P36 repair package provenance mismatch")
+          if repair.get("source_p34_review") != "5079847388" or repair.get("source_p35_comment") != "5496205447":
+              raise SystemExit("CP-I08 P36 source review/classification mismatch")
           if manifest.get("d0") != {"golden_passed": 44, "golden_total": 44}:
               raise SystemExit("CP-I08 G01-G44 closure incomplete")
           q = manifest.get("qualification", {})
           if q.get("detected") != 20 or q.get("mandatory_total") != 20 or q.get("false_acceptance") != 0:
               raise SystemExit("CP-I08 M01-M20 qualification incomplete")
+          d0 = json.loads((root / "d0-conformance.json").read_text(encoding="utf-8"))
+          golden = d0.get("golden_results", {})
+          if set(golden) != {f"G{i:02d}" for i in range(1, 45)}:
+              raise SystemExit("CP-I08 exact G01-G44 identity set mismatch")
+          for gid, result in golden.items():
+              if result.get("passed") is not True or result.get("tests_run") != 1 or result.get("failures") or result.get("errors"):
+                  raise SystemExit(f"CP-I08 {gid} execution result invalid")
+              execution = result.get("execution", {})
+              if execution.get("workflow_run") != "${{ github.run_id }}" or execution.get("workflow_job") != "verify":
+                  raise SystemExit(f"CP-I08 {gid} execution provenance mismatch")
           if manifest.get("passed") is not True or any(manifest.get("metrics", {}).values()):
-              raise SystemExit("CP-I08 zero-tolerance evidence failed")
+              raise SystemExit("CP-I08 P36 zero-tolerance evidence failed")
+          if len(manifest.get("metrics", {})) != 18:
+              raise SystemExit("CP-I08 P36 zero-metric set incomplete")
           claims = manifest.get("claims", {})
           if claims.get("p34_gate_pass") is not False or claims.get("evidence_compiler_gate_authority") is not False:
               raise SystemExit("CP-I08 evidence compiler claimed Gate authority")
