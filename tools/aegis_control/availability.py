@@ -6,6 +6,10 @@ from typing import Sequence
 QUERY_SLI = "QUERY_PATH_WHEN_STORE_HEALTHY_AVAILABILITY"
 
 
+class AvailabilityError(RuntimeError):
+    pass
+
+
 @dataclass(frozen=True)
 class AvailabilityObservation:
     observation_id: str
@@ -27,6 +31,7 @@ class ObservationClassification:
 
 @dataclass(frozen=True)
 class AvailabilityWindowResult:
+    window_id: str
     status: str
     numerator: int
     denominator: int
@@ -53,7 +58,17 @@ def classify_observation(observation: AvailabilityObservation) -> ObservationCla
     return ObservationClassification(observation.observation_id, "BAD")
 
 
-def evaluate_window(observations: Sequence[AvailabilityObservation], *, required_probe_intervals: int, complete_window: bool) -> AvailabilityWindowResult:
+def evaluate_window(
+    observations: Sequence[AvailabilityObservation],
+    *,
+    window_id: str,
+    required_probe_intervals: int,
+    complete_window: bool,
+) -> AvailabilityWindowResult:
+    if not isinstance(window_id, str) or not window_id.strip():
+        raise AvailabilityError("OBSERVATION_WINDOW_ID_REQUIRED")
+    if not isinstance(required_probe_intervals, int) or isinstance(required_probe_intervals, bool) or required_probe_intervals < 0:
+        raise AvailabilityError("INVALID_REQUIRED_PROBE_INTERVALS")
     unique = {}
     for observation in observations:
         unique.setdefault(observation.observation_id, observation)
@@ -71,4 +86,4 @@ def evaluate_window(observations: Sequence[AvailabilityObservation], *, required
         gaps.append("INCOMPLETE_WINDOW")
     status = "COMPLETE" if complete_window and not gaps else "INCOMPLETE"
     ratio = numerator / denominator if denominator else None
-    return AvailabilityWindowResult(status, numerator, denominator, excluded, ratio, tuple(gaps), False)
+    return AvailabilityWindowResult(window_id, status, numerator, denominator, excluded, ratio, tuple(gaps), False)
