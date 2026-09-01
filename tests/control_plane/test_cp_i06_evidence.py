@@ -73,6 +73,7 @@ EXPECTED_CASES = {
         "repair_lineage_gap_rejected",
         "repair_budget_exhaustion_rejected",
         "repair_scope_expansion_rejected",
+        "required_reverification_skip_rejected",
         "reverification_is_separate_occurrence",
         "rereview_is_separate_external_gate_occurrence",
     },
