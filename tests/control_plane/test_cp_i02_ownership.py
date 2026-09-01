@@ -29,6 +29,7 @@ class OwnershipTests(unittest.TestCase):
                 "read_delivery_state",
                 "record_delivery_attempt",
                 "record_delivery_correlation",
+                "record_delivery_diagnostic",
                 "snapshot_counts",
             },
             public,
