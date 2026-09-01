@@ -7,11 +7,13 @@ from tools.aegis_control.store import ControlStore
 
 
 class OwnershipTests(unittest.TestCase):
-    def test_control_store_public_surface_is_read_only(self):
+    def test_control_store_public_surface_preserves_canonical_write_boundary(self):
         public = {
             name for name, value in inspect.getmembers(ControlStore, inspect.isfunction)
             if not name.startswith("_")
         }
+        # CP-I05 adds operational outbox/delivery metadata APIs. They are not
+        # canonical lifecycle writers and do not weaken the CP-I02 ownership rule.
         self.assertEqual(
             {
                 "read_latest",
@@ -23,10 +25,20 @@ class OwnershipTests(unittest.TestCase):
                 "read_latest_escalations",
                 "read_idempotency",
                 "read_outbox",
+                "read_outbox_entry",
+                "read_delivery_state",
+                "record_delivery_attempt",
+                "record_delivery_correlation",
                 "snapshot_counts",
             },
             public,
         )
+        self.assertTrue({
+            "append_canonical",
+            "compare_and_advance_lane",
+            "append_idempotency",
+            "append_outbox",
+        }.isdisjoint(public))
 
     def test_only_mutation_module_invokes_private_mutation_transaction(self):
         root = Path(__file__).resolve().parents[2] / "tools" / "aegis_control"
@@ -49,7 +61,7 @@ class OwnershipTests(unittest.TestCase):
                 owners.add(path.name)
         self.assertEqual({"store.py"}, owners)
 
-    def test_no_production_dispatch_or_network_path_exists_in_cp_i02_modules(self):
+    def test_no_production_dispatch_or_network_path_exists_in_cp_i02_transaction_modules(self):
         root = Path(__file__).resolve().parents[2] / "tools" / "aegis_control"
         forbidden_imports = {"requests", "httpx", "urllib.request", "socket"}
         observed = set()
