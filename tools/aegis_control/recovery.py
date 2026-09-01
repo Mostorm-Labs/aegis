@@ -88,6 +88,7 @@ class RecoveryCoordinator:
         if delivery is None or not delivery.get("provider_correlation_id"):
             raise ReconciliationBlocked("DELIVERY_CORRELATION_MISSING")
         self._require_query_eligibility(delivery, observed_at, event_hint=event_hint)
+        delivery = self._persist_uncertainty_if_due(outbox_id, delivery, observed_at)
 
         correlation_id = delivery["provider_correlation_id"]
         try:
@@ -162,6 +163,34 @@ class RecoveryCoordinator:
         interval = reconciliation_policy(age).interval_seconds
         if (now - last).total_seconds() < interval:
             raise ReconciliationBlocked("RECONCILIATION_NOT_YET_ELIGIBLE")
+
+    def _persist_uncertainty_if_due(
+        self,
+        outbox_id: str,
+        delivery: Mapping[str, Any],
+        observed_at: str,
+    ) -> Mapping[str, Any]:
+        first_text = delivery.get("first_attempt_at")
+        if not first_text:
+            return delivery
+        now = _parse_time(observed_at)
+        first = _parse_time(first_text)
+        elapsed = max(0, int((now - first).total_seconds()))
+        if not delivery_is_uncertain(
+            attempt_count=int(delivery.get("attempt_count") or 0),
+            elapsed_seconds=elapsed,
+        ):
+            return delivery
+        if delivery.get("diagnostic_state") == "DELIVERY_UNCERTAIN":
+            return delivery
+        try:
+            return self._store.record_delivery_diagnostic(
+                outbox_id,
+                "DELIVERY_UNCERTAIN",
+                observed_at=observed_at,
+            )
+        except StoreConflict as exc:
+            raise ReconciliationBlocked("DELIVERY_STATE_CONFLICT") from exc
 
     def _submit_progress(
         self,
