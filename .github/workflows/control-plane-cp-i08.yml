@@ -33,3 +33,66 @@ jobs:
           python-version: "3.12"
       - name: Run CP-I08 focused tests
         run: python3 -m unittest discover -s tests/control_plane -p 'test_cp_i08_*.py' -v
+      - name: Run full Control Plane regression suite
+        run: python3 -m unittest discover -s tests/control_plane -v
+      - name: Run Project State regression suite
+        run: python3 -m unittest discover -s tests/project_state -v
+      - name: Run Skillset regression suite
+        run: python3 -m unittest discover -s tests/skillset -v
+      - name: Materialize CP-I08 exact evidence bundle
+        run: |
+          rm -rf artifacts/cp-i08
+          python3 -m tests.control_plane.generate_cp_i08_evidence \
+            --result-revision "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --workflow-run "${{ github.run_id }}" \
+            --output-dir artifacts/cp-i08
+      - name: Validate CP-I08 JSON evidence
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("artifacts/cp-i08")
+          expected = {
+              "d0-conformance.json",
+              "verifier-qualification.json",
+              "retention-replay.json",
+              "observability-cost.json",
+              "operational-retention.json",
+              "alerting-conformance.json",
+              "availability-evaluator-qualification.json",
+              "evidence-manifest.json",
+          }
+          actual = {p.name for p in root.glob("*.json")}
+          if actual != expected:
+              raise SystemExit(f"unexpected CP-I08 evidence set: {sorted(actual)}")
+          for path in root.glob("*.json"):
+              json.loads(path.read_text(encoding="utf-8"))
+          manifest = json.loads((root / "evidence-manifest.json").read_text(encoding="utf-8"))
+          if manifest.get("package_id") != "CP-I08-P31-01" or manifest.get("package_ref") != "55ca192347739779a611cb5d387f05132db37b06":
+              raise SystemExit("CP-I08 package provenance mismatch")
+          if manifest.get("result_revision") != "${{ github.event.pull_request.head.sha || github.sha }}":
+              raise SystemExit("CP-I08 result revision mismatch")
+          if manifest.get("workflow_run") != "${{ github.run_id }}":
+              raise SystemExit("CP-I08 workflow run mismatch")
+          if manifest.get("d0") != {"golden_passed": 44, "golden_total": 44}:
+              raise SystemExit("CP-I08 G01-G44 closure incomplete")
+          q = manifest.get("qualification", {})
+          if q.get("detected") != 20 or q.get("mandatory_total") != 20 or q.get("false_acceptance") != 0:
+              raise SystemExit("CP-I08 M01-M20 qualification incomplete")
+          if manifest.get("passed") is not True or any(manifest.get("metrics", {}).values()):
+              raise SystemExit("CP-I08 zero-tolerance evidence failed")
+          claims = manifest.get("claims", {})
+          if claims.get("p34_gate_pass") is not False or claims.get("evidence_compiler_gate_authority") is not False:
+              raise SystemExit("CP-I08 evidence compiler claimed Gate authority")
+          if claims.get("current_cross_primary_rollout") != "DENIED" or claims.get("cp_i09_plus") is not False:
+              raise SystemExit("CP-I08 scope or rollout expanded")
+          if claims.get("r0_pass") or claims.get("s0_pass") or claims.get("seven_day_cost_pass") or claims.get("monthly_availability_attainment"):
+              raise SystemExit("CP-I08 made prohibited engineering/availability claim")
+          PY
+      - name: Upload CP-I08 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp-i08-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/cp-i08
+          if-no-files-found: error
+          retention-days: 30
