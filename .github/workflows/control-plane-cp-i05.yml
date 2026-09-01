@@ -7,6 +7,7 @@ on:
       - "tests/control_plane/test_cp_i05_*.py"
       - "tests/control_plane/cp_i05_*.py"
       - "tests/control_plane/generate_cp_i05_evidence.py"
+      - "tests/control_plane/augment_cp_i05_p36_evidence.py"
       - "tests/control_plane/cp_i02_fixtures.py"
       - "tests/control_plane/reference_model.py"
       - "tests/control_plane/verifier_helpers.py"
@@ -17,6 +18,7 @@ on:
       - "tests/control_plane/test_cp_i05_*.py"
       - "tests/control_plane/cp_i05_*.py"
       - "tests/control_plane/generate_cp_i05_evidence.py"
+      - "tests/control_plane/augment_cp_i05_p36_evidence.py"
       - "tests/control_plane/cp_i02_fixtures.py"
       - "tests/control_plane/reference_model.py"
       - "tests/control_plane/verifier_helpers.py"
@@ -53,6 +55,8 @@ jobs:
           python3 -m tests.control_plane.generate_cp_i05_evidence \
             --result-revision "$RESULT_REVISION" \
             --package-ref "$PACKAGE_REF" \
+            --output-dir artifacts/cp-i05
+          python3 -m tests.control_plane.augment_cp_i05_p36_evidence \
             --output-dir artifacts/cp-i05
           for file in artifacts/cp-i05/*.json; do python3 -m json.tool "$file" >/dev/null; done
       - name: Upload CP-I05 evidence
