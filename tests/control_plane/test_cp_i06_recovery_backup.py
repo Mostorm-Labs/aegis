@@ -6,7 +6,12 @@ from pathlib import Path
 
 from tests.control_plane.cp_i02_fixtures import make_request, occurrence_record
 from tools.aegis_control.mutation import MutationService
-from tools.aegis_control.recovery import startup_recovery_plan
+from tools.aegis_control.recovery import (
+    backup_control_store,
+    restore_control_store_backup,
+    startup_recovery_plan,
+    verify_control_store_integrity,
+)
 from tools.aegis_control.store import ControlStore, StoreConflict
 
 
@@ -85,13 +90,13 @@ class CpI06RecoveryBackupRedTests(unittest.TestCase):
         counts = dict(self.store.snapshot_counts())
 
         backup = self.root / "control.backup.db"
-        metadata = self.store.backup_to(str(backup))
+        metadata = backup_control_store(self.store, str(backup))
         self.assertEqual("ok", metadata["integrity_check"])
         self.assertTrue(backup.is_file())
 
         restored_path = self.root / "restored.db"
-        restored = ControlStore.restore_backup(str(backup), str(restored_path))
-        self.assertEqual("ok", restored.integrity_check())
+        restored = restore_control_store_backup(str(backup), str(restored_path))
+        self.assertEqual("ok", verify_control_store_integrity(restored))
         self.assertEqual(counts, restored.snapshot_counts())
         self.assertEqual(canonical.digest, restored.read_latest("STAGE_OCCURRENCE", "so_backup").digest)
         self.assertEqual(idempotency, restored.read_idempotency("req_so_backup"))
@@ -101,12 +106,12 @@ class CpI06RecoveryBackupRedTests(unittest.TestCase):
     def test_corrupt_backup_fails_closed_without_fabricated_restore(self):
         self._seed_open("so_corrupt", "lane_corrupt")
         backup = self.root / "corrupt.db"
-        self.store.backup_to(str(backup))
+        backup_control_store(self.store, str(backup))
         backup.write_bytes(b"not-a-sqlite-database")
         destination = self.root / "should-not-exist.db"
 
         with self.assertRaises(StoreConflict):
-            ControlStore.restore_backup(str(backup), str(destination))
+            restore_control_store_backup(str(backup), str(destination))
         self.assertFalse(destination.exists())
 
 
