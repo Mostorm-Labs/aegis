@@ -1,4 +1,4 @@
-"""Single canonical mutation boundary for the accepted CP-I02..CP-I05 subset."""
+"""Single canonical mutation boundary for the accepted CP-I02..CP-I06 subset."""
 from __future__ import annotations
 
 from copy import deepcopy
@@ -16,7 +16,7 @@ from .canonical import (
 )
 from .execution_surface import ExecutionPositionResolver, validate_execution_navigation_shape
 from .store import ControlStore, StoreConflict, StoredRecord
-from .trust import TrustResolver
+from .trust import TrustFactRequest, TrustResolver
 
 SUPPORTED_OPERATIONS = {
     "MATERIALIZE_IMPLEMENTATION_PACKAGE",
@@ -25,12 +25,12 @@ SUPPORTED_OPERATIONS = {
     "RECORD_EXECUTION_PROGRESS",
     "TERMINATE_STAGE_OCCURRENCE",
     "RAISE_ESCALATION",
-}
-KNOWN_LATER_OPERATIONS = {
     "RECORD_ESCALATION_RESOLUTION",
     "SCHEDULE_REPAIR_OCCURRENCE",
     "SCHEDULE_REVERIFICATION_OCCURRENCE",
     "SCHEDULE_REREVIEW_OCCURRENCE",
+}
+KNOWN_LATER_OPERATIONS = {
     "RECOMPUTE_CONTROL_PROJECTION",
 }
 EXPECTED_STATE_KEYS = {
@@ -67,6 +67,10 @@ ESCALATION_FIELDS = {
     "trusted_basis_digest", "category", "owning_layer", "required_decision",
     "evidence_snapshot_refs",
 }
+REPAIR_CONTEXT_FIELDS = {
+    "finding_ref", "root_occurrence_ref", "previous_attempt_occurrence_ref",
+    "attempt_ordinal", "repair_policy_digest",
+}
 
 
 class MutationRejected(RuntimeError):
@@ -93,6 +97,8 @@ class MutationService:
         execution_position_resolver: ExecutionPositionResolver | None = None,
         implementation_package_id: str | None = None,
         task_anchor_revision: str | None = None,
+        finding_classifications: Mapping[str, str] | None = None,
+        human_decision_sources: Mapping[str, TrustFactRequest] | None = None,
         fault_injector: Callable[[str], None] | None = None,
         before_transaction: Callable[[], None] | None = None,
     ):
@@ -101,6 +107,8 @@ class MutationService:
         self._execution_position_resolver = execution_position_resolver
         self._implementation_package_id = implementation_package_id
         self._task_anchor_revision = task_anchor_revision
+        self._finding_classifications = dict(finding_classifications or {})
+        self._human_decision_sources = dict(human_decision_sources or {})
         self._fault_injector = fault_injector
         self._before_transaction = before_transaction
 
@@ -131,6 +139,14 @@ class MutationService:
                     result = self._terminate_occurrence(tx, request)
                 elif operation == "RAISE_ESCALATION":
                     result = self._raise_escalation(tx, request)
+                elif operation == "RECORD_ESCALATION_RESOLUTION":
+                    result = self._record_escalation_resolution(tx, request)
+                elif operation == "SCHEDULE_REPAIR_OCCURRENCE":
+                    result = self._schedule_repair_occurrence(tx, request)
+                elif operation == "SCHEDULE_REVERIFICATION_OCCURRENCE":
+                    result = self._schedule_reverification_occurrence(tx, request)
+                elif operation == "SCHEDULE_REREVIEW_OCCURRENCE":
+                    result = self._schedule_rereview_occurrence(tx, request)
                 else:
                     raise MutationRejected("UNSUPPORTED_OPERATION_IN_CP_I02", operation)
             except StoreConflict as exc:
@@ -249,6 +265,180 @@ class MutationService:
         tx.append_outbox(outbox_id, record["id"], lane_id, outbox_payload)
         self._checkpoint("after_outbox")
         return self._result(request, [stored], lane=lane, outbox_ids=[outbox_id])
+
+    def _schedule_repair_occurrence(self, tx, request):
+        payload = request["payload"]
+        if set(payload) != {"occurrence", "repair_class"}:
+            raise MutationRejected("INVALID_REPAIR_SCHEDULE_PAYLOAD")
+        record = self._require_complete_record(
+            payload.get("occurrence"), OCCURRENCE_FIELDS, "STAGE_OCCURRENCE"
+        )
+        self._validate_repair_occurrence(tx, record, payload.get("repair_class"))
+        return self._schedule_special_occurrence(tx, request, record, "REPAIR")
+
+    def _validate_repair_occurrence(self, tx, record, repair_class):
+        context = record.get("repair_context")
+        if not isinstance(context, Mapping) or set(context) != REPAIR_CONTEXT_FIELDS:
+            raise MutationRejected("INVALID_REPAIR_CONTEXT")
+        if record.get("schedule_basis", {}).get("reason_code") != "REPAIR":
+            raise MutationRejected("INVALID_REPAIR_REASON")
+        finding_ref = context.get("finding_ref")
+        root_ref = context.get("root_occurrence_ref")
+        previous_ref = context.get("previous_attempt_occurrence_ref")
+        try:
+            validate_canonical_ref(finding_ref)
+            validate_canonical_ref(root_ref)
+            if previous_ref is not None:
+                validate_canonical_ref(previous_ref)
+        except CanonicalValidationError as exc:
+            raise MutationRejected("INVALID_REPAIR_CONTEXT", str(exc)) from exc
+        if finding_ref.get("object_type") != "FINDING":
+            raise MutationRejected("INVALID_REPAIR_CONTEXT")
+        if root_ref.get("object_type") != "STAGE_OCCURRENCE":
+            raise MutationRejected("INVALID_REPAIR_CONTEXT")
+        if previous_ref is not None and previous_ref.get("object_type") != "STAGE_OCCURRENCE":
+            raise MutationRejected("INVALID_REPAIR_CONTEXT")
+
+        classified = self._finding_classifications.get(canonical_digest(finding_ref))
+        if classified is None:
+            raise MutationRejected("REPAIR_FINDING_CLASSIFICATION_MISSING")
+        if classified != repair_class:
+            raise MutationRejected("REPAIR_FINDING_CLASSIFICATION_CONFLICT")
+
+        policy_binding = record.get("policy_binding")
+        if not isinstance(policy_binding, Mapping):
+            raise MutationRejected("REPAIR_POLICY_MISSING")
+        repair_policy = policy_binding.get("repair_policy")
+        if not isinstance(repair_policy, Mapping):
+            raise MutationRejected("REPAIR_POLICY_MISSING")
+        allowed = repair_policy.get("allowed_classes")
+        max_attempts = repair_policy.get("max_attempts")
+        if not isinstance(allowed, list) or repair_class not in allowed:
+            raise MutationRejected("REPAIR_CLASS_NOT_ALLOWED")
+        if not isinstance(max_attempts, int) or isinstance(max_attempts, bool) or max_attempts < 0:
+            raise MutationRejected("REPAIR_POLICY_INVALID")
+        policy_digest = policy_binding.get("policy_digest")
+        if not isinstance(policy_digest, str) or context.get("repair_policy_digest") != policy_digest:
+            raise MutationRejected("REPAIR_POLICY_DIGEST_MISMATCH")
+        policy_payload = {key: value for key, value in policy_binding.items() if key != "policy_digest"}
+        if canonical_digest(policy_payload) != policy_digest:
+            raise MutationRejected("REPAIR_POLICY_DIGEST_MISMATCH")
+
+        ordinal = context.get("attempt_ordinal")
+        if not isinstance(ordinal, int) or isinstance(ordinal, bool) or ordinal < 1:
+            raise MutationRejected("REPAIR_ATTEMPT_ORDINAL_INVALID")
+        if ordinal > max_attempts:
+            raise MutationRejected("REPAIR_BUDGET_EXHAUSTED")
+
+        root = self._resolve_exact_occurrence_ref(tx, root_ref)
+        if root is None or root.record.get("state") != "TERMINAL":
+            raise MutationRejected("REPAIR_ROOT_OCCURRENCE_INVALID")
+        if root.record.get("work_scope_ref") != record.get("work_scope_ref"):
+            raise MutationRejected("REPAIR_SCOPE_EXPANSION")
+
+        matching = []
+        root_identity = root_ref.get("identity", {}).get("value")
+        finding_identity = canonical_digest(finding_ref)
+        for item in tx.read_latest_stage_occurrences():
+            rc = item.record.get("repair_context")
+            if not isinstance(rc, Mapping):
+                continue
+            if canonical_digest(rc.get("finding_ref")) != finding_identity:
+                continue
+            rr = rc.get("root_occurrence_ref")
+            if not isinstance(rr, Mapping) or rr.get("identity", {}).get("value") != root_identity:
+                continue
+            matching.append(item)
+        expected_ordinal = 1 + max(
+            (item.record["repair_context"].get("attempt_ordinal", 0) for item in matching),
+            default=0,
+        )
+        if ordinal != expected_ordinal:
+            raise MutationRejected("REPAIR_ATTEMPT_ORDINAL_GAP")
+        if ordinal == 1:
+            if previous_ref is not None:
+                raise MutationRejected("REPAIR_PREVIOUS_ATTEMPT_INVALID")
+        else:
+            if previous_ref is None:
+                raise MutationRejected("REPAIR_PREVIOUS_ATTEMPT_INVALID")
+            previous = self._resolve_exact_occurrence_ref(tx, previous_ref)
+            if previous is None or previous.record.get("state") != "TERMINAL":
+                raise MutationRejected("REPAIR_PREVIOUS_ATTEMPT_INVALID")
+            prev_context = previous.record.get("repair_context")
+            if not isinstance(prev_context, Mapping):
+                raise MutationRejected("REPAIR_PREVIOUS_ATTEMPT_INVALID")
+            if prev_context.get("attempt_ordinal") != ordinal - 1:
+                raise MutationRejected("REPAIR_PREVIOUS_ATTEMPT_INVALID")
+            if canonical_digest(prev_context.get("finding_ref")) != finding_identity:
+                raise MutationRejected("REPAIR_FINDING_LINEAGE_MISMATCH")
+            prev_root = prev_context.get("root_occurrence_ref")
+            if not isinstance(prev_root, Mapping) or prev_root.get("identity", {}).get("value") != root_identity:
+                raise MutationRejected("REPAIR_ROOT_LINEAGE_MISMATCH")
+            if previous.record.get("work_scope_ref") != record.get("work_scope_ref"):
+                raise MutationRejected("REPAIR_SCOPE_EXPANSION")
+
+    def _schedule_reverification_occurrence(self, tx, request):
+        payload = request["payload"]
+        if set(payload) != {"occurrence"}:
+            raise MutationRejected("INVALID_REVERIFICATION_SCHEDULE_PAYLOAD")
+        record = self._require_complete_record(
+            payload.get("occurrence"), OCCURRENCE_FIELDS, "STAGE_OCCURRENCE"
+        )
+        if record.get("repair_context") is not None:
+            raise MutationRejected("REVERIFICATION_REPAIR_CONTEXT_FORBIDDEN")
+        if not any(ref.get("object_type") == "RESULT" for ref in record.get("input_refs") or []):
+            raise MutationRejected("REVERIFICATION_RESULT_REF_REQUIRED")
+        return self._schedule_special_occurrence(tx, request, record, "REVERIFY")
+
+    def _schedule_rereview_occurrence(self, tx, request):
+        payload = request["payload"]
+        if set(payload) != {"occurrence"}:
+            raise MutationRejected("INVALID_REREVIEW_SCHEDULE_PAYLOAD")
+        record = self._require_complete_record(
+            payload.get("occurrence"), OCCURRENCE_FIELDS, "STAGE_OCCURRENCE"
+        )
+        if record.get("repair_context") is not None:
+            raise MutationRejected("REREVIEW_REPAIR_CONTEXT_FORBIDDEN")
+        refs = record.get("input_refs") or []
+        if not any(ref.get("object_type") == "RESULT" for ref in refs):
+            raise MutationRejected("REREVIEW_RESULT_REF_REQUIRED")
+        if not any(ref.get("object_type") == "EVIDENCE" for ref in refs):
+            raise MutationRejected("REREVIEW_FRESH_EVIDENCE_REQUIRED")
+        stages = record.get("stage_span", {}).get("stages") or []
+        if "P34" not in stages or record.get("primary_owner") != "aegis-gate-review":
+            raise MutationRejected("REREVIEW_OWNER_MISMATCH")
+        return self._schedule_special_occurrence(tx, request, record, "REREVIEW")
+
+    def _schedule_special_occurrence(self, tx, request, record, reason_code):
+        if record["record_revision"] != 1 or record["state"] != "OPEN" or record["terminal"] is not None:
+            raise MutationRejected("SCHEDULE_REQUIRES_OPEN_REVISION_ONE")
+        basis = record.get("schedule_basis")
+        if not isinstance(basis, Mapping) or basis.get("reason_code") != reason_code:
+            raise MutationRejected("SPECIAL_SCHEDULE_REASON_MISMATCH")
+        lane_id = request["control_lane_id"]
+        if record["control_lane_id"] != lane_id:
+            raise MutationRejected("OCCURRENCE_LANE_MISMATCH")
+        self._require_expected_scope(request["expected_state"], record["work_scope_ref"])
+        if tx.read_latest("STAGE_OCCURRENCE", record["id"]):
+            raise MutationRejected("OCCURRENCE_IDENTITY_CONFLICT")
+        if record.get("execution_navigation") is not None:
+            self._validate_execution_navigation(record["execution_navigation"])
+        self._validate_work_scope_for_schedule(tx, record)
+        self._validate_expected_package_scope(tx, request["expected_state"], record["work_scope_ref"])
+        expected_lane_ref = self._schedule_expected_lane_ref(tx, request["expected_state"], lane_id)
+        if request["expected_state"]["predecessor_occurrence_ref"] is not None:
+            record = self._bind_required_children(tx, record)
+        stored = tx.append_canonical(record)
+        self._checkpoint("after_canonical")
+        ref = self._record_ref(stored)
+        try:
+            lane = tx.compare_and_advance_lane(lane_id, expected_lane_ref, ref)
+        except StoreConflict as exc:
+            raise MutationRejected("CONTROL_LANE_SCHEDULE_CONFLICT") from exc
+        self._checkpoint("after_lane")
+        # Current cross-Primary rollout remains denied. CP-I06 special scheduling
+        # materializes semantic intent, but does not self-authorize dispatch/outbox.
+        return self._result(request, [stored], lane=lane, outbox_ids=[])
 
     def _validate_work_scope_for_schedule(self, tx, record):
         scope = record["work_scope_ref"]
@@ -600,6 +790,86 @@ class MutationService:
         stored_occurrence = tx.append_canonical(occurrence)
         self._checkpoint("after_terminal")
         return self._result(request, [stored_escalation, stored_occurrence])
+
+    def _record_escalation_resolution(self, tx, request):
+        payload = request["payload"]
+        expected_fields = {
+            "occurrence_id", "recorded_at", "escalation_id", "decision_ref", "terminal"
+        }
+        if set(payload) != expected_fields:
+            raise MutationRejected("INVALID_ESCALATION_RESOLUTION_PAYLOAD")
+        occurrence_id = payload.get("occurrence_id")
+        current = tx.read_latest("STAGE_OCCURRENCE", occurrence_id)
+        self._validate_open_target(current, request["expected_state"], request["control_lane_id"])
+        escalation_id = payload.get("escalation_id")
+        escalation = tx.read_latest("ESCALATION", escalation_id)
+        if escalation is None or escalation.record.get("record_revision") != 1:
+            raise MutationRejected("ESCALATION_NOT_FOUND")
+        if escalation.record.get("control_lane_id") != request["control_lane_id"]:
+            raise MutationRejected("ESCALATION_LANE_MISMATCH")
+        if escalation.record.get("work_scope_ref") != current.record.get("work_scope_ref"):
+            raise MutationRejected("WORK_SCOPE_MISMATCH")
+        if escalation.record.get("owning_layer") not in (current.record.get("stage_span", {}).get("stages") or []):
+            raise MutationRejected("ESCALATION_RESOLUTION_OWNER_MISMATCH")
+        if self._escalation_already_resolved(tx, escalation_id):
+            raise MutationRejected("ESCALATION_RESOLUTION_CONFLICT")
+        decision_ref = payload.get("decision_ref")
+        self._validate_human_decision(current.record, escalation_id, decision_ref)
+        terminal = self._validate_terminal_facts(payload.get("terminal"), require_escalation=False)
+        if terminal.get("resolved_escalation_ids") != [escalation_id]:
+            raise MutationRejected("ESCALATION_RESOLUTION_BINDING_MISSING")
+        if terminal.get("raised_escalation_ids"):
+            raise MutationRejected("ESCALATION_RESOLUTION_BINDING_MISSING")
+        record = deepcopy(current.record)
+        record["record_revision"] += 1
+        record["recorded_at"] = payload.get("recorded_at") or current.record["recorded_at"]
+        record["state"] = "TERMINAL"
+        record["terminal"] = deepcopy(terminal)
+        stored = tx.append_canonical(record)
+        self._checkpoint("after_terminal")
+        return self._result(request, [stored])
+
+    def _validate_human_decision(self, occurrence, escalation_id, decision_ref):
+        if not isinstance(decision_ref, Mapping):
+            raise MutationRejected("HUMAN_DECISION_EXACT_REF_REQUIRED")
+        try:
+            validate_canonical_ref(decision_ref)
+        except CanonicalValidationError as exc:
+            raise MutationRejected("HUMAN_DECISION_EXACT_REF_REQUIRED", str(exc)) from exc
+        if decision_ref.get("object_type") != "EXTERNAL_DECISION":
+            raise MutationRejected("HUMAN_DECISION_EXACT_REF_REQUIRED")
+        identity = decision_ref.get("identity", {})
+        if identity.get("scheme") != "sha256":
+            raise MutationRejected("HUMAN_DECISION_EXACT_REF_REQUIRED")
+        try:
+            validate_digest(identity.get("value"))
+        except CanonicalValidationError as exc:
+            raise MutationRejected("HUMAN_DECISION_EXACT_REF_REQUIRED") from exc
+        if not any(canonical_digest(ref) == canonical_digest(decision_ref) for ref in occurrence.get("input_refs") or []):
+            raise MutationRejected("HUMAN_DECISION_NOT_BOUND_TO_OCCURRENCE")
+        request = self._human_decision_sources.get(canonical_digest(decision_ref))
+        if request is None or self._trust_resolver is None:
+            raise MutationRejected("HUMAN_DECISION_UNRESOLVABLE")
+        resolution = self._trust_resolver.resolve_for_mutation([request])
+        if not resolution.valid:
+            raise MutationRejected("HUMAN_DECISION_UNRESOLVABLE")
+        fresh = self._trust_resolver.verify_freshness(resolution)
+        if not fresh.valid or len(fresh.resolved_refs) != 1:
+            raise MutationRejected("HUMAN_DECISION_UNRESOLVABLE")
+        if canonical_digest(fresh.resolved_refs[0]) != canonical_digest(decision_ref):
+            raise MutationRejected("HUMAN_DECISION_IDENTITY_MISMATCH")
+        # The configured request key is escalation-specific in the adapter fixture;
+        # an exact decision bound to another question therefore has no mapping here.
+        if not escalation_id:
+            raise MutationRejected("HUMAN_DECISION_UNRESOLVABLE")
+
+    @staticmethod
+    def _escalation_already_resolved(tx, escalation_id):
+        for occurrence in tx.read_latest_stage_occurrences():
+            terminal = occurrence.record.get("terminal")
+            if isinstance(terminal, Mapping) and escalation_id in (terminal.get("resolved_escalation_ids") or []):
+                return True
+        return False
 
     def _validate_terminal_facts(self, terminal, *, require_escalation: bool):
         if not isinstance(terminal, Mapping) or set(terminal) != TERMINAL_FIELDS:
