@@ -8,6 +8,7 @@ on:
       - "tests/control_plane/cp_i06_*.py"
       - "tests/control_plane/generate_cp_i06_evidence.py"
       - "tests/control_plane/generate_cp_i06_p36_evidence.py"
+      - "tests/control_plane/generate_cp_i06_p36_final_evidence.py"
       - "tests/control_plane/cp_i02_fixtures.py"
       - "tests/control_plane/reference_model.py"
       - "tests/control_plane/verifier_helpers.py"
@@ -19,6 +20,7 @@ on:
       - "tests/control_plane/cp_i06_*.py"
       - "tests/control_plane/generate_cp_i06_evidence.py"
       - "tests/control_plane/generate_cp_i06_p36_evidence.py"
+      - "tests/control_plane/generate_cp_i06_p36_final_evidence.py"
       - "tests/control_plane/cp_i02_fixtures.py"
       - "tests/control_plane/reference_model.py"
       - "tests/control_plane/verifier_helpers.py"
@@ -47,13 +49,13 @@ jobs:
         run: python3 -m unittest discover -s tests/project_state -v
       - name: Run Skillset regression suite
         run: python3 -m unittest discover -s tests/skillset -v
-      - name: Materialize CP-I06 P36 evidence bundle
+      - name: Materialize CP-I06 P36 final evidence bundle
         run: |
           rm -rf artifacts/cp-i06
-          python3 -m tests.control_plane.generate_cp_i06_p36_evidence \
+          python3 -m tests.control_plane.generate_cp_i06_p36_final_evidence \
             --result-revision "${{ github.event.pull_request.head.sha || github.sha }}" \
             --output-dir artifacts/cp-i06
-      - name: Validate CP-I06 P36 JSON evidence
+      - name: Validate CP-I06 P36 final JSON evidence
         run: |
           python3 - <<'PY'
           import json
@@ -75,7 +77,7 @@ jobs:
               json.loads(path.read_text(encoding="utf-8"))
           manifest = json.loads((root / "evidence-manifest.json").read_text(encoding="utf-8"))
           if not manifest.get("passed"):
-              raise SystemExit("CP-I06 P36 evidence manifest is not passing")
+              raise SystemExit("CP-I06 P36 final evidence manifest is not passing")
           if any(manifest.get("metrics", {}).values()):
               raise SystemExit("CP-I06 zero-tolerance metrics are non-zero")
           claims = manifest.get("claims", {})
@@ -91,6 +93,10 @@ jobs:
               raise SystemExit("CP-I06 P36 repair provenance missing")
           if repair.get("source_p34_review") != "5076730656" or repair.get("source_p35_comment") != "5493748067":
               raise SystemExit("CP-I06 P36 source review/classification provenance mismatch")
+          if repair.get("inherited_case_catalog_validated") is not True:
+              raise SystemExit("CP-I06 P36 inherited predecessor case catalog was not validated")
+          if repair.get("acknowledged_gap_direct_case") != "stale_valid_backup_missing_acknowledged_terminal_blocks_continuation":
+              raise SystemExit("CP-I06 P36 acknowledged-gap direct evidence is missing")
           PY
       - name: Upload CP-I06 evidence
         uses: actions/upload-artifact@v4
