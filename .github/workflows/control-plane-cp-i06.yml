@@ -7,6 +7,7 @@ on:
       - "tests/control_plane/test_cp_i06_*.py"
       - "tests/control_plane/cp_i06_*.py"
       - "tests/control_plane/generate_cp_i06_evidence.py"
+      - "tests/control_plane/generate_cp_i06_p36_evidence.py"
       - "tests/control_plane/cp_i02_fixtures.py"
       - "tests/control_plane/reference_model.py"
       - "tests/control_plane/verifier_helpers.py"
@@ -17,6 +18,7 @@ on:
       - "tests/control_plane/test_cp_i06_*.py"
       - "tests/control_plane/cp_i06_*.py"
       - "tests/control_plane/generate_cp_i06_evidence.py"
+      - "tests/control_plane/generate_cp_i06_p36_evidence.py"
       - "tests/control_plane/cp_i02_fixtures.py"
       - "tests/control_plane/reference_model.py"
       - "tests/control_plane/verifier_helpers.py"
@@ -45,13 +47,13 @@ jobs:
         run: python3 -m unittest discover -s tests/project_state -v
       - name: Run Skillset regression suite
         run: python3 -m unittest discover -s tests/skillset -v
-      - name: Materialize CP-I06 evidence bundle
+      - name: Materialize CP-I06 P36 evidence bundle
         run: |
           rm -rf artifacts/cp-i06
-          python3 -m tests.control_plane.generate_cp_i06_evidence \
+          python3 -m tests.control_plane.generate_cp_i06_p36_evidence \
             --result-revision "${{ github.event.pull_request.head.sha || github.sha }}" \
             --output-dir artifacts/cp-i06
-      - name: Validate CP-I06 JSON evidence
+      - name: Validate CP-I06 P36 JSON evidence
         run: |
           python3 - <<'PY'
           import json
@@ -73,7 +75,7 @@ jobs:
               json.loads(path.read_text(encoding="utf-8"))
           manifest = json.loads((root / "evidence-manifest.json").read_text(encoding="utf-8"))
           if not manifest.get("passed"):
-              raise SystemExit("CP-I06 evidence manifest is not passing")
+              raise SystemExit("CP-I06 P36 evidence manifest is not passing")
           if any(manifest.get("metrics", {}).values()):
               raise SystemExit("CP-I06 zero-tolerance metrics are non-zero")
           claims = manifest.get("claims", {})
@@ -81,6 +83,14 @@ jobs:
               raise SystemExit("CP-I06 evidence compiler attempted to claim Gate authority")
           if claims.get("current_cross_primary_rollout") != "DENIED" or claims.get("cp_i07_plus") is not False:
               raise SystemExit("CP-I06 evidence expanded rollout or CP-I07 scope")
+          coverage = manifest.get("p31_mandatory_coverage", {})
+          if coverage.get("obligation_count") != 72 or coverage.get("passed") is not True:
+              raise SystemExit("CP-I06 P31 mandatory coverage map is incomplete")
+          repair = manifest.get("p36_repair", {})
+          if repair.get("repair_package_id") != "CP-I06-P36-01":
+              raise SystemExit("CP-I06 P36 repair provenance missing")
+          if repair.get("source_p34_review") != "5076730656" or repair.get("source_p35_comment") != "5493748067":
+              raise SystemExit("CP-I06 P36 source review/classification provenance mismatch")
           PY
       - name: Upload CP-I06 evidence
         uses: actions/upload-artifact@v4
