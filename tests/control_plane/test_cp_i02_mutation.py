@@ -103,8 +103,10 @@ class MutationTests(unittest.TestCase):
         self.assertEqual(2,len(esc_store.read_revisions('STAGE_OCCURRENCE','so_01')))
         self.assertEqual(['esc_01'],esc_store.read_latest('STAGE_OCCURRENCE','so_01').record['terminal']['raised_escalation_ids'])
 
-    def test_unsupported_operation_is_zero_mutation(self):
-        req=make_request('RECORD_EXECUTION_PROGRESS','req_u','lane_01',{'x':1})
+    def test_unsupported_later_operation_is_zero_mutation(self):
+        # RECORD_EXECUTION_PROGRESS is current CP-I05 behavior. Keep the original
+        # CP-I02 invariant by probing an operation that is still a later slice.
+        req=make_request('SCHEDULE_REPAIR_OCCURRENCE','req_u','lane_01',{'x':1})
         before=self.store.snapshot_counts()
         with self.assertRaisesRegex(MutationRejected,'UNSUPPORTED_OPERATION_IN_CP_I02'): self.mutation.apply(req)
         self.assertEqual(before,self.store.snapshot_counts())
