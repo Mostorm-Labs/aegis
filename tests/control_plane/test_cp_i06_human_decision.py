@@ -15,7 +15,11 @@ from tests.control_plane.cp_i02_fixtures import (
 )
 from tools.aegis_control.canonical import canonical_digest
 from tools.aegis_control.external_ports import DeterministicExternalAdapter
-from tools.aegis_control.mutation import MutationRejected, MutationService
+from tools.aegis_control.mutation import (
+    HumanDecisionSupportBinding,
+    MutationRejected,
+    MutationService,
+)
 from tools.aegis_control.store import ControlStore
 from tools.aegis_control.trust import TrustFactRequest, TrustResolver
 
@@ -64,7 +68,12 @@ class CpI06HumanDecisionRedTests(unittest.TestCase):
             self.store,
             trust_resolver=trust,
             human_decision_sources={
-                canonical_digest(self.decision): TrustFactRequest("HUMAN_DECISION", "escalation/esc_cp_i06")
+                canonical_digest(self.decision): HumanDecisionSupportBinding(
+                    escalation_id="esc_cp_i06",
+                    trust_fact_request=TrustFactRequest(
+                        "HUMAN_DECISION", "escalation/esc_cp_i06"
+                    ),
+                )
             },
         )
         self.source_terminal = self._raise_escalation()
