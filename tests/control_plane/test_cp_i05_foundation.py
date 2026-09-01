@@ -4,7 +4,8 @@ import unittest
 from pathlib import Path
 
 from tests.control_plane.cp_i02_fixtures import expected_state, make_request, occurrence_record
-from tools.aegis_control.mutation import MutationRejected, MutationService
+from tests.control_plane.cp_i05_fixtures import configured_mutation, navigation, seed_surface
+from tools.aegis_control.execution_surface import DeterministicExecutionSurface
 from tools.aegis_control.store import ControlStore
 
 
@@ -12,7 +13,6 @@ class CpI05FoundationRedTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.store = ControlStore(str(Path(self.tmp.name) / "control.db"))
-        self.mutation = MutationService(self.store)
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -30,16 +30,27 @@ class CpI05FoundationRedTests(unittest.TestCase):
         self.assertTrue(hasattr(self.store, "read_delivery_state"))
         self.assertTrue(hasattr(self.store, "record_delivery_attempt"))
         self.assertTrue(hasattr(self.store, "record_delivery_correlation"))
+        self.assertTrue(hasattr(self.store, "record_delivery_diagnostic"))
 
-    def test_record_execution_progress_is_supported(self):
-        schedule = make_request(
+    def test_record_execution_progress_is_supported_with_reconciled_p12_snapshot(self):
+        surface = DeterministicExecutionSurface()
+        seed_surface(
+            surface,
+            occurrence_id="so_cp_i05",
+            execution_ref="exec://cp-i05",
+            revision="abc123",
+            completed_through=("step-1",),
+            next_action="step-2",
+        )
+        mutation = configured_mutation(self.store, surface)
+        mutation.apply(make_request(
             "SCHEDULE_STAGE_OCCURRENCE",
             "req_cp_i05_schedule",
             "lane_cp_i05",
             {"occurrence": occurrence_record("so_cp_i05", "lane_cp_i05")},
-        )
-        self.mutation.apply(schedule)
+        ))
         current = self.store.read_latest("STAGE_OCCURRENCE", "so_cp_i05")
+        checkpoint = navigation("exec://cp-i05", "abc123", next_action="step-2")
         request = make_request(
             "RECORD_EXECUTION_PROGRESS",
             "req_cp_i05_progress",
@@ -47,13 +58,7 @@ class CpI05FoundationRedTests(unittest.TestCase):
             {
                 "occurrence_id": "so_cp_i05",
                 "recorded_at": "2026-09-01T01:15:00Z",
-                "execution_navigation": {
-                    "task_anchor": {"revision": "a3fd350c350bec9220a1c6e283de88c14dfbcd2a", "relation": "ancestor"},
-                    "classification": "EXACT_CURSOR",
-                    "accepted_revision": "abc123",
-                    "completed_through": ["step-1"],
-                    "next_action": "step-2",
-                },
+                "execution_navigation": checkpoint,
             },
             expected_state(
                 target_record_revision=1,
@@ -61,15 +66,12 @@ class CpI05FoundationRedTests(unittest.TestCase):
                 work_scope_ref=current.record["work_scope_ref"],
             ),
         )
-        try:
-            result = self.mutation.apply(request)
-        except MutationRejected as exc:
-            result = {"status": "REJECTED", "code": exc.code}
+        result = mutation.apply(request)
         self.assertEqual("APPLIED", result["status"])
         revisions = self.store.read_revisions("STAGE_OCCURRENCE", "so_cp_i05")
         self.assertEqual(2, len(revisions))
         self.assertEqual("OPEN", revisions[-1].record["state"])
-        self.assertEqual(request["payload"]["execution_navigation"], revisions[-1].record["execution_navigation"])
+        self.assertEqual(checkpoint, revisions[-1].record["execution_navigation"])
 
 
 if __name__ == "__main__":
