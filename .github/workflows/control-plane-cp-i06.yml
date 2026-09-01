@@ -45,3 +45,47 @@ jobs:
         run: python3 -m unittest discover -s tests/project_state -v
       - name: Run Skillset regression suite
         run: python3 -m unittest discover -s tests/skillset -v
+      - name: Materialize CP-I06 evidence bundle
+        run: |
+          rm -rf artifacts/cp-i06
+          python3 -m tests.control_plane.generate_cp_i06_evidence \
+            --result-revision "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --output-dir artifacts/cp-i06
+      - name: Validate CP-I06 JSON evidence
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("artifacts/cp-i06")
+          expected = {
+              "human-decision.json",
+              "recovery-fault-matrix.json",
+              "backup-restore.json",
+              "rate-limit-control.json",
+              "derived-operational-state.json",
+              "evidence-manifest.json",
+          }
+          actual = {path.name for path in root.glob("*.json")}
+          if actual != expected:
+              raise SystemExit(f"unexpected CP-I06 evidence set: {sorted(actual)}")
+          for path in sorted(root.glob("*.json")):
+              json.loads(path.read_text(encoding="utf-8"))
+          manifest = json.loads((root / "evidence-manifest.json").read_text(encoding="utf-8"))
+          if not manifest.get("passed"):
+              raise SystemExit("CP-I06 evidence manifest is not passing")
+          if any(manifest.get("metrics", {}).values()):
+              raise SystemExit("CP-I06 zero-tolerance metrics are non-zero")
+          claims = manifest.get("claims", {})
+          if claims.get("p34_gate_pass") is not False or claims.get("evidence_compiler_gate_authority") is not False:
+              raise SystemExit("CP-I06 evidence compiler attempted to claim Gate authority")
+          if claims.get("current_cross_primary_rollout") != "DENIED" or claims.get("cp_i07_plus") is not False:
+              raise SystemExit("CP-I06 evidence expanded rollout or CP-I07 scope")
+          PY
+      - name: Upload CP-I06 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp-i06-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/cp-i06
+          if-no-files-found: error
+          retention-days: 30
