@@ -1,0 +1,33 @@
+name: Aegis Control Plane CP-I07 Platform Boundary
+
+on:
+  push:
+    paths:
+      - "tools/aegis_control/**"
+      - "tests/control_plane/test_cp_i07_*.py"
+      - "tests/control_plane/generate_cp_i07_evidence.py"
+      - ".github/workflows/control-plane-cp-i07.yml"
+  pull_request:
+    paths:
+      - "tools/aegis_control/**"
+      - "tests/control_plane/test_cp_i07_*.py"
+      - "tests/control_plane/generate_cp_i07_evidence.py"
+      - ".github/workflows/control-plane-cp-i07.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: control-plane-cp-i07-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run CP-I07 focused tests
+        run: python3 -m unittest discover -s tests/control_plane -p 'test_cp_i07_*.py' -v
