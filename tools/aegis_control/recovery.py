@@ -6,6 +6,10 @@ module does not author semantic failure or replacement StageOccurrences.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
+
+from .execution_surface import ProviderObservation
+from .store import ControlStore, StoreConflict
 
 
 class ReconciliationBlocked(RuntimeError):
@@ -46,3 +50,38 @@ def reconciliation_policy(age_seconds: int) -> ReconciliationPolicy:
     if age_seconds < 7200:
         return ReconciliationPolicy(300, False)
     return ReconciliationPolicy(900, True)
+
+
+class RecoveryCoordinator:
+    """Query provider truth by durable correlation without semantic side effects."""
+
+    def __init__(self, store: ControlStore, execution_surface: Any):
+        self._store = store
+        self._execution_surface = execution_surface
+
+    def reconcile_outbox(self, outbox_id: str, *, observed_at: str) -> ProviderObservation:
+        outbox = self._store.read_outbox_entry(outbox_id)
+        if outbox is None:
+            raise ReconciliationBlocked("OUTBOX_NOT_FOUND")
+        delivery = self._store.read_delivery_state(outbox_id)
+        if delivery is None or not delivery.get("provider_correlation_id"):
+            raise ReconciliationBlocked("DELIVERY_CORRELATION_MISSING")
+        correlation_id = delivery["provider_correlation_id"]
+        try:
+            observation = self._execution_surface.query(correlation_id)
+        except KeyError as exc:
+            raise ReconciliationBlocked("PROVIDER_CORRELATION_NOT_FOUND") from exc
+        if not isinstance(observation, ProviderObservation):
+            raise ReconciliationBlocked("PROVIDER_OBSERVATION_INVALID")
+        if observation.occurrence_id != outbox["occurrence_id"]:
+            raise ReconciliationBlocked("PROVIDER_CORRELATION_MISMATCH")
+        try:
+            self._store.record_delivery_correlation(
+                outbox_id,
+                correlation_id,
+                observed_at=observed_at,
+                provider_state=observation.state,
+            )
+        except StoreConflict as exc:
+            raise ReconciliationBlocked("DELIVERY_STATE_CONFLICT") from exc
+        return observation
