@@ -1,10 +1,10 @@
-"""Durable SQLite persistence mechanics for Control Plane CP-I02..CP-I05.
+"""Durable SQLite persistence mechanics for Control Plane CP-I02..CP-I06.
 
 This module owns storage, transaction, CAS, idempotency, outbox, and read-only
-lookup mechanics. CP-I05 delivery state is deliberately operational and lives
-outside canonical records, lane heads, and semantic idempotency. This module
-intentionally owns no lifecycle, Authority, Gate, proof, policy,
-child-acceptance, or provider-currentness decisions.
+lookup mechanics. CP-I05/CP-I06 operational state is deliberately outside
+canonical records, lane heads, and semantic idempotency. Backup/restore here is
+persistence recovery only; it never invents lifecycle, Authority, Gate, proof,
+policy, child-acceptance, or provider-currentness truth.
 """
 from __future__ import annotations
 
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS delivery_state (
 
 
 class ControlStore:
-    """Public read surface plus private canonical mutation transaction factory."""
+    """Public read/recovery surface plus private canonical mutation transaction factory."""
 
     def __init__(self, db_path: str, *, timeout: float = 10.0):
         self.db_path = str(Path(db_path))
@@ -171,7 +171,7 @@ class ControlStore:
             conn.close()
 
     def read_latest_stage_occurrences(self) -> list[StoredRecord]:
-        """Read-only global latest occurrence view for WorkScope/child projection."""
+        """Read-only global latest occurrence view for WorkScope/child projection/recovery."""
         conn = self._connect(readonly=True)
         try:
             return _read_latest_records(conn, kind="STAGE_OCCURRENCE")
@@ -360,8 +360,98 @@ class ControlStore:
         assert state is not None
         return state
 
+    def integrity_check(self) -> str:
+        """Return SQLite integrity_check result without mutating semantic state."""
+        conn = self._connect(readonly=True)
+        try:
+            row = conn.execute("PRAGMA integrity_check").fetchone()
+            return str(row[0]) if row else "missing"
+        except sqlite3.DatabaseError as exc:
+            raise StoreConflict("store integrity check failed") from exc
+        finally:
+            conn.close()
+
+    def backup_to(self, destination_path: str) -> Mapping[str, Any]:
+        """Materialize a verified point-in-time backup using SQLite's backup API."""
+        destination = Path(destination_path)
+        if destination.resolve() == Path(self.db_path).resolve():
+            raise StoreConflict("backup destination must differ from source")
+        if destination.exists():
+            raise StoreConflict("backup destination already exists")
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        source = self._connect()
+        target: sqlite3.Connection | None = None
+        try:
+            target = sqlite3.connect(str(destination), isolation_level=None)
+            source.backup(target)
+            row = target.execute("PRAGMA integrity_check").fetchone()
+            integrity = str(row[0]) if row else "missing"
+            if integrity != "ok":
+                raise StoreConflict("backup integrity check failed")
+        except (sqlite3.DatabaseError, StoreConflict) as exc:
+            if target is not None:
+                target.close()
+                target = None
+            if destination.exists():
+                destination.unlink()
+            if isinstance(exc, StoreConflict):
+                raise
+            raise StoreConflict("backup failed") from exc
+        finally:
+            source.close()
+            if target is not None:
+                target.close()
+        return {"path": str(destination), "integrity_check": integrity}
+
+    @classmethod
+    def restore_backup(
+        cls,
+        backup_path: str,
+        destination_path: str,
+        *,
+        timeout: float = 10.0,
+    ) -> "ControlStore":
+        """Restore a verified backup into a new store path, fail-closed on corruption."""
+        source_path = Path(backup_path)
+        destination = Path(destination_path)
+        if not source_path.is_file():
+            raise StoreConflict("backup file not found")
+        if destination.exists():
+            raise StoreConflict("restore destination already exists")
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        source: sqlite3.Connection | None = None
+        target: sqlite3.Connection | None = None
+        try:
+            source = sqlite3.connect(f"file:{source_path.resolve()}?mode=ro", uri=True, isolation_level=None)
+            row = source.execute("PRAGMA integrity_check").fetchone()
+            if not row or str(row[0]) != "ok":
+                raise StoreConflict("backup integrity check failed")
+            target = sqlite3.connect(str(destination), isolation_level=None)
+            source.backup(target)
+            restored = target.execute("PRAGMA integrity_check").fetchone()
+            if not restored or str(restored[0]) != "ok":
+                raise StoreConflict("restored store integrity check failed")
+        except (sqlite3.DatabaseError, StoreConflict) as exc:
+            if target is not None:
+                target.close()
+                target = None
+            if source is not None:
+                source.close()
+                source = None
+            if destination.exists():
+                destination.unlink()
+            if isinstance(exc, StoreConflict):
+                raise
+            raise StoreConflict("restore failed") from exc
+        finally:
+            if target is not None:
+                target.close()
+            if source is not None:
+                source.close()
+        return cls(str(destination), timeout=timeout)
+
     def snapshot_counts(self) -> Mapping[str, int]:
-        """Return canonical/semantic counts only; CP-I05 operational state is excluded."""
+        """Return canonical/semantic counts only; operational delivery state is excluded."""
         conn = self._connect(readonly=True)
         try:
             return {
