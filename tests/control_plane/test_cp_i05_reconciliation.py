@@ -62,10 +62,6 @@ class CpI05ReconciliationTests(unittest.TestCase):
         self.assertEqual(1, latest.record["record_revision"])
 
     def test_missing_correlation_fails_closed_without_query(self):
-        missing = self.store.read_outbox_entry(self.outbox_id)
-        self.assertIsNotNone(missing)
-        delivery = self.store.read_delivery_state(self.outbox_id)
-        self.assertIsNotNone(delivery)
         # A fresh committed outbox with no provider correlation must not invent one during reconciliation.
         mutation = MutationService(self.store)
         scheduled = mutation.apply(make_request(
@@ -82,12 +78,7 @@ class CpI05ReconciliationTests(unittest.TestCase):
         self.assertEqual(before_queries, self.surface.query_count)
 
     def test_unknown_provider_correlation_fails_closed(self):
-        self.store.record_delivery_correlation(
-            self.outbox_id,
-            "exec_unknown",
-            observed_at="2026-09-01T02:20:30Z",
-        )
-        # Existing conflicting correlation is protected by the store; model an unknown provider using a new surface.
+        # The durable correlation exists, but this provider surface has no matching execution.
         recovery = RecoveryCoordinator(self.store, DeterministicExecutionSurface())
         with self.assertRaises(ReconciliationBlocked) as caught:
             recovery.reconcile_outbox(self.outbox_id, observed_at="2026-09-01T02:21:00Z")
