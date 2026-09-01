@@ -31,3 +31,58 @@ jobs:
           python-version: "3.12"
       - name: Run CP-I07 focused tests
         run: python3 -m unittest discover -s tests/control_plane -p 'test_cp_i07_*.py' -v
+      - name: Run full Control Plane regression suite
+        run: python3 -m unittest discover -s tests/control_plane -v
+      - name: Run Project State regression suite
+        run: python3 -m unittest discover -s tests/project_state -v
+      - name: Run Skillset regression suite
+        run: python3 -m unittest discover -s tests/skillset -v
+      - name: Materialize CP-I07 evidence bundle
+        run: |
+          rm -rf artifacts/cp-i07
+          python3 -m tests.control_plane.generate_cp_i07_evidence \
+            --result-revision "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --output-dir artifacts/cp-i07
+      - name: Validate CP-I07 JSON evidence
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("artifacts/cp-i07")
+          expected = {
+              "api-contract.json",
+              "capability-security.json",
+              "platform-corroboration.json",
+              "envelope-size-integrity.json",
+              "async-provider-capability.json",
+              "evidence-manifest.json",
+          }
+          actual = {p.name for p in root.glob("*.json")}
+          if actual != expected:
+              raise SystemExit(f"unexpected CP-I07 evidence set: {sorted(actual)}")
+          for path in root.glob("*.json"):
+              json.loads(path.read_text(encoding="utf-8"))
+          manifest = json.loads((root / "evidence-manifest.json").read_text(encoding="utf-8"))
+          if manifest.get("package_id") != "CP-I07-P31-01":
+              raise SystemExit("CP-I07 package provenance mismatch")
+          if manifest.get("package_ref") != "18f12121cd8991e7ad67bf51a2e3e74c0239a808":
+              raise SystemExit("CP-I07 package ref mismatch")
+          if manifest.get("result_revision") != "${{ github.event.pull_request.head.sha || github.sha }}":
+              raise SystemExit("CP-I07 result revision mismatch")
+          if manifest.get("passed") is not True or any(manifest.get("metrics", {}).values()):
+              raise SystemExit("CP-I07 evidence is not zero-tolerance passing")
+          claims = manifest.get("claims", {})
+          if claims.get("p34_gate_pass") is not False or claims.get("evidence_compiler_gate_authority") is not False:
+              raise SystemExit("CP-I07 evidence compiler claimed Gate authority")
+          if claims.get("current_cross_primary_rollout") != "DENIED" or claims.get("cp_i08_plus") is not False:
+              raise SystemExit("CP-I07 evidence expanded rollout or CP-I08 scope")
+          if manifest.get("claimed_real_provider_classes") != ["GITHUB_REPOSITORY_CI"]:
+              raise SystemExit("CP-I07 real provider claim drift")
+          PY
+      - name: Upload CP-I07 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp-i07-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/cp-i07
+          if-no-files-found: error
+          retention-days: 30
