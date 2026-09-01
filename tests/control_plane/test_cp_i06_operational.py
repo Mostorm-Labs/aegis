@@ -4,6 +4,7 @@ from tools.aegis_control.operational import (
     AdmissionController,
     ProviderRateLimitController,
     classify_backpressure,
+    manual_fallback_guard,
 )
 
 
@@ -60,6 +61,18 @@ class CpI06OperationalRedTests(unittest.TestCase):
         state = controller.observe(window_seconds=300, request_count=20, rate_limited_count=2)
         self.assertFalse(state.semantic_retry)
         self.assertTrue(state.reduce_polling_before_proof_or_review)
+
+    def test_active_controlled_work_cannot_fall_back_to_duplicate_manual_execution(self):
+        active = manual_fallback_guard(active_controlled_work=True)
+        self.assertFalse(active.allowed)
+        self.assertEqual("ACTIVE_CONTROLLED_WORK_REQUIRES_RECONCILIATION", active.reason)
+        self.assertFalse(active.semantic_retry)
+        self.assertFalse(active.replacement_occurrence)
+
+        inactive = manual_fallback_guard(active_controlled_work=False)
+        self.assertFalse(inactive.allowed)
+        self.assertEqual("MANUAL_EXECUTION_REQUIRES_GOVERNED_POLICY", inactive.reason)
+        self.assertFalse(inactive.semantic_retry)
 
 
 if __name__ == "__main__":
