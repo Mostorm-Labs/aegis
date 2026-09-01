@@ -18,8 +18,8 @@ from tests.control_plane.cp_i02_evidence import (
     PREDECESSOR_REF,
     TASK_ID,
     TEST_COMMANDS,
-    compile_evidence,
 )
+from tests.control_plane.cp_i02_evidence_compat import compile_evidence
 
 
 def _write_json(path: Path, value) -> None:
