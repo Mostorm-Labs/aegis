@@ -174,7 +174,7 @@ def compile_evidence(repo_root: Path) -> dict[str, Any]:
         db = str(root / "lifecycle.db")
         store = ControlStore(db)
         mutation = MutationService(store)
-        first_schedule = _schedule(mutation, "req_ev_g01_schedule_a", "lane_g01", "so_g01_a")
+        _schedule(mutation, "req_ev_g01_schedule_a", "lane_g01", "so_g01_a")
         current = store.read_latest("STAGE_OCCURRENCE", "so_g01_a")
         outbox_before_terminal = len(store.read_outbox())
         terminal_result = mutation.apply(make_request(
@@ -514,14 +514,16 @@ def compile_evidence(repo_root: Path) -> dict[str, Any]:
                 "post_reopen_counts": counts,
             })
 
-        # Unsupported later-slice operation must be zero mutation.
+        # Unsupported later-slice operation must be zero mutation. CP-I05 now
+        # supports RECORD_EXECUTION_PROGRESS, so retain the CP-I02 invariant by
+        # probing an operation that is still owned by the later CP-I06 slice.
         db = str(root / "unsupported.db")
         store = ControlStore(db)
         before = dict(store.snapshot_counts())
         code = None
         try:
             MutationService(store).apply(make_request(
-                "RECORD_EXECUTION_PROGRESS",
+                "SCHEDULE_REPAIR_OCCURRENCE",
                 "req_unsupported",
                 "lane_unsupported",
                 {"checkpoint": 1},
