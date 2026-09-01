@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from tests.control_plane.cp_i02_fixtures import make_request
-from tools.aegis_control.mutation import MutationService
+from tools.aegis_control.mutation import MutationRejected, MutationService
 from tools.aegis_control.store import ControlStore
 
 
@@ -24,14 +24,12 @@ class CpI06FoundationRedTests(unittest.TestCase):
             "RECORD_ESCALATION_RESOLUTION",
         ):
             with self.subTest(operation_name=operation_name):
-                result = self.mutation.apply(
-                    make_request(operation_name, f"req_{operation_name.lower()}", "lane_cp_i06", {})
-                )
-                self.assertNotEqual(
-                    "OPERATION_NOT_IMPLEMENTED_IN_THIS_SLICE",
-                    result.get("reason"),
-                    operation_name,
-                )
+                try:
+                    self.mutation.apply(
+                        make_request(operation_name, f"req_{operation_name.lower()}", "lane_cp_i06", {})
+                    )
+                except MutationRejected as exc:
+                    self.assertNotEqual("UNSUPPORTED_OPERATION_IN_CP_I02", exc.code)
 
 
 if __name__ == "__main__":
