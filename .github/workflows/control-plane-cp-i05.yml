@@ -50,7 +50,7 @@ jobs:
           PACKAGE_REF: d1e76563385bd03747aef2ee396855ec26496679
           RESULT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          python3 tests/control_plane/generate_cp_i05_evidence.py \
+          python3 -m tests.control_plane.generate_cp_i05_evidence \
             --result-revision "$RESULT_REVISION" \
             --package-ref "$PACKAGE_REF" \
             --output-dir artifacts/cp-i05
