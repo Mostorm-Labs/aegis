@@ -522,7 +522,10 @@ class MutationService:
         if terminal.get("outcome_category") != "COMPLETED":
             return
         navigation = occurrence.get("execution_navigation")
-        if navigation is None:
+        configured_execution_boundary = bool(
+            self._implementation_package_id and self._task_anchor_revision
+        )
+        if navigation is None and not configured_execution_boundary:
             return
         result_refs = [
             ref for ref in terminal.get("produced_refs") or []
