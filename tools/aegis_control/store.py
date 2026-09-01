@@ -1,8 +1,10 @@
-"""Durable SQLite persistence mechanics for Control Plane CP-I02/CP-I04.
+"""Durable SQLite persistence mechanics for Control Plane CP-I02..CP-I05.
 
 This module owns storage, transaction, CAS, idempotency, outbox, and read-only
-lookup mechanics. It intentionally owns no lifecycle, Authority, Gate, proof,
-policy, child-acceptance, or provider-currentness decisions.
+lookup mechanics. CP-I05 delivery state is deliberately operational and lives
+outside canonical records, lane heads, and semantic idempotency. This module
+intentionally owns no lifecycle, Authority, Gate, proof, policy,
+child-acceptance, or provider-currentness decisions.
 """
 from __future__ import annotations
 
@@ -66,11 +68,24 @@ CREATE TABLE IF NOT EXISTS outbox (
     payload_json TEXT NOT NULL,
     UNIQUE(occurrence_id)
 );
+CREATE TABLE IF NOT EXISTS delivery_state (
+    outbox_id TEXT PRIMARY KEY,
+    occurrence_id TEXT NOT NULL,
+    provider_correlation_id TEXT,
+    attempt_count INTEGER NOT NULL DEFAULT 0,
+    first_attempt_at TEXT,
+    last_attempt_at TEXT,
+    next_attempt_at TEXT,
+    provider_state TEXT,
+    last_observed_at TEXT,
+    diagnostic_state TEXT,
+    FOREIGN KEY(outbox_id) REFERENCES outbox(outbox_id) ON DELETE CASCADE
+);
 """
 
 
 class ControlStore:
-    """Public read surface plus private mutation transaction factory."""
+    """Public read surface plus private canonical mutation transaction factory."""
 
     def __init__(self, db_path: str, *, timeout: float = 10.0):
         self.db_path = str(Path(db_path))
@@ -202,7 +217,108 @@ class ControlStore:
         finally:
             conn.close()
 
+    def read_delivery_state(self, outbox_id: str) -> Mapping[str, Any] | None:
+        """Read CP-I05 operational delivery state; never canonical lifecycle truth."""
+        conn = self._connect(readonly=True)
+        try:
+            row = conn.execute(
+                "SELECT outbox_id, occurrence_id, provider_correlation_id, attempt_count, "
+                "first_attempt_at, last_attempt_at, next_attempt_at, provider_state, "
+                "last_observed_at, diagnostic_state FROM delivery_state WHERE outbox_id = ?",
+                (outbox_id,),
+            ).fetchone()
+            return _delivery_state(row) if row else None
+        finally:
+            conn.close()
+
+    def record_delivery_attempt(
+        self,
+        outbox_id: str,
+        attempted_at: str,
+        *,
+        next_attempt_at: str | None = None,
+        provider_state: str | None = None,
+    ) -> Mapping[str, Any]:
+        """Record one transport attempt in the operational delivery table only."""
+        conn = self._connect()
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            outbox = conn.execute(
+                "SELECT occurrence_id FROM outbox WHERE outbox_id = ?", (outbox_id,)
+            ).fetchone()
+            if outbox is None:
+                raise StoreConflict("outbox entry not found")
+            conn.execute(
+                "INSERT OR IGNORE INTO delivery_state(outbox_id, occurrence_id) VALUES (?, ?)",
+                (outbox_id, outbox["occurrence_id"]),
+            )
+            conn.execute(
+                "UPDATE delivery_state SET "
+                "attempt_count = attempt_count + 1, "
+                "first_attempt_at = COALESCE(first_attempt_at, ?), "
+                "last_attempt_at = ?, next_attempt_at = ?, "
+                "provider_state = COALESCE(?, provider_state) "
+                "WHERE outbox_id = ?",
+                (attempted_at, attempted_at, next_attempt_at, provider_state, outbox_id),
+            )
+            conn.execute("COMMIT")
+        except Exception:
+            if conn.in_transaction:
+                conn.execute("ROLLBACK")
+            raise
+        finally:
+            conn.close()
+        state = self.read_delivery_state(outbox_id)
+        assert state is not None
+        return state
+
+    def record_delivery_correlation(
+        self,
+        outbox_id: str,
+        correlation_id: str,
+        *,
+        observed_at: str | None = None,
+        provider_state: str = "ACCEPTED",
+    ) -> Mapping[str, Any]:
+        """Bind provider correlation as operational state without canonical mutation."""
+        if not correlation_id:
+            raise StoreConflict("provider correlation id is required")
+        conn = self._connect()
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            outbox = conn.execute(
+                "SELECT occurrence_id FROM outbox WHERE outbox_id = ?", (outbox_id,)
+            ).fetchone()
+            if outbox is None:
+                raise StoreConflict("outbox entry not found")
+            conn.execute(
+                "INSERT OR IGNORE INTO delivery_state(outbox_id, occurrence_id) VALUES (?, ?)",
+                (outbox_id, outbox["occurrence_id"]),
+            )
+            current = conn.execute(
+                "SELECT provider_correlation_id FROM delivery_state WHERE outbox_id = ?", (outbox_id,)
+            ).fetchone()
+            existing = current["provider_correlation_id"] if current else None
+            if existing is not None and existing != correlation_id:
+                raise StoreConflict("provider correlation conflict")
+            conn.execute(
+                "UPDATE delivery_state SET provider_correlation_id = ?, provider_state = ?, "
+                "last_observed_at = COALESCE(?, last_observed_at) WHERE outbox_id = ?",
+                (correlation_id, provider_state, observed_at, outbox_id),
+            )
+            conn.execute("COMMIT")
+        except Exception:
+            if conn.in_transaction:
+                conn.execute("ROLLBACK")
+            raise
+        finally:
+            conn.close()
+        state = self.read_delivery_state(outbox_id)
+        assert state is not None
+        return state
+
     def snapshot_counts(self) -> Mapping[str, int]:
+        """Return canonical/semantic counts only; CP-I05 operational state is excluded."""
         conn = self._connect(readonly=True)
         try:
             return {
@@ -383,6 +499,21 @@ def _read_latest_records(
         tuple(params),
     ).fetchall()
     return [_stored(row) for row in rows]
+
+
+def _delivery_state(row: sqlite3.Row) -> Mapping[str, Any]:
+    return {
+        "outbox_id": row["outbox_id"],
+        "occurrence_id": row["occurrence_id"],
+        "provider_correlation_id": row["provider_correlation_id"],
+        "attempt_count": int(row["attempt_count"]),
+        "first_attempt_at": row["first_attempt_at"],
+        "last_attempt_at": row["last_attempt_at"],
+        "next_attempt_at": row["next_attempt_at"],
+        "provider_state": row["provider_state"],
+        "last_observed_at": row["last_observed_at"],
+        "diagnostic_state": row["diagnostic_state"],
+    }
 
 
 def _stored(row: sqlite3.Row) -> StoredRecord:
