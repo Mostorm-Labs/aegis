@@ -31,6 +31,16 @@ class ReconciledObservation:
     truth_source: str
 
 
+def github_ci_adapter_capability() -> AdapterCapability:
+    return AdapterCapability(
+        provider_class="GITHUB_REPOSITORY_CI",
+        authenticated_events=True,
+        durable_query=True,
+        durable_correlation=True,
+        autonomous_trust_sensitive=True,
+    )
+
+
 def validate_adapter_capability(capability: AdapterCapability) -> AdapterCapability:
     if not capability.provider_class:
         raise ValueError("provider_class required")
@@ -40,6 +50,16 @@ def validate_adapter_capability(capability: AdapterCapability) -> AdapterCapabil
         if not capability.durable_query or not capability.durable_correlation:
             raise ValueError("callback-only adapter cannot claim autonomous trust-sensitive capability")
     return capability
+
+
+def reconcile_by_query(resource_hint: str, capability: AdapterCapability, *, query: Callable[[str], Mapping[str, Any]]) -> ReconciledObservation:
+    validate_adapter_capability(capability)
+    if not capability.durable_query or not capability.durable_correlation:
+        raise ValueError("provider lacks durable query/correlation")
+    observation = dict(query(resource_hint))
+    if not observation:
+        raise ValueError("provider query returned no durable observation")
+    return ReconciledObservation(event_id="QUERY_RECOVERY", observation=observation, truth_source="QUERY")
 
 
 def reconcile_provider_event(event: ProviderEvent, capability: AdapterCapability, *, query: Callable[[str], Mapping[str, Any]]) -> ReconciledObservation:
