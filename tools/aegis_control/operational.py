@@ -116,6 +116,34 @@ class AdmissionController:
 
 
 @dataclass(frozen=True)
+class ManualFallbackDecision:
+    allowed: bool
+    reason: str
+    semantic_retry: bool = False
+    replacement_occurrence: bool = False
+
+
+def manual_fallback_guard(*, active_controlled_work: bool) -> ManualFallbackDecision:
+    """Fail closed instead of duplicating already-controlled substantive work.
+
+    CP-I06 does not create a generic manual escape hatch. If controlled work is
+    active, the only safe path is reconciliation/pause/escalation under normal
+    lifecycle contracts. If no controlled work is active, manual execution is
+    still not self-authorized by degraded mode; it requires separate governed
+    policy/Authority.
+    """
+    if active_controlled_work:
+        return ManualFallbackDecision(
+            False,
+            "ACTIVE_CONTROLLED_WORK_REQUIRES_RECONCILIATION",
+        )
+    return ManualFallbackDecision(
+        False,
+        "MANUAL_EXECUTION_REQUIRES_GOVERNED_POLICY",
+    )
+
+
+@dataclass(frozen=True)
 class RateLimitState:
     concurrency: int
     retry_after_seconds: int | None
