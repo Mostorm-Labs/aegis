@@ -67,6 +67,26 @@ def reconciliation_policy(age_seconds: int) -> ReconciliationPolicy:
     return ReconciliationPolicy(900, True)
 
 
+def backup_control_store(store: ControlStore, destination_path: str) -> Mapping[str, Any]:
+    """Coordinate a point-in-time store backup without exposing a new store API."""
+    return store._backup_to(destination_path)
+
+
+def restore_control_store_backup(
+    backup_path: str,
+    destination_path: str,
+    *,
+    timeout: float = 10.0,
+) -> ControlStore:
+    """Restore a verified backup through the recovery module boundary."""
+    return ControlStore._restore_backup(backup_path, destination_path, timeout=timeout)
+
+
+def verify_control_store_integrity(store: ControlStore) -> str:
+    """Read-only integrity verification used by recovery/evidence paths."""
+    return store._integrity_check()
+
+
 def startup_recovery_plan(store: ControlStore, *, observed_at: str) -> list[StartupRecoveryItem]:
     """Reconstruct recovery work exclusively from durable state.
 
