@@ -205,15 +205,20 @@ class ControlStore:
                 "SELECT outbox_id, occurrence_id, control_lane_id, payload_json "
                 "FROM outbox ORDER BY outbox_id"
             ).fetchall()
-            return [
-                {
-                    "outbox_id": row["outbox_id"],
-                    "occurrence_id": row["occurrence_id"],
-                    "control_lane_id": row["control_lane_id"],
-                    "payload": json.loads(row["payload_json"]),
-                }
-                for row in rows
-            ]
+            return [_outbox_row(row) for row in rows]
+        finally:
+            conn.close()
+
+    def read_outbox_entry(self, outbox_id: str) -> Mapping[str, Any] | None:
+        """Read one durably committed outbox row for dispatch eligibility."""
+        conn = self._connect(readonly=True)
+        try:
+            row = conn.execute(
+                "SELECT outbox_id, occurrence_id, control_lane_id, payload_json "
+                "FROM outbox WHERE outbox_id = ?",
+                (outbox_id,),
+            ).fetchone()
+            return _outbox_row(row) if row else None
         finally:
             conn.close()
 
@@ -499,6 +504,15 @@ def _read_latest_records(
         tuple(params),
     ).fetchall()
     return [_stored(row) for row in rows]
+
+
+def _outbox_row(row: sqlite3.Row) -> Mapping[str, Any]:
+    return {
+        "outbox_id": row["outbox_id"],
+        "occurrence_id": row["occurrence_id"],
+        "control_lane_id": row["control_lane_id"],
+        "payload": json.loads(row["payload_json"]),
+    }
 
 
 def _delivery_state(row: sqlite3.Row) -> Mapping[str, Any]:
