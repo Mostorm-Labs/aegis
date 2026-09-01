@@ -322,6 +322,44 @@ class ControlStore:
         assert state is not None
         return state
 
+    def record_delivery_diagnostic(
+        self,
+        outbox_id: str,
+        diagnostic_state: str,
+        *,
+        observed_at: str | None = None,
+    ) -> Mapping[str, Any]:
+        """Persist an operational diagnostic without changing canonical lifecycle truth."""
+        if not diagnostic_state:
+            raise StoreConflict("diagnostic state is required")
+        conn = self._connect()
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            outbox = conn.execute(
+                "SELECT occurrence_id FROM outbox WHERE outbox_id = ?", (outbox_id,)
+            ).fetchone()
+            if outbox is None:
+                raise StoreConflict("outbox entry not found")
+            conn.execute(
+                "INSERT OR IGNORE INTO delivery_state(outbox_id, occurrence_id) VALUES (?, ?)",
+                (outbox_id, outbox["occurrence_id"]),
+            )
+            conn.execute(
+                "UPDATE delivery_state SET diagnostic_state = ?, "
+                "last_observed_at = COALESCE(?, last_observed_at) WHERE outbox_id = ?",
+                (diagnostic_state, observed_at, outbox_id),
+            )
+            conn.execute("COMMIT")
+        except Exception:
+            if conn.in_transaction:
+                conn.execute("ROLLBACK")
+            raise
+        finally:
+            conn.close()
+        state = self.read_delivery_state(outbox_id)
+        assert state is not None
+        return state
+
     def snapshot_counts(self) -> Mapping[str, int]:
         """Return canonical/semantic counts only; CP-I05 operational state is excluded."""
         conn = self._connect(readonly=True)
