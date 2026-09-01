@@ -166,7 +166,7 @@ class CpI06RepairRedTests(unittest.TestCase):
         self.assertEqual("REPAIR_BUDGET_EXHAUSTED", exhausted.exception.code)
         self.assertEqual(before_exhausted, self.store.snapshot_counts())
 
-    def test_wrong_finding_or_disallowed_repair_class_fails_closed(self):
+    def test_wrong_finding_or_caller_reclassification_fails_closed(self):
         record = self._repair_record("so_wrong_finding", 1)
         record["repair_context"]["finding_ref"] = exact_ref("FINDING", "other")
         with self.assertRaises(MutationRejected) as wrong:
@@ -181,7 +181,7 @@ class CpI06RepairRedTests(unittest.TestCase):
         self.assertEqual("REPAIR_FINDING_CLASSIFICATION_MISSING", wrong.exception.code)
 
         record = self._repair_record("so_wrong_class", 1)
-        with self.assertRaises(MutationRejected) as disallowed:
+        with self.assertRaises(MutationRejected) as reclassified:
             self.mutation.apply(make_request(
                 "SCHEDULE_REPAIR_OCCURRENCE", "req_wrong_class", "lane_cp_i06",
                 {"occurrence": record, "repair_class": "AUTHORITY_CHANGE"},
@@ -190,7 +190,7 @@ class CpI06RepairRedTests(unittest.TestCase):
                     work_scope_ref=record["work_scope_ref"],
                 ),
             ))
-        self.assertEqual("REPAIR_CLASS_NOT_ALLOWED", disallowed.exception.code)
+        self.assertEqual("REPAIR_FINDING_CLASSIFICATION_CONFLICT", reclassified.exception.code)
 
     def test_reverify_then_rereview_are_separate_occurrences_without_gate_truth(self):
         self._schedule_repair("so_repair", 1, self.root_terminal)
