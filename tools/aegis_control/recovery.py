@@ -1,9 +1,9 @@
-"""Reconciliation/recovery boundary for Control Plane CP-I05.
+"""Reconciliation/recovery boundary for Control Plane CP-I05/CP-I06.
 
-Age, callback loss, and delivery uncertainty are operational diagnostics. This
-module does not author semantic failure or replacement StageOccurrences.
-Canonical progress/completion, when derived, is submitted only through the
-single MutationService writer.
+Age, callback loss, delivery uncertainty, process replacement, and startup
+sweeps are operational recovery inputs. This module does not author semantic
+failure or replacement StageOccurrences. Canonical progress/completion, when
+derived, is submitted only through the single MutationService writer.
 """
 from __future__ import annotations
 
@@ -27,6 +27,17 @@ class ReconciliationPolicy:
     interval_seconds: int
     operator_alert: bool
     semantic_terminalization: bool = False
+
+
+@dataclass(frozen=True)
+class StartupRecoveryItem:
+    occurrence_id: str
+    outbox_id: str | None
+    action: str
+    observed_at: str
+    semantic_retry: bool = False
+    replacement_occurrence: bool = False
+    canonical_mutation: bool = False
 
 
 def dispatch_retry_delay_seconds(attempt_count: int) -> int:
@@ -54,6 +65,50 @@ def reconciliation_policy(age_seconds: int) -> ReconciliationPolicy:
     if age_seconds < 7200:
         return ReconciliationPolicy(300, False)
     return ReconciliationPolicy(900, True)
+
+
+def startup_recovery_plan(store: ControlStore, *, observed_at: str) -> list[StartupRecoveryItem]:
+    """Reconstruct recovery work exclusively from durable state.
+
+    The plan is read-only. It never allocates a replacement occurrence and it
+    never treats process loss as semantic retry/failure. A committed outbox with
+    no provider correlation is delivered as the *same* occurrence. Once durable
+    correlation exists, startup requests reconciliation of that same occurrence.
+    An OPEN occurrence without outbox is still reconciled rather than replaced.
+    """
+    _parse_time(observed_at)
+    outbox_by_occurrence = {
+        entry["occurrence_id"]: entry
+        for entry in store.read_outbox()
+    }
+    plan: list[StartupRecoveryItem] = []
+    for stored in store.read_latest_stage_occurrences():
+        record = stored.record
+        if record.get("state") != "OPEN":
+            continue
+        occurrence_id = record["id"]
+        outbox = outbox_by_occurrence.get(occurrence_id)
+        if outbox is None:
+            plan.append(StartupRecoveryItem(
+                occurrence_id=occurrence_id,
+                outbox_id=None,
+                action="RECONCILE_EXISTING_OCCURRENCE",
+                observed_at=observed_at,
+            ))
+            continue
+        delivery = store.read_delivery_state(outbox["outbox_id"])
+        action = (
+            "RECONCILE_EXISTING_OCCURRENCE"
+            if delivery and delivery.get("provider_correlation_id")
+            else "DISPATCH_COMMITTED_OUTBOX"
+        )
+        plan.append(StartupRecoveryItem(
+            occurrence_id=occurrence_id,
+            outbox_id=outbox["outbox_id"],
+            action=action,
+            observed_at=observed_at,
+        ))
+    return sorted(plan, key=lambda item: (item.occurrence_id, item.outbox_id or ""))
 
 
 class RecoveryCoordinator:
