@@ -15,7 +15,11 @@ from tests.control_plane.cp_i02_fixtures import (
 from tests.control_plane.test_cp_i06_human_decision import decision_ref, internal_ref
 from tools.aegis_control.canonical import canonical_digest
 from tools.aegis_control.external_ports import DeterministicExternalAdapter
-from tools.aegis_control.mutation import MutationRejected, MutationService
+from tools.aegis_control.mutation import (
+    HumanDecisionSupportBinding,
+    MutationRejected,
+    MutationService,
+)
 from tools.aegis_control.store import ControlStore
 from tools.aegis_control.trust import TrustFactRequest, TrustResolver
 
@@ -35,7 +39,7 @@ class CpI06P36HumanDecisionTests(unittest.TestCase):
                 clock=clock,
             )
             adapter.set_resource(
-                "escalation/esc_other",
+                "opaque-human-resource-7",
                 version_scheme="native-immutable-id",
                 version_value="decision-other-v1",
                 resolved_refs=[wrong_decision],
@@ -45,8 +49,11 @@ class CpI06P36HumanDecisionTests(unittest.TestCase):
                 store,
                 trust_resolver=TrustResolver({"HUMAN_DECISION": adapter}),
                 human_decision_sources={
-                    canonical_digest(wrong_decision): TrustFactRequest(
-                        "HUMAN_DECISION", "escalation/esc_other"
+                    canonical_digest(wrong_decision): HumanDecisionSupportBinding(
+                        escalation_id="esc_other",
+                        trust_fact_request=TrustFactRequest(
+                            "HUMAN_DECISION", "opaque-human-resource-7"
+                        ),
                     )
                 },
             )
