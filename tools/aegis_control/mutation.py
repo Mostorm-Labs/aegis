@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Sequence
 
 from .canonical import (
@@ -80,6 +81,14 @@ class MutationRejected(RuntimeError):
         super().__init__(code if detail is None else f"{code}: {detail}")
 
 
+@dataclass(frozen=True)
+class HumanDecisionSupportBinding:
+    """Bind one exact external HumanDecision source to one exact Escalation identity."""
+
+    escalation_id: str
+    trust_fact_request: TrustFactRequest
+
+
 def semantic_fingerprint(request: Mapping[str, Any]) -> str:
     payload = {
         key: request[key]
@@ -98,7 +107,7 @@ class MutationService:
         implementation_package_id: str | None = None,
         task_anchor_revision: str | None = None,
         finding_classifications: Mapping[str, str] | None = None,
-        human_decision_sources: Mapping[str, TrustFactRequest] | None = None,
+        human_decision_sources: Mapping[str, HumanDecisionSupportBinding] | None = None,
         fault_injector: Callable[[str], None] | None = None,
         before_transaction: Callable[[], None] | None = None,
     ):
@@ -868,8 +877,17 @@ class MutationService:
             raise MutationRejected("HUMAN_DECISION_EXACT_REF_REQUIRED") from exc
         if not any(canonical_digest(ref) == canonical_digest(decision_ref) for ref in occurrence.get("input_refs") or []):
             raise MutationRejected("HUMAN_DECISION_NOT_BOUND_TO_OCCURRENCE")
-        request = self._human_decision_sources.get(canonical_digest(decision_ref))
-        if request is None or self._trust_resolver is None:
+        binding = self._human_decision_sources.get(canonical_digest(decision_ref))
+        if binding is None or self._trust_resolver is None:
+            raise MutationRejected("HUMAN_DECISION_UNRESOLVABLE")
+        if not isinstance(binding, HumanDecisionSupportBinding):
+            raise MutationRejected("HUMAN_DECISION_RESOURCE_BINDING_REQUIRED")
+        if not isinstance(binding.escalation_id, str) or not binding.escalation_id:
+            raise MutationRejected("HUMAN_DECISION_RESOURCE_BINDING_REQUIRED")
+        if binding.escalation_id != escalation_id:
+            raise MutationRejected("HUMAN_DECISION_WRONG_RESOURCE")
+        request = binding.trust_fact_request
+        if not isinstance(request, TrustFactRequest) or request.source_kind != "HUMAN_DECISION":
             raise MutationRejected("HUMAN_DECISION_UNRESOLVABLE")
         resolution = self._trust_resolver.resolve_for_mutation([request])
         if not resolution.valid:
