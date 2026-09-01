@@ -487,6 +487,7 @@ class MutationService:
         current = tx.read_latest("STAGE_OCCURRENCE", occurrence_id)
         self._validate_open_target(current, request["expected_state"], request["control_lane_id"])
         terminal = self._validate_terminal_facts(request["payload"].get("terminal"), require_escalation=False)
+        self._validate_required_materialization(current.record.get("execution_navigation"), terminal)
         record = deepcopy(current.record)
         record["record_revision"] += 1
         record["recorded_at"] = request["payload"].get("recorded_at") or current.record["recorded_at"]
@@ -495,6 +496,23 @@ class MutationService:
         stored = tx.append_canonical(record)
         self._checkpoint("after_canonical")
         return self._result(request, [stored])
+
+    def _validate_required_materialization(self, navigation, terminal):
+        if terminal.get("outcome_category") != "COMPLETED":
+            return
+        if not isinstance(navigation, Mapping) or navigation.get("materialization_required") is not True:
+            return
+        result_ref = navigation.get("result_ref")
+        if not isinstance(result_ref, Mapping) or navigation.get("reviewer_accessible") is not True:
+            raise MutationRejected("RESULT_MATERIALIZATION_REQUIRED")
+        try:
+            validate_canonical_ref(result_ref)
+        except CanonicalValidationError as exc:
+            raise MutationRejected("RESULT_MATERIALIZATION_REQUIRED", str(exc)) from exc
+        if result_ref.get("object_type") != "RESULT":
+            raise MutationRejected("RESULT_MATERIALIZATION_REQUIRED")
+        if not any(ref == result_ref for ref in terminal.get("produced_refs") or []):
+            raise MutationRejected("RESULT_MATERIALIZATION_MISMATCH")
 
     def _raise_escalation(self, tx, request):
         occurrence_id = request["payload"].get("occurrence_id")
