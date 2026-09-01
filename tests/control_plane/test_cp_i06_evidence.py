@@ -6,12 +6,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests.control_plane.generate_cp_i06_evidence import (
+from tests.control_plane.generate_cp_i06_p36_evidence import (
     CP_I05_EVIDENCE_ARTIFACT_ID,
+    CP_I05_MATERIALIZED_REF,
     CP_I05_P34_COMMENT,
     CP_I05_REVISION,
     PACKAGE_ID,
     PACKAGE_REF,
+    P31_MANDATORY_OBLIGATIONS,
     TASK_ANCHOR,
     generate,
 )
@@ -59,6 +61,7 @@ EXPECTED_CASES = {
         "mutable_unpinned_decision_rejected",
         "stale_decision_rejected",
         "wrong_unmaterialized_decision_rejected",
+        "valid_fresh_materialized_wrong_resource_decision_rejected_zero_residue",
         "escalation_immutable_after_resolution",
         "exact_resolution_replay_idempotent",
         "conflicting_second_resolution_rejected",
@@ -76,6 +79,11 @@ EXPECTED_CASES = {
         "required_reverification_skip_rejected",
         "reverification_is_separate_occurrence",
         "rereview_is_separate_external_gate_occurrence",
+        "repair_duplicate_ordinal_rejected",
+        "repair_ambiguous_classification_rejected",
+        "repair_root_finding_change_rejected",
+        "repair_policy_digest_mismatch_rejected",
+        "repair_authority_or_semantic_defect_not_laundered",
     },
     "CPV-E-BACKUP-RESTORE": {
         "verified_backup_restore_preserves_exact_state",
@@ -87,6 +95,8 @@ EXPECTED_CASES = {
         "safe_retry_after_is_retained",
         "recovery_is_gradual_not_instant",
         "rate_limit_control_never_requests_semantic_retry",
+        "repeated_sustained_breach_halves_again",
+        "provider_unavailability_remains_operational_not_gate_or_implementation_failure",
     },
     "CPV-E-DERIVED-STATE": {
         "backpressure_watermarks_match_p18",
@@ -97,6 +107,10 @@ EXPECTED_CASES = {
         "red_preserves_committed_recovery",
         "manual_duplicate_fallback_is_denied",
         "committed_outbox_is_not_dropped_by_backpressure",
+        "green_normal_admission",
+        "yellow_reduces_optional_before_required_work",
+        "terminalization_priority_survives_backpressure",
+        "reconciliation_priority_survives_backpressure",
     },
 }
 
@@ -141,6 +155,7 @@ class CpI06EvidenceContractTests(unittest.TestCase):
             self.assertEqual(5, len({entry["file"] for entry in evidence_files}))
             self.assertEqual(5, len({entry["evidence_family"] for entry in evidence_files}))
 
+            evidence_case_ids = set()
             for entry in evidence_files:
                 path = output / entry["file"]
                 self.assertTrue(path.is_file(), entry)
@@ -153,6 +168,23 @@ class CpI06EvidenceContractTests(unittest.TestCase):
                 self.assertEqual(EXPECTED_CASES[evidence["evidence_family"]], case_names)
                 self.assertEqual(len(case_names), len(evidence["cases"]))
                 self.assertTrue(all(case["passed"] for case in evidence["cases"]))
+                evidence_case_ids.update(
+                    f"{evidence['evidence_family']}::{name}" for name in case_names
+                )
+
+            wrong_resource = next(
+                case
+                for case in _load(output / "human-decision.json")["cases"]
+                if case["case"] == "valid_fresh_materialized_wrong_resource_decision_rejected_zero_residue"
+            )
+            self.assertTrue(wrong_resource["passed"])
+            self.assertTrue(wrong_resource["zero_residue"])
+            self.assertEqual("HUMAN_DECISION_WRONG_RESOURCE", wrong_resource["rejection"])
+            self.assertNotEqual(
+                wrong_resource["bound_escalation_id"],
+                wrong_resource["attempted_escalation_id"],
+            )
+            self.assertEqual("opaque-human-resource-7", wrong_resource["provider_resource_key"])
 
             self.assertEqual(EXPECTED_METRICS, set(materialized["metrics"]))
             self.assertTrue(all(value == 0 for value in materialized["metrics"].values()))
@@ -170,13 +202,47 @@ class CpI06EvidenceContractTests(unittest.TestCase):
                 },
                 materialized["claims"],
             )
+            self.assertEqual(
+                {
+                    "repair_package_id": "CP-I06-P36-01",
+                    "source_p34_review": "5076730656",
+                    "source_p35_comment": "5493748067",
+                    "wrong_resource_binding_repaired": True,
+                    "coverage_gap_closed": True,
+                },
+                materialized["p36_repair"],
+            )
+
+            coverage = materialized["p31_mandatory_coverage"]
+            expected_obligations = {
+                obligation
+                for obligations in P31_MANDATORY_OBLIGATIONS.values()
+                for obligation in obligations
+            }
+            self.assertEqual(72, len(expected_obligations))
+            self.assertEqual(72, coverage["obligation_count"])
+            self.assertEqual(expected_obligations, set(coverage["obligations"]))
+            self.assertTrue(coverage["passed"])
+            for obligation, entry in coverage["obligations"].items():
+                self.assertIn(entry["mode"], {"DIRECT_CP_I06", "INHERITED_EXACT_PREDECESSOR"}, obligation)
+                self.assertTrue(entry["case_id"], obligation)
+                self.assertTrue(entry["rationale"], obligation)
+                if entry["mode"] == "DIRECT_CP_I06" and entry["case_id"].startswith("CPV-E-"):
+                    self.assertIn(entry["case_id"], evidence_case_ids, obligation)
+                if entry["mode"] == "INHERITED_EXACT_PREDECESSOR":
+                    self.assertEqual(CP_I05_REVISION, entry["predecessor_revision"], obligation)
+                    self.assertEqual(CP_I05_EVIDENCE_ARTIFACT_ID, entry["artifact_id"], obligation)
+                    self.assertEqual(CP_I05_MATERIALIZED_REF, entry["materialized_ref"], obligation)
+                    self.assertEqual("dispatch-fault-matrix.json", entry["evidence_file"], obligation)
+
             self.assertTrue(materialized["passed"])
 
-    def test_manifest_pass_is_derived_from_case_level_evidence(self):
+    def test_manifest_pass_is_derived_from_case_level_evidence_and_complete_coverage(self):
         with tempfile.TemporaryDirectory() as tmp:
             output = Path(tmp)
             manifest = generate(output, result_revision="b" * 40)
             self.assertTrue(manifest["passed"])
+            self.assertTrue(manifest["p31_mandatory_coverage"]["passed"])
             for entry in manifest["evidence_files"]:
                 evidence = _load(output / entry["file"])
                 self.assertEqual(
