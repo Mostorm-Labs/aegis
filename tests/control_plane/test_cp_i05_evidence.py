@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tests.control_plane.augment_cp_i05_p36_evidence import augment_evidence_bundle
 from tests.control_plane.generate_cp_i05_evidence import build_evidence_bundle
 
 
@@ -48,6 +49,10 @@ EXPECTED_PROGRESS_CASES = {
     "stale_revision_digest_zero_residue",
     "competing_checkpoints_one_winner",
 }
+EXPECTED_EDGE_CASES = {
+    "configured_boundary_no_progress_still_requires_exact_result",
+    "thirty_minute_uncertainty_persists_without_replacement_occurrence",
+}
 EXPECTED_METRICS = {
     "age_only_terminalization",
     "dispatch_before_commit",
@@ -74,17 +79,19 @@ class CpI05EvidenceTests(unittest.TestCase):
             output = Path(tmp)
             result_revision = "f" * 40
             package_ref = "d1e76563385bd03747aef2ee396855ec26496679"
-            manifest = build_evidence_bundle(
+            build_evidence_bundle(
                 result_revision=result_revision,
                 package_ref=package_ref,
                 output_dir=output,
             )
+            manifest = augment_evidence_bundle(output_dir=output)
 
             expected_files = {
                 "dispatch-fault-matrix.json",
                 "resume-corpus.json",
                 "delivery-policy.json",
                 "reconciliation-policy.json",
+                "p36-edge-closure.json",
                 "evidence-manifest.json",
             }
             self.assertEqual(expected_files, {path.name for path in output.glob("*.json")})
@@ -97,14 +104,12 @@ class CpI05EvidenceTests(unittest.TestCase):
                 manifest["task_anchor"],
             )
             self.assertEqual("5486917398", manifest["source_cp_i04_p34_comment"])
-            self.assertEqual(
-                {
-                    "source_p34_comment": "5488464223",
-                    "source_p35_classification_comment": "5489296080",
-                    "source_revision": "033637a5be7cb04bb60f0d8176e48130027b9b93",
-                },
-                manifest["repair_lineage"],
-            )
+            expected_repair_lineage = {
+                "source_p34_comment": "5488464223",
+                "source_p35_classification_comment": "5489296080",
+                "source_revision": "033637a5be7cb04bb60f0d8176e48130027b9b93",
+            }
+            self.assertEqual(expected_repair_lineage, manifest["repair_lineage"])
             self.assertEqual(EXPECTED_METRICS, set(manifest["metrics"]))
             self.assertTrue(all(value == 0 for value in manifest["metrics"].values()))
             self.assertIs(manifest["passed"], True)
@@ -126,6 +131,7 @@ class CpI05EvidenceTests(unittest.TestCase):
                     "CPV-E-RESUME-CORPUS",
                     "CPV-E-DELIVERY-POLICY",
                     "CPV-E-RECONCILIATION-POLICY",
+                    "CP-I05-P36-EDGE-CLOSURE",
                 },
                 {entry["evidence_family"] for entry in declared.values()},
             )
@@ -157,6 +163,14 @@ class CpI05EvidenceTests(unittest.TestCase):
                     "stale_revision_digest_zero_residue",
                 }:
                     self.assertIs(case["zero_residue"], True)
+
+            edge = json.loads((output / "p36-edge-closure.json").read_text())
+            self.assertEqual("CP-I05-P36-EDGE-CLOSURE", edge["evidence_family"])
+            self.assertEqual("CP-I05-P36-01", edge["repair_package_id"])
+            self.assertEqual(expected_repair_lineage, edge["repair_lineage"])
+            self.assertEqual(result_revision, edge["result_revision"])
+            self._assert_exact_unique_cases(EXPECTED_EDGE_CASES, edge["cases"])
+            self.assertIs(edge["passed"], True)
 
             resume = json.loads((output / "resume-corpus.json").read_text())
             states = [case["state"] for case in resume["cases"]]
