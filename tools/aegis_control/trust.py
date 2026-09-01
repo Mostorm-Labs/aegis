@@ -1,4 +1,4 @@
-"""Read-only external trust aggregation for CP-I04."""
+"""Read-only external trust aggregation for CP-I04/CP-I05."""
 from __future__ import annotations
 
 from copy import deepcopy
@@ -21,14 +21,7 @@ _SEMVER_RE = re.compile(
 
 
 def _validate_exact_trust_ref(ref: Mapping[str, Any]) -> None:
-    """Fail closed unless a CanonicalRef carries an exact trust-boundary identity.
-
-    Generic CanonicalRef structure deliberately remains broader. CP-I04 authorization
-    only accepts identity schemes whose exactness can be established locally from the
-    accepted P12 contract. Native/governed schemes require an owning provider contract
-    that can prove immutability; this bounded fake-adapter slice does not invent one.
-    """
-
+    """Fail closed unless a CanonicalRef carries an exact trust-boundary identity."""
     validate_canonical_ref(ref)
     identity = ref["identity"]
     scheme = identity["scheme"]
@@ -54,11 +47,28 @@ class TrustFactRequest:
 
 
 @dataclass(frozen=True)
+class ResultMaterializationRequest:
+    source_kind: str
+    resource_key: str
+    occurrence_id: str
+    package_id: str
+    task_anchor_revision: str
+
+
+@dataclass(frozen=True)
 class TrustResolution:
     valid: bool
     code: str
     snapshots: tuple[SourceSnapshot, ...] = ()
     resolved_refs: tuple[Mapping[str, Any], ...] = ()
+
+
+@dataclass(frozen=True)
+class ResultMaterializationResolution:
+    valid: bool
+    code: str
+    result_ref: Mapping[str, Any] | None = None
+    snapshot_resolution: TrustResolution | None = None
 
 
 @dataclass(frozen=True)
@@ -81,17 +91,84 @@ class TrustResolver:
         adapters: Mapping[str, DeterministicExternalAdapter],
         *,
         acceptance_contract_sources: Mapping[str, TrustFactRequest] | None = None,
+        result_sources: Mapping[str, ResultMaterializationRequest] | None = None,
     ):
         self._adapters = dict(adapters)
-        # Keys are canonical digests of the exact CONTRACT CanonicalRef. A stable
-        # semantic contract id alone is intentionally insufficient to authorize.
+        # Keys are canonical digests of exact refs, never mutable semantic IDs.
         self._acceptance_contract_sources = dict(acceptance_contract_sources or {})
+        self._result_sources = dict(result_sources or {})
 
     def resolve_for_projection(self, requests: Sequence[TrustFactRequest]) -> TrustResolution:
         return self._resolve(requests)
 
     def resolve_for_mutation(self, requests: Sequence[TrustFactRequest]) -> TrustResolution:
         return self._resolve(requests)
+
+    def resolve_result_materialization(
+        self,
+        result_ref: Mapping[str, Any],
+        *,
+        occurrence_id: str,
+        package_id: str,
+        task_anchor_revision: str,
+    ) -> ResultMaterializationResolution:
+        try:
+            _validate_exact_trust_ref(result_ref)
+        except (TypeError, ValueError):
+            return ResultMaterializationResolution(False, "RESULT_MATERIALIZATION_UNPINNED")
+        if result_ref.get("object_type") != "RESULT":
+            return ResultMaterializationResolution(False, "RESULT_MATERIALIZATION_IDENTITY_MISMATCH")
+
+        request = self._result_sources.get(canonical_digest(result_ref))
+        if request is None:
+            return ResultMaterializationResolution(False, "RESULT_MATERIALIZATION_UNRESOLVABLE")
+        if (
+            request.occurrence_id != occurrence_id
+            or request.package_id != package_id
+            or request.task_anchor_revision != task_anchor_revision
+        ):
+            return ResultMaterializationResolution(False, "RESULT_MATERIALIZATION_LINEAGE_MISMATCH")
+
+        resolution = self.resolve_for_mutation(
+            [TrustFactRequest(request.source_kind, request.resource_key)]
+        )
+        if not resolution.valid:
+            if resolution.code in {"TRUST_BASIS_AMBIGUOUS", "TRUST_FACT_DUPLICATE"}:
+                code = "RESULT_MATERIALIZATION_AMBIGUOUS"
+            elif resolution.code in {
+                "TRUST_BASIS_CONFLICT", "TRUST_BASIS_DENIED"
+            }:
+                code = "RESULT_MATERIALIZATION_IDENTITY_MISMATCH"
+            else:
+                code = "RESULT_MATERIALIZATION_UNRESOLVABLE"
+            return ResultMaterializationResolution(False, code, snapshot_resolution=resolution)
+
+        fresh = self.verify_freshness(resolution)
+        if not fresh.valid:
+            return ResultMaterializationResolution(
+                False, "RESULT_MATERIALIZATION_UNRESOLVABLE", snapshot_resolution=fresh
+            )
+        if len(fresh.resolved_refs) != 1:
+            return ResultMaterializationResolution(
+                False, "RESULT_MATERIALIZATION_AMBIGUOUS", snapshot_resolution=fresh
+            )
+        resolved = fresh.resolved_refs[0]
+        try:
+            _validate_exact_trust_ref(resolved)
+        except (TypeError, ValueError):
+            return ResultMaterializationResolution(
+                False, "RESULT_MATERIALIZATION_UNPINNED", snapshot_resolution=fresh
+            )
+        if canonical_digest(resolved) != canonical_digest(result_ref):
+            return ResultMaterializationResolution(
+                False, "RESULT_MATERIALIZATION_IDENTITY_MISMATCH", snapshot_resolution=fresh
+            )
+        return ResultMaterializationResolution(
+            True,
+            "RESULT_MATERIALIZATION_VALID",
+            deepcopy(dict(resolved)),
+            fresh,
+        )
 
     def resolve_child_acceptance(
         self,
