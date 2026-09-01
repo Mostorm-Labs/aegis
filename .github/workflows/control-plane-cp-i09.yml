@@ -1,0 +1,33 @@
+name: Aegis Control Plane CP-I09 Engineering Evidence
+
+on:
+  push:
+    paths:
+      - "tests/control_plane/test_cp_i09_*.py"
+      - "tests/control_plane/cp_i09_*.py"
+      - "tests/control_plane/generate_cp_i09_evidence.py"
+      - ".github/workflows/control-plane-cp-i09.yml"
+  pull_request:
+    paths:
+      - "tests/control_plane/test_cp_i09_*.py"
+      - "tests/control_plane/cp_i09_*.py"
+      - "tests/control_plane/generate_cp_i09_evidence.py"
+      - ".github/workflows/control-plane-cp-i09.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: control-plane-cp-i09-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract-red:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run CP-I09 contract tests
+        run: python3 -m unittest discover -s tests/control_plane -p 'test_cp_i09_*.py' -v
