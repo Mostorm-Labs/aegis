@@ -10,6 +10,15 @@ REQUIRED_METRIC_FAMILIES = frozenset({
     "zero_tolerance_invariant", "orchestration_cost_component",
 })
 
+_ALERT_BOOLEAN_FAMILIES = frozenset({
+    "possible_acknowledged_commit_loss", "stale_snapshot_accepted",
+    "unauthorized_cross_primary_dispatch", "production_traffic",
+})
+_ALERT_NUMERIC_FAMILIES = frozenset({
+    "store_unavailable_seconds", "oldest_ready_outbox_seconds", "reconciliation_lag_seconds",
+    "red_backpressure_seconds", "delivery_attempts", "delivery_uncertainty_seconds",
+})
+
 
 class ObservabilityError(RuntimeError):
     pass
@@ -63,6 +72,28 @@ def recompute_aggregates(events: Sequence[RawMetricEvent]) -> dict:
     }
 
 
+def alert_snapshot_from_raw(events: Sequence[RawMetricEvent]) -> dict[str, object]:
+    latest: dict[str, RawMetricEvent] = {}
+    allowed = _ALERT_BOOLEAN_FAMILIES | _ALERT_NUMERIC_FAMILIES
+    for event in events:
+        if not event.correlation_id:
+            raise ObservabilityError("CORRELATION_ID_REQUIRED")
+        if event.family not in allowed:
+            continue
+        previous = latest.get(event.family)
+        if previous is None or event.sequence > previous.sequence:
+            latest[event.family] = event
+    snapshot: dict[str, object] = {}
+    for family, event in latest.items():
+        if family in _ALERT_BOOLEAN_FAMILIES:
+            snapshot[family] = bool(event.value)
+        elif family == "delivery_attempts":
+            snapshot[family] = int(event.value)
+        else:
+            snapshot[family] = float(event.value)
+    return snapshot
+
+
 def evaluate_alerts(snapshot: Mapping[str, object]) -> list[Alert]:
     alerts: list[Alert] = []
     if snapshot.get("possible_acknowledged_commit_loss") is True:
@@ -82,3 +113,7 @@ def evaluate_alerts(snapshot: Mapping[str, object]) -> list[Alert]:
     if int(snapshot.get("delivery_attempts", 0) or 0) >= 12 or float(snapshot.get("delivery_uncertainty_seconds", 0) or 0) >= 1800:
         alerts.append(Alert("DELIVERY_UNCERTAINTY_URGENT", "URGENT"))
     return alerts
+
+
+def evaluate_alerts_from_raw(events: Sequence[RawMetricEvent]) -> list[Alert]:
+    return evaluate_alerts(alert_snapshot_from_raw(events))
