@@ -194,7 +194,7 @@ class ControlStore:
         finally:
             conn.close()
 
-    def read_latest_stage_occurrences_for_scope_family(self, work_scope_id: str) -> list[StoredRecord]:
+    def _read_latest_stage_occurrences_for_scope_family(self, work_scope_id: str) -> list[StoredRecord]:
         """Read latest parent/direct-child occurrences for one WorkScope family only."""
         if not isinstance(work_scope_id, str) or not work_scope_id:
             return []

@@ -97,7 +97,7 @@ class ProjectionEngine:
         work_scope_ref = self._lane_work_scope(latest)
         work_scope_id = work_scope_ref.get("id") if isinstance(work_scope_ref, Mapping) else None
         scope_occurrences = (
-            self._store.read_latest_stage_occurrences_for_scope_family(work_scope_id)
+            self._store._read_latest_stage_occurrences_for_scope_family(work_scope_id)
             if isinstance(work_scope_id, str) and work_scope_id
             else []
         )
