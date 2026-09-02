@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import sqlite3
+import tempfile
 import unittest
+from pathlib import Path
 
 
 class CpI09ContractRedTests(unittest.TestCase):
@@ -94,6 +97,28 @@ class CpI09ContractRedTests(unittest.TestCase):
         self.assertEqual("NOT_CLAIMED_PRELAUNCH", validate_monthly_availability_claim("NOT_CLAIMED_PRELAUNCH"))
         with self.assertRaises(BenchmarkContractError):
             validate_monthly_availability_claim("PASS_99_9")
+
+    def test_fixture_outbox_seed_matches_current_production_schema(self):
+        from tests.control_plane.cp_i09_fixture import _seed_outbox_rows
+        from tools.aegis_control.store import ControlStore
+
+        with tempfile.TemporaryDirectory() as tmp:
+            db_path = Path(tmp) / "fixture-smoke.sqlite"
+            store = ControlStore(str(db_path))
+            conn = sqlite3.connect(str(db_path))
+            try:
+                _seed_outbox_rows(
+                    conn,
+                    [("so_open_0000", "lane_open_0000", "STAGE_OCCURRENCE:so_open_0000@1#sha256:" + "1" * 64)],
+                    1,
+                )
+                conn.commit()
+            finally:
+                conn.close()
+            row = store.read_outbox_entry("out_bench_0000")
+            self.assertIsNotNone(row)
+            self.assertEqual("so_open_0000", row["occurrence_id"])
+            self.assertEqual("lane_open_0000", row["control_lane_id"])
 
 
 if __name__ == "__main__":
