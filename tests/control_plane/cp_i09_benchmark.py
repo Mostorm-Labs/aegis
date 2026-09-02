@@ -31,6 +31,7 @@ from tests.control_plane.cp_i09_fixture import (
     REFERENCE_OPEN_OCCURRENCES,
     load_reference_fixture,
 )
+from tests.control_plane.cp_i09_progress import ProgressReporter, build_progress_snapshot
 from tools.aegis_control.api import ControlApi
 from tools.aegis_control.dispatch import DispatchService
 from tools.aegis_control.execution_surface import DeterministicExecutionSurface
@@ -257,6 +258,8 @@ def _run_phase(
     rates: Mapping[str, float],
     bursts: Mapping[str, Mapping[str, int]] | None,
     collect_samples: bool,
+    progress_path: Path | None = None,
+    result_revision: str | None = None,
 ) -> dict:
     workers = _WORKERS_R0 if profile == "r0" else _WORKERS_S0
     abort = threading.Event()
@@ -279,6 +282,34 @@ def _run_phase(
     while time.monotonic() < start:
         time.sleep(0.001)
     actual_start = time.monotonic()
+    reporter: ProgressReporter | None = None
+    if progress_path is not None:
+        if result_revision is None:
+            raise ValueError("result_revision is required when progress evidence is enabled")
+
+        def progress_snapshot(phase: str) -> dict:
+            family_snapshots = {family.name: family.snapshot() for family in families}
+            blockers = [
+                value["scheduling_blocker"]
+                for value in family_snapshots.values()
+                if value.get("scheduling_blocker")
+            ]
+            return build_progress_snapshot(
+                profile=profile,
+                phase=phase,
+                elapsed_wall_seconds=max(0.0, time.monotonic() - actual_start),
+                result_revision=result_revision,
+                package_id=PACKAGE_ID,
+                package_ref=PACKAGE_REF,
+                task_anchor={"revision": TASK_ANCHOR, "relation": "ancestor"},
+                family_snapshots=family_snapshots,
+                abort_reason=blockers[0] if blockers else None,
+                resource_observation=_phase_resource_sample(db_path, actual_start, families),
+            )
+
+        reporter = ProgressReporter(progress_path, progress_snapshot, interval_seconds=5.0)
+        reporter.start("STRESS" if profile == "s0" else "MEASUREMENT")
+
     resources = []
     next_sample = actual_start
     while any(thread.is_alive() for thread in threads):
@@ -291,10 +322,14 @@ def _run_phase(
         thread.join()
     measurement_end = time.monotonic()
     pending_at_end = {family.name: family.snapshot()["pending_count"] for family in families}
+    if reporter is not None:
+        reporter.set_phase("DRAINING")
     recovery_started = time.monotonic()
     for family in families:
         family.wait()
     recovery_end = time.monotonic()
+    if reporter is not None:
+        reporter.stop("EXECUTION_COMPLETE")
     if collect_samples:
         resources.append(_phase_resource_sample(db_path, actual_start, families))
     latency_samples: dict[str, list[float]] = {}
@@ -674,6 +709,8 @@ def run_s0(*, result_revision: str, output_dir: Path) -> bool:
         rates=reference_s0_load(),
         bursts=None,
         collect_samples=True,
+        progress_path=output_dir / "s0-progress.json",
+        result_revision=result_revision,
     )
     runtime = runtime_snapshot()
     families = measurement["families"]
