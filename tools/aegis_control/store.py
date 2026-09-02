@@ -13,6 +13,7 @@ from dataclasses import dataclass
 import json
 from pathlib import Path
 import sqlite3
+import threading
 from typing import Any, Iterator, Mapping
 
 from .canonical import canonical_digest, canonical_dumps, validate_record
@@ -106,6 +107,7 @@ class ControlStore:
     def __init__(self, db_path: str, *, timeout: float = 10.0):
         self.db_path = str(Path(db_path))
         self.timeout = timeout
+        self._write_lock = threading.RLock()
         self._initialize()
 
     def _connect(self, *, readonly: bool = False) -> sqlite3.Connection:
@@ -130,18 +132,19 @@ class ControlStore:
 
     @contextmanager
     def _mutation_transaction(self) -> Iterator["_MutationTransaction"]:
-        conn = self._connect()
-        tx = _MutationTransaction(conn)
-        try:
-            conn.execute("BEGIN IMMEDIATE")
-            yield tx
-            conn.execute("COMMIT")
-        except Exception:
-            if conn.in_transaction:
-                conn.execute("ROLLBACK")
-            raise
-        finally:
-            conn.close()
+        with self._write_lock:
+            conn = self._connect()
+            tx = _MutationTransaction(conn)
+            try:
+                conn.execute("BEGIN IMMEDIATE")
+                yield tx
+                conn.execute("COMMIT")
+            except Exception:
+                if conn.in_transaction:
+                    conn.execute("ROLLBACK")
+                raise
+            finally:
+                conn.close()
 
     def read_latest(self, kind: str, record_id: str) -> StoredRecord | None:
         conn = self._connect(readonly=True)
@@ -271,34 +274,35 @@ class ControlStore:
         provider_state: str | None = None,
     ) -> Mapping[str, Any]:
         """Record one transport attempt in the operational delivery table only."""
-        conn = self._connect()
-        try:
-            conn.execute("BEGIN IMMEDIATE")
-            outbox = conn.execute(
-                "SELECT occurrence_id FROM outbox WHERE outbox_id = ?", (outbox_id,)
-            ).fetchone()
-            if outbox is None:
-                raise StoreConflict("outbox entry not found")
-            conn.execute(
-                "INSERT OR IGNORE INTO delivery_state(outbox_id, occurrence_id) VALUES (?, ?)",
-                (outbox_id, outbox["occurrence_id"]),
-            )
-            conn.execute(
-                "UPDATE delivery_state SET "
-                "attempt_count = attempt_count + 1, "
-                "first_attempt_at = COALESCE(first_attempt_at, ?), "
-                "last_attempt_at = ?, next_attempt_at = ?, "
-                "provider_state = COALESCE(?, provider_state) "
-                "WHERE outbox_id = ?",
-                (attempted_at, attempted_at, next_attempt_at, provider_state, outbox_id),
-            )
-            conn.execute("COMMIT")
-        except Exception:
-            if conn.in_transaction:
-                conn.execute("ROLLBACK")
-            raise
-        finally:
-            conn.close()
+        with self._write_lock:
+            conn = self._connect()
+            try:
+                conn.execute("BEGIN IMMEDIATE")
+                outbox = conn.execute(
+                    "SELECT occurrence_id FROM outbox WHERE outbox_id = ?", (outbox_id,)
+                ).fetchone()
+                if outbox is None:
+                    raise StoreConflict("outbox entry not found")
+                conn.execute(
+                    "INSERT OR IGNORE INTO delivery_state(outbox_id, occurrence_id) VALUES (?, ?)",
+                    (outbox_id, outbox["occurrence_id"]),
+                )
+                conn.execute(
+                    "UPDATE delivery_state SET "
+                    "attempt_count = attempt_count + 1, "
+                    "first_attempt_at = COALESCE(first_attempt_at, ?), "
+                    "last_attempt_at = ?, next_attempt_at = ?, "
+                    "provider_state = COALESCE(?, provider_state) "
+                    "WHERE outbox_id = ?",
+                    (attempted_at, attempted_at, next_attempt_at, provider_state, outbox_id),
+                )
+                conn.execute("COMMIT")
+            except Exception:
+                if conn.in_transaction:
+                    conn.execute("ROLLBACK")
+                raise
+            finally:
+                conn.close()
         state = self.read_delivery_state(outbox_id)
         assert state is not None
         return state
@@ -314,36 +318,37 @@ class ControlStore:
         """Bind provider correlation as operational state without canonical mutation."""
         if not correlation_id:
             raise StoreConflict("provider correlation id is required")
-        conn = self._connect()
-        try:
-            conn.execute("BEGIN IMMEDIATE")
-            outbox = conn.execute(
-                "SELECT occurrence_id FROM outbox WHERE outbox_id = ?", (outbox_id,)
-            ).fetchone()
-            if outbox is None:
-                raise StoreConflict("outbox entry not found")
-            conn.execute(
-                "INSERT OR IGNORE INTO delivery_state(outbox_id, occurrence_id) VALUES (?, ?)",
-                (outbox_id, outbox["occurrence_id"]),
-            )
-            current = conn.execute(
-                "SELECT provider_correlation_id FROM delivery_state WHERE outbox_id = ?", (outbox_id,)
-            ).fetchone()
-            existing = current["provider_correlation_id"] if current else None
-            if existing is not None and existing != correlation_id:
-                raise StoreConflict("provider correlation conflict")
-            conn.execute(
-                "UPDATE delivery_state SET provider_correlation_id = ?, provider_state = ?, "
-                "last_observed_at = COALESCE(?, last_observed_at) WHERE outbox_id = ?",
-                (correlation_id, provider_state, observed_at, outbox_id),
-            )
-            conn.execute("COMMIT")
-        except Exception:
-            if conn.in_transaction:
-                conn.execute("ROLLBACK")
-            raise
-        finally:
-            conn.close()
+        with self._write_lock:
+            conn = self._connect()
+            try:
+                conn.execute("BEGIN IMMEDIATE")
+                outbox = conn.execute(
+                    "SELECT occurrence_id FROM outbox WHERE outbox_id = ?", (outbox_id,)
+                ).fetchone()
+                if outbox is None:
+                    raise StoreConflict("outbox entry not found")
+                conn.execute(
+                    "INSERT OR IGNORE INTO delivery_state(outbox_id, occurrence_id) VALUES (?, ?)",
+                    (outbox_id, outbox["occurrence_id"]),
+                )
+                current = conn.execute(
+                    "SELECT provider_correlation_id FROM delivery_state WHERE outbox_id = ?", (outbox_id,)
+                ).fetchone()
+                existing = current["provider_correlation_id"] if current else None
+                if existing is not None and existing != correlation_id:
+                    raise StoreConflict("provider correlation conflict")
+                conn.execute(
+                    "UPDATE delivery_state SET provider_correlation_id = ?, provider_state = ?, "
+                    "last_observed_at = COALESCE(?, last_observed_at) WHERE outbox_id = ?",
+                    (correlation_id, provider_state, observed_at, outbox_id),
+                )
+                conn.execute("COMMIT")
+            except Exception:
+                if conn.in_transaction:
+                    conn.execute("ROLLBACK")
+                raise
+            finally:
+                conn.close()
         state = self.read_delivery_state(outbox_id)
         assert state is not None
         return state
@@ -358,30 +363,31 @@ class ControlStore:
         """Persist an operational diagnostic without changing canonical lifecycle truth."""
         if not diagnostic_state:
             raise StoreConflict("diagnostic state is required")
-        conn = self._connect()
-        try:
-            conn.execute("BEGIN IMMEDIATE")
-            outbox = conn.execute(
-                "SELECT occurrence_id FROM outbox WHERE outbox_id = ?", (outbox_id,)
-            ).fetchone()
-            if outbox is None:
-                raise StoreConflict("outbox entry not found")
-            conn.execute(
-                "INSERT OR IGNORE INTO delivery_state(outbox_id, occurrence_id) VALUES (?, ?)",
-                (outbox_id, outbox["occurrence_id"]),
-            )
-            conn.execute(
-                "UPDATE delivery_state SET diagnostic_state = ?, "
-                "last_observed_at = COALESCE(?, last_observed_at) WHERE outbox_id = ?",
-                (diagnostic_state, observed_at, outbox_id),
-            )
-            conn.execute("COMMIT")
-        except Exception:
-            if conn.in_transaction:
-                conn.execute("ROLLBACK")
-            raise
-        finally:
-            conn.close()
+        with self._write_lock:
+            conn = self._connect()
+            try:
+                conn.execute("BEGIN IMMEDIATE")
+                outbox = conn.execute(
+                    "SELECT occurrence_id FROM outbox WHERE outbox_id = ?", (outbox_id,)
+                ).fetchone()
+                if outbox is None:
+                    raise StoreConflict("outbox entry not found")
+                conn.execute(
+                    "INSERT OR IGNORE INTO delivery_state(outbox_id, occurrence_id) VALUES (?, ?)",
+                    (outbox_id, outbox["occurrence_id"]),
+                )
+                conn.execute(
+                    "UPDATE delivery_state SET diagnostic_state = ?, "
+                    "last_observed_at = COALESCE(?, last_observed_at) WHERE outbox_id = ?",
+                    (diagnostic_state, observed_at, outbox_id),
+                )
+                conn.execute("COMMIT")
+            except Exception:
+                if conn.in_transaction:
+                    conn.execute("ROLLBACK")
+                raise
+            finally:
+                conn.close()
         state = self.read_delivery_state(outbox_id)
         assert state is not None
         return state
