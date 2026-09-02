@@ -39,6 +39,10 @@ The recipient named in an `ownership_handoff` becomes the final-answer owner onl
 
 A surface handoff changes where authorized work executes. It does not transfer ownership, change Current Authority, create Evidence, issue a Gate verdict, or mutate Project State merely by occurring.
 
+A Codex execution prefix is rendering/trigger metadata only. It does not transfer ownership, expand Authority or package scope, create Evidence, issue a Gate verdict, or mutate Project State. Whenever a rendered `surface_handoff` contains `preferred_executor: codex`, it MUST place this exact execution instruction immediately before the YAML envelope:
+
+> 请按以下 Aegis handoff 直接执行：以 `package_ref` 为任务授权，按 `task_anchor/resume_cursor` 核对当前状态并从首个未完成步骤继续；若状态冲突则 fail closed。
+
 ```yaml
 type: surface_handoff
 stage: P32
