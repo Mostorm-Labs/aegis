@@ -120,12 +120,13 @@ class DispatchService:
         next_attempt = attempted + timedelta(
             seconds=dispatch_retry_delay_seconds(attempt_number)
         )
+        known_correlation = previous.get("provider_correlation_id") if previous else None
         try:
             delivery = self._store.record_delivery_attempt(
                 outbox_id,
                 attempted_at,
                 next_attempt_at=_format_time(next_attempt),
-                provider_state="ATTEMPTING",
+                provider_state="ATTEMPTING" if known_correlation is None else None,
             )
         except StoreConflict as exc:
             raise DispatchRejected("DELIVERY_STATE_CONFLICT") from exc
@@ -158,15 +159,19 @@ class DispatchService:
         if receipt.occurrence_id != occurrence.record["id"] or not receipt.correlation_id:
             raise DispatchRejected("PROVIDER_CORRELATION_MISMATCH")
         self._checkpoint("after_provider_dispatch")
-        try:
-            self._store.record_delivery_correlation(
-                outbox_id,
-                receipt.correlation_id,
-                observed_at=attempted_at,
-                provider_state="ACCEPTED",
-            )
-        except StoreConflict as exc:
-            raise DispatchRejected("DELIVERY_STATE_CONFLICT") from exc
+        current_correlation = delivery.get("provider_correlation_id")
+        if current_correlation is not None and current_correlation != receipt.correlation_id:
+            raise DispatchRejected("DELIVERY_STATE_CONFLICT")
+        if current_correlation is None:
+            try:
+                self._store.record_delivery_correlation(
+                    outbox_id,
+                    receipt.correlation_id,
+                    observed_at=attempted_at,
+                    provider_state="ACCEPTED",
+                )
+            except StoreConflict as exc:
+                raise DispatchRejected("DELIVERY_STATE_CONFLICT") from exc
         return DispatchReceipt(
             receipt.occurrence_id,
             receipt.correlation_id,
