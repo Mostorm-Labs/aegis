@@ -106,6 +106,48 @@ class CpI09HarnessTests(unittest.TestCase):
 
             self.assertEqual(1, state["attempt_count"])
 
+    def test_retry_with_existing_provider_correlation_skips_redundant_correlation_write(self):
+        from tests.control_plane.cp_i02_fixtures import make_request, occurrence_record
+        from tests.control_plane.cp_i05_fixtures import dispatch_authorization
+        from tools.aegis_control.dispatch import DispatchService
+        from tools.aegis_control.execution_surface import DeterministicExecutionSurface
+        from tools.aegis_control.mutation import MutationService
+        from tools.aegis_control.store import ControlStore
+
+        with tempfile.TemporaryDirectory() as tmp:
+            store = ControlStore(str(Path(tmp) / "control.sqlite"))
+            scheduled = MutationService(store).apply(make_request(
+                "SCHEDULE_STAGE_OCCURRENCE",
+                "req_cp_i09_dispatch_write_probe",
+                "lane_cp_i09_dispatch_write_probe",
+                {"occurrence": occurrence_record(
+                    "so_cp_i09_dispatch_write_probe",
+                    "lane_cp_i09_dispatch_write_probe",
+                )},
+            ))
+            outbox_id = scheduled["outbox_ids"][0]
+            surface = DeterministicExecutionSurface()
+            dispatch = DispatchService(
+                store,
+                surface,
+                authorization_resolver=dispatch_authorization(),
+            )
+
+            with patch.object(
+                store,
+                "record_delivery_correlation",
+                wraps=store.record_delivery_correlation,
+            ) as record_correlation:
+                first = dispatch.dispatch(outbox_id, attempted_at="2026-09-02T00:00:00Z")
+                second = dispatch.dispatch(outbox_id, attempted_at="2026-09-02T01:00:00Z")
+
+            delivery = store.read_delivery_state(outbox_id)
+            self.assertEqual(first.correlation_id, second.correlation_id)
+            self.assertEqual(1, surface.unique_execution_count)
+            self.assertEqual(2, delivery["attempt_count"])
+            self.assertEqual(first.correlation_id, delivery["provider_correlation_id"])
+            self.assertEqual(1, record_correlation.call_count)
+
     def test_package_materialization_does_not_scan_global_stage_occurrence_history(self):
         from tests.control_plane.cp_i02_fixtures import make_request, package_record
         from tools.aegis_control.mutation import MutationService
