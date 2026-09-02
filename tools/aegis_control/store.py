@@ -51,6 +51,8 @@ CREATE TABLE IF NOT EXISTS canonical_records (
 CREATE UNIQUE INDEX IF NOT EXISTS ux_stage_occurrence_terminal
 ON canonical_records(record_id)
 WHERE kind = 'STAGE_OCCURRENCE' AND stage_state = 'TERMINAL';
+CREATE INDEX IF NOT EXISTS ix_canonical_lane_latest
+ON canonical_records(control_lane_id, kind, record_id, record_revision DESC);
 CREATE TABLE IF NOT EXISTS lane_heads (
     lane_id TEXT PRIMARY KEY,
     version INTEGER NOT NULL,
