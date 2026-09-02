@@ -4,7 +4,7 @@ Status: **Current Additive Authority v0.2 — execution-position repair**
 
 Supersedes: `docs/execution-surface-contract-v0.1.md`
 
-v0.2 preserves the v0.1 execution-surface vocabulary, P30-P36 ownership mapping, task-package compression rule, reviewer-accessible evidence-materialization boundary, and independent P34 review. It adds one missing contract: how a repository-backed task identifies its stable trusted baseline and its moving accepted resume point across `CONTROL_REASONING -> CODE_EXECUTION` handoffs.
+v0.2 preserves the v0.1 execution-surface vocabulary, P30-P36 ownership mapping, task-package compression rule, reviewer-accessible evidence-materialization boundary, and independent P34 review. It adds one missing contract: how a repository-backed task identifies its stable trusted baseline and its moving accepted resume point across `CONTROL_REASONING -> CODE_EXECUTION` handoffs. It also standardizes the execution-trigger rendering for Codex-targeted handoffs without changing lifecycle or Authority semantics.
 
 ## 1. Preserved v0.1 semantics
 
@@ -61,7 +61,9 @@ If no accepted continuation point exists yet, `resume_cursor: null` is valid. Th
 
 ## 5. Surface handoff v0.2
 
-A repository-backed P32/P33 handoff is represented as:
+A repository-backed P32/P33 handoff is represented as below. When the rendered handoff uses `preferred_executor: codex`, the presentation MUST prepend this exact execution instruction immediately before the YAML envelope:
+
+> 请按以下 Aegis handoff 直接执行：以 `package_ref` 为任务授权，按 `task_anchor/resume_cursor` 核对当前状态并从首个未完成步骤继续；若状态冲突则 fail closed。
 
 ```yaml
 type: surface_handoff
@@ -77,6 +79,8 @@ task_anchor:
 resume_cursor: null | <accepted-cursor>
 return_surface: CONTROL_REVIEW
 ```
+
+The standard prefix is execution-trigger/rendering metadata only. It does not alter stage ownership, Current Authority, package scope, evidence obligations, Gate semantics, or Project State. It is conditional on `preferred_executor: codex`; other executor profiles are not required to render it.
 
 `package_ref` continues to carry the authorized work contract. `task_anchor` and `resume_cursor` carry execution-position semantics only. The nullability shown above does not weaken the conditional requirements in §§3-4: baseline-dependent repository execution requires a non-null anchor, and a known accepted P33 continuation requires a non-null cursor.
 
@@ -139,6 +143,7 @@ P34 resolves `materialized_ref` independently. A `resume_cursor` is not evidence
 
 `aegis-implementation` must:
 
+- require the exact standard execution prefix immediately before every rendered `surface_handoff` whose `preferred_executor` is `codex`;
 - require a non-null repository task anchor whenever P31 execution depends on a repository baseline;
 - require a non-null accepted resume cursor whenever P33 has a known control-plane-accepted continuation point;
 - allow `resume_cursor: null` only when no accepted continuation point exists yet;
@@ -162,9 +167,10 @@ v0.2 is accepted when deterministic and hosted verification prove:
 5. behavioral dogfood exercises `EXACT_CURSOR`, `DESCENDANT_CURSOR`, `ANCHOR_DESCENDANT_WITHOUT_CURSOR`, and `DIVERGED`, including no-replay descendant resume and fail-closed divergence;
 6. genuine divergence fails closed with `BLOCKED_EXECUTION_DIVERGENCE` or a more specific valid blocker;
 7. historical HEAD equality is not the sole resumable-task predicate;
-8. canonical and generated Skill instructions agree;
-9. existing execution-surface, composition, routing, Project State, and evaluation regressions remain green;
-10. final result is reviewer-accessible and P34 can independently resolve it.
+8. every rendered `surface_handoff` with `preferred_executor: codex` carries the exact standard execution prefix immediately before its YAML envelope;
+9. canonical and generated Skill instructions agree;
+10. existing execution-surface, composition, routing, Project State, and evaluation regressions remain green;
+11. final result is reviewer-accessible and P34 can independently resolve it.
 
 ## 11. Non-goals
 
@@ -180,4 +186,4 @@ v0.2 does not:
 
 ## 12. Origin of the repair
 
-The repair was triggered by a real handoff failure mode in which a control-plane prompt retained an earlier P32 expected HEAD while the code-execution branch already contained later authorized implementation, test-strengthening, and evidence commits. The executor correctly observed the mismatch but lacked a shared contract for distinguishing valid descendant progress from true divergence. v0.2 promotes the previously local ancestry-based preflight pattern into shared normative execution-position semantics.
+The execution-position repair was triggered by a real handoff failure mode in which a control-plane prompt retained an earlier P32 expected HEAD while the code-execution branch already contained later authorized implementation, test-strengthening, and evidence commits. The executor correctly observed the mismatch but lacked a shared contract for distinguishing valid descendant progress from true divergence. v0.2 promotes the previously local ancestry-based preflight pattern into shared normative execution-position semantics. The Codex prefix addition closes a separate presentation ambiguity: a valid handoff envelope must also make it explicit that the receiving Codex surface should begin authorized execution rather than merely inspect the protocol payload.
