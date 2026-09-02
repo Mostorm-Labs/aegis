@@ -31,7 +31,7 @@ def _insert_record(conn: sqlite3.Connection, record: dict, *, stage_state: str |
             record["record_revision"],
             record.get("control_lane_id"),
             stage_state,
-            canonical_dumps(record).decode("utf-8"),
+            canonical_dumps(record),
             digest,
         ),
     )
