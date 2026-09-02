@@ -4,6 +4,8 @@ import threading
 import time
 import unittest
 
+# P36 evidence: S0 must preserve the offered-load window while recoverable backlog drains later.
+
 
 class CpI09S0AdmissionTests(unittest.TestCase):
     def test_recoverable_s0_backlog_does_not_throttle_offered_load(self):
