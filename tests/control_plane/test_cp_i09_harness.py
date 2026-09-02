@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+import sqlite3
 import tempfile
 import threading
 import time
@@ -62,6 +63,48 @@ class CpI09HarnessTests(unittest.TestCase):
                     futures = [executor.submit(dispatch_op, seq) for seq in (0, 1)]
                     for future in futures:
                         future.result(timeout=2.0)
+
+    def test_same_store_serializes_semantic_and_operational_writers_before_sqlite(self):
+        from tools.aegis_control.store import ControlStore
+
+        class ShortBusyStore(ControlStore):
+            def _connect(self, *, readonly=False):
+                conn = super()._connect(readonly=readonly)
+                conn.execute("PRAGMA busy_timeout = 20")
+                return conn
+
+        with tempfile.TemporaryDirectory() as tmp:
+            db_path = Path(tmp) / "control.sqlite"
+            store = ShortBusyStore(str(db_path))
+            conn = sqlite3.connect(str(db_path))
+            try:
+                conn.execute(
+                    "INSERT INTO outbox(outbox_id, occurrence_id, control_lane_id, payload_json) "
+                    "VALUES('out_writer_probe', 'so_writer_probe', 'lane_writer_probe', '{}')"
+                )
+                conn.commit()
+            finally:
+                conn.close()
+
+            write_started = threading.Event()
+
+            def hold_semantic_writer():
+                with store._mutation_transaction():
+                    write_started.set()
+                    time.sleep(0.1)
+
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                holder = executor.submit(hold_semantic_writer)
+                self.assertTrue(write_started.wait(timeout=1.0))
+                state = store.record_delivery_attempt(
+                    "out_writer_probe",
+                    "2026-09-02T00:00:00Z",
+                    next_attempt_at="2026-09-02T00:00:01Z",
+                    provider_state="ATTEMPTING",
+                )
+                holder.result(timeout=1.0)
+
+            self.assertEqual(1, state["attempt_count"])
 
     def test_w7d_generator_materializes_exact_168_hour_raw_recomputable_workload(self):
         from tests.control_plane.cp_i09_cost import build_cost_evidence
