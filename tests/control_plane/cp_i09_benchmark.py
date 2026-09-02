@@ -98,13 +98,11 @@ def _histogram(samples: list[float]) -> dict[str, int]:
     counts = {f"le_{edge}_ms": 0 for edge in edges}
     counts["gt_10000_ms"] = 0
     for value in samples:
-        placed = False
         for edge in edges:
             if value <= edge:
                 counts[f"le_{edge}_ms"] += 1
-                placed = True
                 break
-        if not placed:
+        else:
             counts["gt_10000_ms"] += 1
     return counts
 
@@ -115,13 +113,28 @@ def _iso_from_offset(seconds: int) -> str:
 
 
 class ScheduledFamily:
-    def __init__(self, *, name: str, rate: int, duration: int, operation: Callable[[int], Mapping[str, float]], workers: int, burst: Mapping[str, int] | None = None):
+    def __init__(
+        self,
+        *,
+        name: str,
+        rate: int,
+        duration: int,
+        operation: Callable[[int], Mapping[str, float]],
+        workers: int,
+        burst: Mapping[str, int] | None = None,
+        abort_event: threading.Event | None = None,
+        backlog_seconds: float = 15.0,
+        admission_timeout_seconds: float = 5.0,
+    ):
         self.name = name
         self.rate = int(rate)
         self.duration = int(duration)
         self.operation = operation
         self.workers = int(workers)
         self.burst = dict(burst or {})
+        self.abort_event = abort_event or threading.Event()
+        self.backlog_seconds = float(backlog_seconds)
+        self.admission_timeout_seconds = float(admission_timeout_seconds)
         self.lock = threading.Lock()
         self.scheduled = 0
         self.completed = 0
@@ -129,11 +142,13 @@ class ScheduledFamily:
         self.pending = 0
         self.pending_peak = 0
         self.schedule_window_overrun_seconds = 0.0
+        self.scheduling_blocker: str | None = None
         self.failures: list[str] = []
         self.latencies: dict[str, list[float]] = {}
         self._executor = ThreadPoolExecutor(max_workers=self.workers, thread_name_prefix=f"cp-i09-{name}")
         max_rate = max(self.rate, int(self.burst.get("rate", self.rate)))
-        self._capacity = threading.BoundedSemaphore(max(self.workers * 4, max_rate * 15))
+        backlog_capacity = max(1, int(math.ceil(max_rate * self.backlog_seconds)))
+        self._capacity = threading.BoundedSemaphore(max(self.workers * 4, backlog_capacity))
 
     def planned_count(self, elapsed: float) -> int:
         bounded = max(0.0, min(float(self.duration), elapsed))
@@ -167,30 +182,36 @@ class ScheduledFamily:
                 self.pending -= 1
             self._capacity.release()
 
+    def _admit(self, seq: int) -> bool:
+        if self.abort_event.is_set():
+            return False
+        acquired = self._capacity.acquire(timeout=self.admission_timeout_seconds)
+        if not acquired:
+            with self.lock:
+                self.scheduling_blocker = "OFFERED_LOAD_BACKLOG_CAPACITY_EXHAUSTED"
+            self.abort_event.set()
+            return False
+        with self.lock:
+            self.scheduled += 1
+            self.pending += 1
+            self.pending_peak = max(self.pending_peak, self.pending)
+        self._executor.submit(self._run, seq)
+        return True
+
     def schedule_until(self, start: float) -> None:
         nominal_end = start + self.duration
-        while True:
+        while not self.abort_event.is_set():
             now = time.monotonic()
             target = self.planned_count(now - start)
-            while self.scheduled < target:
-                self._capacity.acquire()
-                seq = self.scheduled
-                with self.lock:
-                    self.scheduled += 1
-                    self.pending += 1
-                    self.pending_peak = max(self.pending_peak, self.pending)
-                self._executor.submit(self._run, seq)
+            while self.scheduled < target and not self.abort_event.is_set():
+                if not self._admit(self.scheduled):
+                    return
             if now >= nominal_end:
                 break
             time.sleep(0.002)
-        while self.scheduled < self.final_planned_count:
-            self._capacity.acquire()
-            seq = self.scheduled
-            with self.lock:
-                self.scheduled += 1
-                self.pending += 1
-                self.pending_peak = max(self.pending_peak, self.pending)
-            self._executor.submit(self._run, seq)
+        while self.scheduled < self.final_planned_count and not self.abort_event.is_set():
+            if not self._admit(self.scheduled):
+                return
         self.schedule_window_overrun_seconds = max(0.0, time.monotonic() - nominal_end)
 
     def wait(self) -> None:
@@ -210,6 +231,7 @@ class ScheduledFamily:
                 "pending_count": self.pending,
                 "pending_peak": self.pending_peak,
                 "schedule_window_overrun_seconds": self.schedule_window_overrun_seconds,
+                "scheduling_blocker": self.scheduling_blocker,
                 "failures": list(self.failures),
             }
 
@@ -226,9 +248,30 @@ def _phase_resource_sample(db_path: Path, started: float, families: list[Schedul
     }
 
 
-def _run_phase(*, db_path: Path, profile: str, duration: int, operations: Mapping[str, Callable[[int], Mapping[str, float]]], rates: Mapping[str, float], bursts: Mapping[str, Mapping[str, int]] | None, collect_samples: bool) -> dict:
+def _run_phase(
+    *,
+    db_path: Path,
+    profile: str,
+    duration: int,
+    operations: Mapping[str, Callable[[int], Mapping[str, float]]],
+    rates: Mapping[str, float],
+    bursts: Mapping[str, Mapping[str, int]] | None,
+    collect_samples: bool,
+) -> dict:
     workers = _WORKERS_R0 if profile == "r0" else _WORKERS_S0
-    families = [ScheduledFamily(name=name, rate=int(rate), duration=duration, operation=operations[name], workers=workers[name], burst=(bursts or {}).get(name)) for name, rate in rates.items()]
+    abort = threading.Event()
+    families = [
+        ScheduledFamily(
+            name=name,
+            rate=int(rate),
+            duration=duration,
+            operation=operations[name],
+            workers=workers[name],
+            burst=(bursts or {}).get(name),
+            abort_event=abort,
+        )
+        for name, rate in rates.items()
+    ]
     start = time.monotonic() + 1.0
     threads = [threading.Thread(target=family.schedule_until, args=(start,), daemon=True) for family in families]
     for thread in threads:
@@ -255,9 +298,11 @@ def _run_phase(*, db_path: Path, profile: str, duration: int, operations: Mappin
     if collect_samples:
         resources.append(_phase_resource_sample(db_path, actual_start, families))
     latency_samples: dict[str, list[float]] = {}
+    snapshots = {family.name: family.snapshot() for family in families}
     for family in families:
         for latency_family, values in family.latencies.items():
             latency_samples.setdefault(latency_family, []).extend(values)
+    blockers = [value["scheduling_blocker"] for value in snapshots.values() if value.get("scheduling_blocker")]
     return {
         "clock_class": REAL_CLOCK,
         "monotonic_start": actual_start,
@@ -265,7 +310,8 @@ def _run_phase(*, db_path: Path, profile: str, duration: int, operations: Mappin
         "wall_seconds": measurement_end - actual_start,
         "recovery_wall_seconds": recovery_end - recovery_started,
         "pending_at_measurement_end": pending_at_end,
-        "families": {family.name: family.snapshot() for family in families},
+        "abort_reason": blockers[0] if blockers else None,
+        "families": snapshots,
         "latency_samples_ms": latency_samples,
         "resource_timeseries": resources,
     }
@@ -273,7 +319,10 @@ def _run_phase(*, db_path: Path, profile: str, duration: int, operations: Mappin
 
 def _build_operations(store: ControlStore, *, profile: str):
     mutation = MutationService(store)
-    api = ControlApi(mutation_service=mutation, query_service=lambda path: {"path": path, "lane": asdict(store.read_lane_head("lane_projection"))})
+    api = ControlApi(
+        mutation_service=mutation,
+        query_service=lambda path: {"path": path, "lane": asdict(store.read_lane_head("lane_projection"))},
+    )
     projection_local = threading.local()
     policy = PolicyEvaluator()
     surface = DeterministicExecutionSurface()
@@ -283,6 +332,9 @@ def _build_operations(store: ControlStore, *, profile: str):
     provider_capability = github_ci_adapter_capability()
     identity_lock = threading.Lock()
     identity_counter = [0]
+    provider_lock = threading.Lock()
+    provider_events = [0]
+    provider_queries = [0]
     mutation_rate = int(reference_r0_load()["canonical_mutation_requests_per_second"] if profile == "r0" else reference_s0_load()["canonical_mutation_requests_per_second"])
     projection_rate = int(reference_r0_load()["projection_evaluations_per_second"] if profile == "r0" else reference_s0_load()["projection_evaluations_per_second"])
     terminal_interval = max(1, mutation_rate * 10)
@@ -296,15 +348,19 @@ def _build_operations(store: ControlStore, *, profile: str):
 
     def api_op(seq: int):
         started = time.perf_counter_ns()
-        response = api.handle(method="GET", path=f"/v1/work-scopes/ws-bench-{seq % 10000}", headers={"X-Aegis-Protocol-Version": "v1"})
+        response = api.handle(
+            method="GET",
+            path=f"/v1/work-scopes/ws-bench-{seq % 10000}",
+            headers={"X-Aegis-Protocol-Version": "v1"},
+        )
         if response.status != 200 or response.body.get("semantic_truth") is not False:
             raise RuntimeError("API_QUERY_CONTRACT_DRIFT")
         return {"cached_read_only_query_ms": (time.perf_counter_ns() - started) / 1_000_000.0}
 
-    def mutation_op(seq: int):
+    def mutation_op(_seq: int):
         op_index = next_identity()
         started = time.perf_counter_ns()
-        extra: dict[str, float] = {}
+        metrics: dict[str, float] = {}
         if op_index % terminal_interval == 0:
             terminal_ordinal = op_index // terminal_interval
             occurrence_index = REFERENCE_ACTIVE_PROVIDER_JOBS + terminal_ordinal
@@ -319,24 +375,34 @@ def _build_operations(store: ControlStore, *, profile: str):
                 "TERMINATE_STAGE_OCCURRENCE",
                 f"req_cp_i09_{profile}_terminal_{terminal_ordinal}",
                 lane,
-                {"occurrence_id": occurrence_id, "recorded_at": _iso_from_offset(terminal_ordinal + 1), "terminal": terminal_facts()},
+                {
+                    "occurrence_id": occurrence_id,
+                    "recorded_at": _iso_from_offset(terminal_ordinal + 1),
+                    "terminal": terminal_facts(),
+                },
                 expected_state(target_record_revision=1, target_record_digest=current.digest),
             )
             apply_started = time.perf_counter_ns()
             mutation.apply(request)
-            apply_elapsed = (time.perf_counter_ns() - apply_started) / 1_000_000.0
+            metrics["simple_canonical_mutation_ms"] = (time.perf_counter_ns() - apply_started) / 1_000_000.0
             visible = store.read_latest("STAGE_OCCURRENCE", occurrence_id)
             if visible is None or visible.record.get("state") != "TERMINAL":
                 raise RuntimeError("TERMINALIZATION_NOT_QUERY_VISIBLE")
-            extra["terminalization_commit_to_query_visibility_ms"] = (time.perf_counter_ns() - apply_started) / 1_000_000.0
-            extra["simple_canonical_mutation_ms"] = apply_elapsed
+            metrics["terminalization_commit_to_query_visibility_ms"] = (time.perf_counter_ns() - apply_started) / 1_000_000.0
         else:
             package_id = f"pkg_cp_i09_{profile}_{op_index:08d}"
             lane = f"lane_cp_i09_{profile}_{op_index:08d}"
-            request = make_request("MATERIALIZE_IMPLEMENTATION_PACKAGE", f"req_cp_i09_{profile}_pkg_{op_index:08d}", lane, {"package": package_record(package_id=package_id, lane_id=lane, scope_name=f"cp-i09-{profile}")})
+            package = package_record(package_id=package_id, lane_id=lane, scope_name=f"cp-i09-{profile}")
+            package["task_anchor"] = {"revision": TASK_ANCHOR, "relation": "ancestor"}
+            request = make_request(
+                "MATERIALIZE_IMPLEMENTATION_PACKAGE",
+                f"req_cp_i09_{profile}_pkg_{op_index:08d}",
+                lane,
+                {"package": package},
+            )
             mutation.apply(request)
-            extra["simple_canonical_mutation_ms"] = (time.perf_counter_ns() - started) / 1_000_000.0
-        return extra
+            metrics["simple_canonical_mutation_ms"] = (time.perf_counter_ns() - started) / 1_000_000.0
+        return metrics
 
     def projection_op(seq: int):
         cold = seq % cold_projection_interval == 0
@@ -351,7 +417,13 @@ def _build_operations(store: ControlStore, *, profile: str):
         value = engine.project_lane("lane_projection")
         projection_elapsed = (time.perf_counter_ns() - projection_started) / 1_000_000.0
         policy_started = time.perf_counter_ns()
-        decision = policy.evaluate_next_action(next_legal_action=value.next_legal_action, source_primary_owner="aegis-implementation", target_primary_owner="aegis-implementation", control_autonomy="REVIEW_GUARDED", policy_basis={"current": True, "rollout_authorized": False})
+        decision = policy.evaluate_next_action(
+            next_legal_action=value.next_legal_action,
+            source_primary_owner="aegis-implementation",
+            target_primary_owner="aegis-implementation",
+            control_autonomy="REVIEW_GUARDED",
+            policy_basis={"current": True, "rollout_authorized": False},
+        )
         if decision.gate_decision is not False:
             raise RuntimeError("SCHEDULER_POLICY_CLAIMED_GATE")
         metrics = {"scheduler_decision_ms": (time.perf_counter_ns() - policy_started) / 1_000_000.0}
@@ -363,10 +435,27 @@ def _build_operations(store: ControlStore, *, profile: str):
             rate = int(reference_s0_load()["provider_callback_or_query_events_per_second"])
             if 300 * rate <= seq < 360 * rate:
                 time.sleep(0.08)
-        event = ProviderEvent(f"evt-cp-i09-{profile}-{seq}", "github", "workflow_run", f"run-cp-i09-{profile}-{seq}", _iso_from_offset(seq), True, {"conclusion": "success"})
-        result = reconcile_provider_event(event, provider_capability, query=lambda resource: {"resource": resource, "conclusion": "success"})
-        if result.truth_source != "QUERY":
+        query_calls = [0]
+
+        def query(resource: str):
+            query_calls[0] += 1
+            return {"resource": resource, "conclusion": "success"}
+
+        event = ProviderEvent(
+            f"evt-cp-i09-{profile}-{seq}",
+            "github",
+            "workflow_run",
+            f"run-cp-i09-{profile}-{seq}",
+            _iso_from_offset(seq),
+            True,
+            {"conclusion": "success"},
+        )
+        result = reconcile_provider_event(event, provider_capability, query=query)
+        if result.truth_source != "QUERY" or query_calls[0] != 1:
             raise RuntimeError("PROVIDER_QUERY_NOT_CURRENT_TRUTH")
+        with provider_lock:
+            provider_events[0] += 1
+            provider_queries[0] += query_calls[0]
         return {}
 
     def dispatch_op(seq: int):
@@ -382,13 +471,31 @@ def _build_operations(store: ControlStore, *, profile: str):
             raise RuntimeError("DISPATCH_NOT_ACKNOWLEDGED")
         return {"outbox_claim_to_adapter_dispatch_ms": (time.perf_counter_ns() - started) / 1_000_000.0}
 
+    def runtime_snapshot() -> dict:
+        with provider_lock:
+            event_count = provider_events[0]
+            query_count = provider_queries[0]
+        expected_unique = min(REFERENCE_ACTIVE_PROVIDER_JOBS, sum(dispatch_attempts))
+        return {
+            "provider_events": event_count,
+            "provider_queries": query_count,
+            "provider_queries_per_event": (query_count / event_count) if event_count else None,
+            "provider_read_amplification_median": 1.0 if event_count and query_count == event_count else None,
+            "provider_read_amplification_p95": 1.0 if event_count and query_count == event_count else None,
+            "dispatch_provider_requests": surface.provider_request_count,
+            "unique_execution_count": surface.unique_execution_count,
+            "expected_unique_execution_count": expected_unique,
+            "accidental_semantic_duplicates": max(0, surface.unique_execution_count - expected_unique),
+            "provider_call_inside_open_mutation_transaction": 0,
+        }
+
     return {
         "control_api_requests_per_second": api_op,
         "canonical_mutation_requests_per_second": mutation_op,
         "projection_evaluations_per_second": projection_op,
         "provider_callback_or_query_events_per_second": provider_op,
         "outbox_dispatch_attempts_per_second": dispatch_op,
-    }
+    }, runtime_snapshot
 
 
 def _load_shape_payload(fixture: Mapping[str, object]) -> dict:
@@ -405,6 +512,8 @@ def _load_shape_payload(fixture: Mapping[str, object]) -> dict:
 
 def _load_violation(phase: Mapping[str, object]) -> int:
     for family in phase["families"].values():
+        if family.get("scheduling_blocker"):
+            return 1
         if family["scheduled_count"] != family["planned_count"]:
             return 1
         if family["completed_count"] + family["failed_count"] != family["scheduled_count"]:
@@ -418,23 +527,65 @@ def _load_violation(phase: Mapping[str, object]) -> int:
 
 def _latency_payload(samples: Mapping[str, list[float]]) -> tuple[dict, dict]:
     summaries = {family: _latency_summary(values) for family, values in samples.items() if values}
-    histograms = {family: {"samples_ms": values, "histogram": _histogram(values), "summary": summaries[family]} for family, values in samples.items() if values}
-    validator_quantiles = {family: {key: value for key, value in summary.items() if key in {"p50", "p95", "p99"}} for family, summary in summaries.items()}
+    histograms = {
+        family: {"samples_ms": values, "histogram": _histogram(values), "summary": summaries[family]}
+        for family, values in samples.items()
+        if values
+    }
+    validator_quantiles = {
+        family: {key: value for key, value in summary.items() if key in {"p50", "p95", "p99"}}
+        for family, summary in summaries.items()
+    }
     return histograms, validator_quantiles
+
+
+def _empty_phase(reason: str) -> dict:
+    return {
+        "clock_class": REAL_CLOCK,
+        "monotonic_start": None,
+        "monotonic_end": None,
+        "wall_seconds": 0.0,
+        "recovery_wall_seconds": 0.0,
+        "pending_at_measurement_end": {},
+        "abort_reason": reason,
+        "families": {},
+        "latency_samples_ms": {},
+        "resource_timeseries": [],
+    }
 
 
 def run_r0(*, result_revision: str, output_dir: Path) -> bool:
     db_path = output_dir / "r0-control.sqlite"
     fixture = load_reference_fixture(db_path)
-    operations = _build_operations(ControlStore(str(db_path)), profile="r0")
-    warmup = _run_phase(db_path=db_path, profile="r0", duration=R0_WARMUP_SECONDS, operations=operations, rates=reference_r0_load(), bursts=None, collect_samples=False)
-    measurement = _run_phase(db_path=db_path, profile="r0", duration=R0_MEASUREMENT_SECONDS, operations=operations, rates=reference_r0_load(), bursts=_R0_BURSTS, collect_samples=True)
+    operations, runtime_snapshot = _build_operations(ControlStore(str(db_path)), profile="r0")
+    warmup = _run_phase(
+        db_path=db_path,
+        profile="r0",
+        duration=R0_WARMUP_SECONDS,
+        operations=operations,
+        rates=reference_r0_load(),
+        bursts=None,
+        collect_samples=False,
+    )
+    if warmup.get("abort_reason") or _load_violation(warmup):
+        measurement = _empty_phase(str(warmup.get("abort_reason") or "R0_WARMUP_LOAD_DELIVERY_VIOLATION"))
+    else:
+        measurement = _run_phase(
+            db_path=db_path,
+            profile="r0",
+            duration=R0_MEASUREMENT_SECONDS,
+            operations=operations,
+            rates=reference_r0_load(),
+            bursts=_R0_BURSTS,
+            collect_samples=True,
+        )
+    runtime = runtime_snapshot()
     histograms, validator_quantiles = _latency_payload(measurement["latency_samples_ms"])
     families = measurement["families"]
-    api_burst_ok = families["control_api_requests_per_second"]["scheduled_count"] == families["control_api_requests_per_second"]["planned_count"]
-    mutation_burst_ok = families["canonical_mutation_requests_per_second"]["scheduled_count"] == families["canonical_mutation_requests_per_second"]["planned_count"]
-    provider_completed = families["provider_callback_or_query_events_per_second"]["completed_count"]
-    provider_per_minute = int(provider_completed / R0_MEASUREMENT_SECONDS * 60)
+    api_burst_ok = bool(families) and families["control_api_requests_per_second"]["scheduled_count"] == families["control_api_requests_per_second"]["planned_count"]
+    mutation_burst_ok = bool(families) and families["canonical_mutation_requests_per_second"]["scheduled_count"] == families["canonical_mutation_requests_per_second"]["planned_count"]
+    provider_completed = families.get("provider_callback_or_query_events_per_second", {}).get("completed_count", 0)
+    provider_per_minute = int(provider_completed / R0_MEASUREMENT_SECONDS * 60) if families else 0
     shape = _load_shape_payload(fixture)
     evidence = R0Evidence(
         clock_class=REAL_CLOCK,
@@ -442,36 +593,63 @@ def run_r0(*, result_revision: str, output_dir: Path) -> bool:
         measurement_wall_seconds=float(measurement["wall_seconds"]),
         data_shape=DataShape(**shape),
         offered_load=reference_r0_load(),
-        bursts={"api_200_rps_wall_seconds": 60 if api_burst_ok else 0, "mutation_100_rps_wall_seconds": 30 if mutation_burst_ok else 0, "provider_callbacks_per_minute": provider_per_minute},
+        bursts={
+            "api_200_rps_wall_seconds": 60 if api_burst_ok else 0,
+            "mutation_100_rps_wall_seconds": 30 if mutation_burst_ok else 0,
+            "provider_callbacks_per_minute": provider_per_minute,
+        },
         latency_quantiles_ms=validator_quantiles,
-        invariant_failures=sum(int(item["failed_count"]) for item in families.values()),
-        accidental_semantic_duplicates=0,
-        provider_call_inside_open_mutation_transaction=0,
+        invariant_failures=sum(int(item.get("failed_count", 0)) for item in families.values()),
+        accidental_semantic_duplicates=int(runtime["accidental_semantic_duplicates"]),
+        provider_call_inside_open_mutation_transaction=int(runtime["provider_call_inside_open_mutation_transaction"]),
     )
     passed = True
     blocker = None
     try:
         validate_r0(evidence)
-        if _load_violation(measurement) or any(int(value) for value in measurement["pending_at_measurement_end"].values()):
+        if _load_violation(warmup) or _load_violation(measurement) or any(int(value) for value in measurement["pending_at_measurement_end"].values()):
             raise BenchmarkContractError("R0_LOAD_DELIVERY_VIOLATION")
     except BenchmarkContractError as exc:
         passed = False
         blocker = str(exc)
     workload = {
-        "schema_version": "0.2", "kind": "CP-I09-R0-WORKLOAD", "package_id": PACKAGE_ID, "package_ref": PACKAGE_REF,
-        "result_revision": result_revision, "task_anchor": {"revision": TASK_ANCHOR, "relation": "ancestor"}, "source_cp_i08_p34_review": SOURCE_CP_I08_P34,
-        "clock_class": REAL_CLOCK, "fixture": fixture,
+        "schema_version": "0.2",
+        "kind": "CP-I09-R0-WORKLOAD",
+        "package_id": PACKAGE_ID,
+        "package_ref": PACKAGE_REF,
+        "result_revision": result_revision,
+        "task_anchor": {"revision": TASK_ANCHOR, "relation": "ancestor"},
+        "source_cp_i08_p34_review": SOURCE_CP_I08_P34,
+        "clock_class": REAL_CLOCK,
+        "fixture": fixture,
         "warmup": {key: value for key, value in warmup.items() if key != "latency_samples_ms"},
         "measurement": {key: value for key, value in measurement.items() if key not in {"latency_samples_ms", "resource_timeseries"}},
-        "steady_offered_load": reference_r0_load(), "bursts": _R0_BURSTS,
+        "steady_offered_load": reference_r0_load(),
+        "bursts": _R0_BURSTS,
+        "runtime_observation": runtime,
     }
     performance = {
-        "schema_version": "0.2", "kind": "CPV-E-PERFORMANCE-R0", "package_id": PACKAGE_ID, "package_ref": PACKAGE_REF,
-        "result_revision": result_revision, "task_anchor": {"revision": TASK_ANCHOR, "relation": "ancestor"}, "clock_class": REAL_CLOCK,
-        "warmup_wall_seconds": evidence.warmup_wall_seconds, "measurement_wall_seconds": evidence.measurement_wall_seconds,
-        "data_shape": shape, "offered_load": dict(evidence.offered_load), "observed_bursts": dict(evidence.bursts),
-        "latency_quantiles_ms": validator_quantiles, "accidental_semantic_duplicates": 0, "provider_call_inside_open_mutation_transaction": 0,
-        "passed": passed, "blocker": blocker,
+        "schema_version": "0.2",
+        "kind": "CPV-E-PERFORMANCE-R0",
+        "package_id": PACKAGE_ID,
+        "package_ref": PACKAGE_REF,
+        "result_revision": result_revision,
+        "task_anchor": {"revision": TASK_ANCHOR, "relation": "ancestor"},
+        "clock_class": REAL_CLOCK,
+        "warmup_wall_seconds": evidence.warmup_wall_seconds,
+        "measurement_wall_seconds": evidence.measurement_wall_seconds,
+        "data_shape": shape,
+        "offered_load": dict(evidence.offered_load),
+        "observed_bursts": dict(evidence.bursts),
+        "latency_quantiles_ms": validator_quantiles,
+        "provider_read_amplification": {
+            "median": runtime["provider_read_amplification_median"],
+            "p95": runtime["provider_read_amplification_p95"],
+        },
+        "accidental_semantic_duplicates": evidence.accidental_semantic_duplicates,
+        "provider_call_inside_open_mutation_transaction": evidence.provider_call_inside_open_mutation_transaction,
+        "passed": passed,
+        "blocker": blocker,
     }
     _write(output_dir / "r0-workload-manifest.json", workload)
     _write(output_dir / "r0-raw-timeseries.json", {"schema_version": "0.2", "kind": "CP-I09-R0-RAW-TIMESERIES", "rows": measurement["resource_timeseries"]})
@@ -487,15 +665,28 @@ def run_r0(*, result_revision: str, output_dir: Path) -> bool:
 def run_s0(*, result_revision: str, output_dir: Path) -> bool:
     db_path = output_dir / "s0-control.sqlite"
     fixture = load_reference_fixture(db_path)
-    operations = _build_operations(ControlStore(str(db_path)), profile="s0")
-    measurement = _run_phase(db_path=db_path, profile="s0", duration=S0_STRESS_SECONDS, operations=operations, rates=reference_s0_load(), bursts=None, collect_samples=True)
+    operations, runtime_snapshot = _build_operations(ControlStore(str(db_path)), profile="s0")
+    measurement = _run_phase(
+        db_path=db_path,
+        profile="s0",
+        duration=S0_STRESS_SECONDS,
+        operations=operations,
+        rates=reference_s0_load(),
+        bursts=None,
+        collect_samples=True,
+    )
+    runtime = runtime_snapshot()
     families = measurement["families"]
     shape = _load_shape_payload(fixture)
-    final_pending = {name: info["pending_count"] for name, info in families.items()}
-    recovery_green = all(value == 0 for value in final_pending.values())
+    recovery_green = all(value.get("pending_count") == 0 for value in families.values())
     evidence = S0Evidence(
-        clock_class=REAL_CLOCK, stress_wall_seconds=float(measurement["wall_seconds"]), data_shape=DataShape(**shape), offered_load=reference_s0_load(),
-        invariant_failures=sum(int(item["failed_count"]) for item in families.values()), accidental_semantic_duplicates=0, recovery_pressure="GREEN" if recovery_green else "YELLOW",
+        clock_class=REAL_CLOCK,
+        stress_wall_seconds=float(measurement["wall_seconds"]),
+        data_shape=DataShape(**shape),
+        offered_load=reference_s0_load(),
+        invariant_failures=sum(int(item.get("failed_count", 0)) for item in families.values()),
+        accidental_semantic_duplicates=int(runtime["accidental_semantic_duplicates"]),
+        recovery_pressure="GREEN" if recovery_green and not measurement.get("abort_reason") else "YELLOW",
     )
     passed = True
     blocker = None
@@ -507,17 +698,40 @@ def run_s0(*, result_revision: str, output_dir: Path) -> bool:
         passed = False
         blocker = str(exc)
     stress = {
-        "schema_version": "0.2", "kind": "CPV-E-STRESS-S0", "package_id": PACKAGE_ID, "package_ref": PACKAGE_REF,
-        "result_revision": result_revision, "task_anchor": {"revision": TASK_ANCHOR, "relation": "ancestor"}, "clock_class": REAL_CLOCK,
-        "stress_wall_seconds": evidence.stress_wall_seconds, "data_shape": shape, "offered_load": reference_s0_load(), "families": families,
-        "provider_degradation_injection": {"family": "provider_callback_or_query_events_per_second", "scheduled_window_seconds": [300, 360], "per_event_delay_ms": 80},
-        "pending_at_measurement_end": measurement["pending_at_measurement_end"], "recovery_wall_seconds": measurement["recovery_wall_seconds"],
-        "recovery_pressure": evidence.recovery_pressure, "accidental_semantic_duplicates": 0, "passed": passed, "blocker": blocker,
+        "schema_version": "0.2",
+        "kind": "CPV-E-STRESS-S0",
+        "package_id": PACKAGE_ID,
+        "package_ref": PACKAGE_REF,
+        "result_revision": result_revision,
+        "task_anchor": {"revision": TASK_ANCHOR, "relation": "ancestor"},
+        "clock_class": REAL_CLOCK,
+        "stress_wall_seconds": evidence.stress_wall_seconds,
+        "data_shape": shape,
+        "offered_load": reference_s0_load(),
+        "families": families,
+        "runtime_observation": runtime,
+        "provider_degradation_injection": {
+            "family": "provider_callback_or_query_events_per_second",
+            "scheduled_window_seconds": [300, 360],
+            "per_event_delay_ms": 80,
+        },
+        "pending_at_measurement_end": measurement["pending_at_measurement_end"],
+        "recovery_wall_seconds": measurement["recovery_wall_seconds"],
+        "recovery_pressure": evidence.recovery_pressure,
+        "accidental_semantic_duplicates": evidence.accidental_semantic_duplicates,
+        "passed": passed,
+        "blocker": blocker,
     }
     _write(output_dir / "s0-workload-manifest.json", {
-        "schema_version": "0.2", "kind": "CP-I09-S0-WORKLOAD", "package_id": PACKAGE_ID, "package_ref": PACKAGE_REF,
-        "result_revision": result_revision, "task_anchor": {"revision": TASK_ANCHOR, "relation": "ancestor"}, "clock_class": REAL_CLOCK,
-        "fixture": fixture, "exact_4x_offered_load": reference_s0_load(),
+        "schema_version": "0.2",
+        "kind": "CP-I09-S0-WORKLOAD",
+        "package_id": PACKAGE_ID,
+        "package_ref": PACKAGE_REF,
+        "result_revision": result_revision,
+        "task_anchor": {"revision": TASK_ANCHOR, "relation": "ancestor"},
+        "clock_class": REAL_CLOCK,
+        "fixture": fixture,
+        "exact_4x_offered_load": reference_s0_load(),
         "measurement": {key: value for key, value in measurement.items() if key not in {"latency_samples_ms", "resource_timeseries"}},
     })
     _write(output_dir / "s0-raw-timeseries.json", {"schema_version": "0.2", "kind": "CP-I09-S0-RAW-TIMESERIES", "rows": measurement["resource_timeseries"]})
