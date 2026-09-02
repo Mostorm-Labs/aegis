@@ -988,7 +988,7 @@ class MutationService:
     def _work_scope_lane(self, tx, scope_id):
         lanes = {
             item.record.get("control_lane_id")
-            for item in tx.read_latest_stage_occurrences()
+            for item in tx.read_latest_stage_occurrences_for_scope(scope_id)
             if isinstance(item.record.get("work_scope_ref"), Mapping)
             and item.record["work_scope_ref"].get("id") == scope_id
         }
@@ -1000,7 +1000,7 @@ class MutationService:
     def _scope_by_id(self, tx, scope_id):
         scopes = {
             canonical_dumps(item.record["work_scope_ref"]): item.record["work_scope_ref"]
-            for item in tx.read_latest_stage_occurrences()
+            for item in tx.read_latest_stage_occurrences_for_scope(scope_id)
             if isinstance(item.record.get("work_scope_ref"), Mapping)
             and item.record["work_scope_ref"].get("id") == scope_id
         }
