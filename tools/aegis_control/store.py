@@ -523,6 +523,9 @@ class _MutationTransaction:
     def read_latest_stage_occurrences(self) -> list[StoredRecord]:
         return _read_latest_records(self._conn, kind="STAGE_OCCURRENCE")
 
+    def read_latest_stage_occurrences_for_scope(self, work_scope_id: str) -> list[StoredRecord]:
+        return _read_latest_stage_occurrences_for_scope(self._conn, work_scope_id)
+
     def read_latest_escalations(self) -> list[StoredRecord]:
         return _read_latest_records(self._conn, kind="ESCALATION")
 
@@ -662,6 +665,37 @@ def _read_latest_records(
         "AND latest.max_revision = c.record_revision "
         "ORDER BY c.kind, c.record_id",
         tuple(params),
+    ).fetchall()
+    return [_stored(row) for row in rows]
+
+
+def _read_latest_stage_occurrences_for_scope(
+    conn: sqlite3.Connection,
+    work_scope_id: str,
+) -> list[StoredRecord]:
+    if not isinstance(work_scope_id, str) or not work_scope_id:
+        return []
+    rows = conn.execute(
+        "WITH relevant_ids AS ("
+        "  SELECT DISTINCT record_id FROM canonical_records "
+        "  WHERE kind = 'STAGE_OCCURRENCE' "
+        "    AND json_extract(canonical_json, '$.work_scope_ref.id') = ?"
+        "), latest AS ("
+        "  SELECT c.record_id, MAX(c.record_revision) AS max_revision "
+        "  FROM canonical_records AS c "
+        "  JOIN relevant_ids AS r ON r.record_id = c.record_id "
+        "  WHERE c.kind = 'STAGE_OCCURRENCE' "
+        "  GROUP BY c.record_id"
+        ") "
+        "SELECT c.canonical_json, c.digest "
+        "FROM canonical_records AS c "
+        "JOIN latest "
+        "ON c.kind = 'STAGE_OCCURRENCE' "
+        "AND c.record_id = latest.record_id "
+        "AND c.record_revision = latest.max_revision "
+        "WHERE json_extract(c.canonical_json, '$.work_scope_ref.id') = ? "
+        "ORDER BY c.record_id",
+        (work_scope_id, work_scope_id),
     ).fetchall()
     return [_stored(row) for row in rows]
 
