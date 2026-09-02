@@ -106,6 +106,29 @@ class CpI09HarnessTests(unittest.TestCase):
 
             self.assertEqual(1, state["attempt_count"])
 
+    def test_package_materialization_does_not_scan_global_stage_occurrence_history(self):
+        from tests.control_plane.cp_i02_fixtures import make_request, package_record
+        from tools.aegis_control.mutation import MutationService
+        from tools.aegis_control.store import ControlStore, _MutationTransaction
+
+        with tempfile.TemporaryDirectory() as tmp:
+            store = ControlStore(str(Path(tmp) / "control.sqlite"))
+            package = package_record("pkg_scope_probe", "lane_scope_probe", scope_name="cp-i09-scope-probe")
+            request = make_request(
+                "MATERIALIZE_IMPLEMENTATION_PACKAGE",
+                "req_scope_probe",
+                "lane_scope_probe",
+                {"package": package},
+            )
+            with patch.object(
+                _MutationTransaction,
+                "read_latest_stage_occurrences",
+                side_effect=AssertionError("materialization must use indexed exact-scope lookup"),
+            ):
+                result = MutationService(store).apply(request)
+
+        self.assertEqual("APPLIED", result["status"])
+
     def test_w7d_generator_materializes_exact_168_hour_raw_recomputable_workload(self):
         from tests.control_plane.cp_i09_cost import build_cost_evidence
 
