@@ -4,6 +4,7 @@ import argparse
 import json
 import math
 import os
+import queue
 import resource
 import threading
 import time
@@ -126,6 +127,7 @@ class ScheduledFamily:
         abort_event: threading.Event | None = None,
         backlog_seconds: float = 15.0,
         admission_timeout_seconds: float = 5.0,
+        recoverable_backlog: bool = False,
     ):
         self.name = name
         self.rate = int(rate)
@@ -136,6 +138,7 @@ class ScheduledFamily:
         self.abort_event = abort_event or threading.Event()
         self.backlog_seconds = float(backlog_seconds)
         self.admission_timeout_seconds = float(admission_timeout_seconds)
+        self.recoverable_backlog = bool(recoverable_backlog)
         self.lock = threading.Lock()
         self.scheduled = 0
         self.completed = 0
@@ -146,10 +149,25 @@ class ScheduledFamily:
         self.scheduling_blocker: str | None = None
         self.failures: list[str] = []
         self.latencies: dict[str, list[float]] = {}
-        self._executor = ThreadPoolExecutor(max_workers=self.workers, thread_name_prefix=f"cp-i09-{name}")
-        max_rate = max(self.rate, int(self.burst.get("rate", self.rate)))
-        backlog_capacity = max(1, int(math.ceil(max_rate * self.backlog_seconds)))
-        self._capacity = threading.BoundedSemaphore(max(self.workers * 4, backlog_capacity))
+        self._executor: ThreadPoolExecutor | None = None
+        self._capacity: threading.BoundedSemaphore | None = None
+        self._work_queue: queue.Queue[int | None] | None = None
+        self._worker_threads: list[threading.Thread] = []
+        if self.recoverable_backlog:
+            self._work_queue = queue.Queue()
+            for worker_index in range(self.workers):
+                thread = threading.Thread(
+                    target=self._queue_worker,
+                    name=f"cp-i09-{name}-queue-{worker_index}",
+                    daemon=True,
+                )
+                thread.start()
+                self._worker_threads.append(thread)
+        else:
+            self._executor = ThreadPoolExecutor(max_workers=self.workers, thread_name_prefix=f"cp-i09-{name}")
+            max_rate = max(self.rate, int(self.burst.get("rate", self.rate)))
+            backlog_capacity = max(1, int(math.ceil(max_rate * self.backlog_seconds)))
+            self._capacity = threading.BoundedSemaphore(max(self.workers * 4, backlog_capacity))
 
     def planned_count(self, elapsed: float) -> int:
         bounded = max(0.0, min(float(self.duration), elapsed))
@@ -181,11 +199,41 @@ class ScheduledFamily:
         finally:
             with self.lock:
                 self.pending -= 1
+
+    def _run_bounded(self, seq: int) -> None:
+        try:
+            self._run(seq)
+        finally:
+            if self._capacity is None:
+                raise RuntimeError("bounded capacity missing")
             self._capacity.release()
+
+    def _queue_worker(self) -> None:
+        if self._work_queue is None:
+            raise RuntimeError("recoverable backlog queue missing")
+        while True:
+            seq = self._work_queue.get()
+            try:
+                if seq is None:
+                    return
+                self._run(seq)
+            finally:
+                self._work_queue.task_done()
 
     def _admit(self, seq: int) -> bool:
         if self.abort_event.is_set():
             return False
+        if self.recoverable_backlog:
+            with self.lock:
+                self.scheduled += 1
+                self.pending += 1
+                self.pending_peak = max(self.pending_peak, self.pending)
+            if self._work_queue is None:
+                raise RuntimeError("recoverable backlog queue missing")
+            self._work_queue.put(seq)
+            return True
+        if self._capacity is None or self._executor is None:
+            raise RuntimeError("bounded scheduler resources missing")
         acquired = self._capacity.acquire(timeout=self.admission_timeout_seconds)
         if not acquired:
             with self.lock:
@@ -196,7 +244,7 @@ class ScheduledFamily:
             self.scheduled += 1
             self.pending += 1
             self.pending_peak = max(self.pending_peak, self.pending)
-        self._executor.submit(self._run, seq)
+        self._executor.submit(self._run_bounded, seq)
         return True
 
     def schedule_until(self, start: float) -> None:
@@ -216,6 +264,18 @@ class ScheduledFamily:
         self.schedule_window_overrun_seconds = max(0.0, time.monotonic() - nominal_end)
 
     def wait(self) -> None:
+        if self.recoverable_backlog:
+            if self._work_queue is None:
+                raise RuntimeError("recoverable backlog queue missing")
+            self._work_queue.join()
+            for _ in self._worker_threads:
+                self._work_queue.put(None)
+            self._work_queue.join()
+            for thread in self._worker_threads:
+                thread.join()
+            return
+        if self._executor is None:
+            raise RuntimeError("bounded executor missing")
         self._executor.shutdown(wait=True)
 
     def snapshot(self) -> dict:
@@ -272,6 +332,7 @@ def _run_phase(
             workers=workers[name],
             burst=(bursts or {}).get(name),
             abort_event=abort,
+            recoverable_backlog=(profile == "s0"),
         )
         for name, rate in rates.items()
     ]
