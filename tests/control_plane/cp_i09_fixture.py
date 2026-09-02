@@ -44,6 +44,29 @@ def _percentile95(values: list[int]) -> int:
     return ordered[index]
 
 
+def _seed_outbox_rows(
+    conn: sqlite3.Connection,
+    open_refs: list[tuple[str, str, str]],
+    count: int = REFERENCE_ACTIVE_PROVIDER_JOBS,
+) -> None:
+    """Seed benchmark dispatch rows through the exact current production outbox schema."""
+    for i, (occurrence_id, lane, ref) in enumerate(open_refs[:count]):
+        outbox_id = f"out_bench_{i:04d}"
+        payload = json.dumps(
+            {
+                "occurrence_ref": ref,
+                "control_lane_id": lane,
+                "operation_request_id": f"req_bench_dispatch_{i:04d}",
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        conn.execute(
+            "INSERT INTO outbox(outbox_id,occurrence_id,control_lane_id,payload_json) VALUES(?,?,?,?)",
+            (outbox_id, occurrence_id, lane, payload),
+        )
+
+
 def load_reference_fixture(db_path: str | Path) -> dict:
     db_path = str(db_path)
     ControlStore(db_path)  # materialize the production schema before benchmark-only bulk preload.
@@ -129,17 +152,7 @@ def load_reference_fixture(db_path: str | Path) -> dict:
         )
         open_refs.append((occurrence["id"], lane, ref))
 
-    for i, (occurrence_id, lane, ref) in enumerate(open_refs[:REFERENCE_ACTIVE_PROVIDER_JOBS]):
-        outbox_id = f"out_bench_{i:04d}"
-        payload = json.dumps(
-            {"occurrence_ref": ref, "control_lane_id": lane, "operation_request_id": f"req_bench_dispatch_{i:04d}"},
-            sort_keys=True,
-            separators=(",", ":"),
-        )
-        conn.execute(
-            "INSERT INTO outbox(outbox_id,occurrence_id,control_lane_id,payload_json,status,created_at,acked_at) VALUES(?,?,?,?,?,?,NULL)",
-            (outbox_id, occurrence_id, lane, payload, "READY", "2026-09-01T00:00:00Z"),
-        )
+    _seed_outbox_rows(conn, open_refs)
 
     # Explicit p95=250 recent completed StageOccurrence-revision sample.
     recent_counts: list[int] = []
