@@ -327,7 +327,7 @@ def _build_operations(store: ControlStore, *, profile: str):
     policy = PolicyEvaluator()
     surface = DeterministicExecutionSurface()
     dispatch = DispatchService(store, surface, authorization_resolver=dispatch_authorization(satisfies=True))
-    dispatch_lock = threading.Lock()
+    dispatch_locks = [threading.Lock() for _ in range(REFERENCE_ACTIVE_PROVIDER_JOBS)]
     dispatch_attempts = [0 for _ in range(REFERENCE_ACTIVE_PROVIDER_JOBS)]
     provider_capability = github_ci_adapter_capability()
     identity_lock = threading.Lock()
@@ -462,7 +462,7 @@ def _build_operations(store: ControlStore, *, profile: str):
         outbox_ordinal = seq % REFERENCE_ACTIVE_PROVIDER_JOBS
         outbox_id = f"out_bench_{outbox_ordinal:04d}"
         started = time.perf_counter_ns()
-        with dispatch_lock:
+        with dispatch_locks[outbox_ordinal]:
             dispatch_attempts[outbox_ordinal] += 1
             attempt_ordinal = dispatch_attempts[outbox_ordinal]
             attempted = datetime(2026, 9, 2, tzinfo=timezone.utc) + timedelta(hours=attempt_ordinal)
