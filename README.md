@@ -84,10 +84,10 @@ Use the repository root marketplace manifest (`.agents/plugins/marketplace.json`
 
 ### Alternative: 9-Skill Installation Kit
 
-Download the `v0.1.0-beta.2` Release asset:
+Download the `v0.1.0-beta.3` Release asset:
 
 ```text
-https://github.com/Mostorm-Labs/aegis/releases/download/v0.1.0-beta.2/aegis-skill-installation-kit-v0.1.0-beta.2.zip
+https://github.com/Mostorm-Labs/aegis/releases/download/v0.1.0-beta.3/aegis-skill-installation-kit-v0.1.0-beta.3.zip
 ```
 
 Extract the outer archive once, then upload the nine nested Skill ZIPs without unpacking them.

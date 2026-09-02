@@ -14,6 +14,12 @@ For repository-backed execution that depends on a repository baseline, the packa
 
 For tasks that return to a review surface, the package must define the evidence-materialization obligation: the exact result must become reviewer-accessible through a durable ref, and the executor return must carry that `materialized_ref`. A local-only result is not sufficient for P34 corroboration.
 
+For any rendered `surface_handoff` with `preferred_executor: codex`, place this exact execution instruction immediately before the YAML envelope:
+
+> 请按以下 Aegis handoff 直接执行：以 `package_ref` 为任务授权，按 `task_anchor/resume_cursor` 核对当前状态并从首个未完成步骤继续；若状态冲突则 fail closed。
+
+The prefix is execution-trigger/rendering metadata only. It does not expand the approved package, change Current Authority, create Evidence, issue a Gate verdict, or mutate Project State.
+
 ## P32 Implementation
 Default execution surface: `CODE_EXECUTION`. Inspect repository/task Authority before edits, change only assigned scope, run specified evidence, and stop on Authority ambiguity. A `surface_handoff` must carry the approved P31 `package_ref`; baseline-dependent repository work MUST also carry the non-null stable `task_anchor`. It changes execution location, not P32 ownership.
 

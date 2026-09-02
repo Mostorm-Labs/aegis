@@ -60,7 +60,7 @@
     ]
   },
   "product_id": "aegis",
-  "release_version": "0.1.0-task6.1",
+  "release_version": "0.1.0-beta.3",
   "schema_version": "0.1",
   "standalone": {
     "id": "aegis-standalone",

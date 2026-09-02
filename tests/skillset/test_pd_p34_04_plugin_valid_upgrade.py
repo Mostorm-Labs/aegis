@@ -27,6 +27,17 @@ EXPECTED_SKILLS = {
     "aegis-implementation",
     "aegis-gate-review",
 }
+HISTORICAL_COMPONENT_TREE_SHA256 = {
+    "aegis": "8599a15d24ccd80c534cc5838425592f666184f8edcf577366b96a48197c42dd",
+    "aegis-project-state": "66639e270cf547f03fa78d1a2e518a4efc58780cadac778bb690f56e6a42b8c6",
+    "aegis-discovery": "2e89921aee11008c8c4db7500c80f243a149a2465fec3281d1d0146905b73721",
+    "aegis-modeling": "5c842d382244c638b4227185683629e856f010b4d73cea71c1208a288e5635ab",
+    "aegis-architecture": "d3d0fca798af19a9fed9a32d23bdf172b5bee06dfde7226ab3473d860cff26ba",
+    "aegis-verification": "b461f31350a2cd73eacd434bdd0849775b75ed7696481143496db1ee22ef5ce8",
+    "aegis-governance": "bbc320caee94c1ee615ba9ba79795a3bae683ca58c4fb9f41841efa886d2b8c5",
+    "aegis-implementation": "58554a6191327a31c101f8e07f938fad89105e271334cda5e649e222aa064c86",
+    "aegis-gate-review": "b593a93bee619d72bfcbd81abf21ca60e4d465d308ed488a9de4443d7f7a8af5",
+}
 
 
 class PDP3404PluginValidUpgradeTests(unittest.TestCase):
@@ -54,15 +65,17 @@ class PDP3404PluginValidUpgradeTests(unittest.TestCase):
         self.assertNotEqual(release_a.get("release_version"), release_b.get("release_version"))
         self.assertEqual(set(manifest.get("expected_skill_ids") or []), EXPECTED_SKILLS)
 
+        # Historical platform evidence is bound to immutable source commits. Its
+        # component digests must not float when the current beta.2 candidate evolves.
+        self.assertEqual(manifest.get("release_a_tree_sha256"), HISTORICAL_COMPONENT_TREE_SHA256)
+        self.assertEqual(manifest.get("release_b_tree_sha256"), HISTORICAL_COMPONENT_TREE_SHA256)
+
         release_b_manifest = self._load(RELEASE_B_MANIFEST)
         self.assertEqual(release_b_manifest.get("release_version"), RELEASE_B_VERSION)
         self.assertEqual(
             {entry["name"] for entry in release_b_manifest["plugin"]["skills"]},
             EXPECTED_SKILLS,
         )
-        expected_digests = {entry["name"]: entry["tree_sha256"] for entry in release_b_manifest["plugin"]["skills"]}
-        self.assertEqual(manifest.get("release_a_tree_sha256"), expected_digests)
-        self.assertEqual(manifest.get("release_b_tree_sha256"), expected_digests)
 
     def test_real_chatgpt_sync_is_atomic_same_platform_plugin_and_exact_nine(self):
         evidence = self._load(EVIDENCE)
