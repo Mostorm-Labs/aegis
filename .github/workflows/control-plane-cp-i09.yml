@@ -22,12 +22,215 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  contract-red:
+  contract-regression:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Run CP-I09 contract tests
+      - name: Run CP-I09 focused contract and harness tests
         run: python3 -m unittest discover -s tests/control_plane -p 'test_cp_i09_*.py' -v
+      - name: Run full Control Plane regression suite
+        run: python3 -m unittest discover -s tests/control_plane -v
+      - name: Run Project State regression suite
+        run: python3 -m unittest discover -s tests/project_state -v
+      - name: Run Skillset regression suite
+        run: python3 -m unittest discover -s tests/skillset -v
+
+  r0-real-wall-clock:
+    needs: contract-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run R0 real monotonic wall-clock benchmark
+        run: |
+          rm -rf artifacts/r0
+          python3 -m tests.control_plane.cp_i09_benchmark \
+            --profile r0 \
+            --result-revision "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --output-dir artifacts/r0
+      - name: Upload R0 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp-i09-r0-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/r0
+          if-no-files-found: error
+          retention-days: 30
+
+  s0-real-wall-clock:
+    needs: contract-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run S0 real monotonic wall-clock stress and recovery benchmark
+        run: |
+          rm -rf artifacts/s0
+          python3 -m tests.control_plane.cp_i09_benchmark \
+            --profile s0 \
+            --result-revision "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --output-dir artifacts/s0
+      - name: Upload S0 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp-i09-s0-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/s0
+          if-no-files-found: error
+          retention-days: 30
+
+  cost-168h-accelerated:
+    needs: contract-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Materialize exact 168-hour logical cost workload
+        run: |
+          rm -rf artifacts/w7d
+          python3 -m tests.control_plane.cp_i09_cost \
+            --result-revision "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --output-dir artifacts/w7d
+      - name: Upload W7D cost evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp-i09-w7d-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/w7d
+          if-no-files-found: error
+          retention-days: 30
+
+  combine-and-verify:
+    needs:
+      - contract-regression
+      - r0-real-wall-clock
+      - s0-real-wall-clock
+      - cost-168h-accelerated
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          name: cp-i09-r0-${{ github.event.pull_request.head.sha || github.sha }}
+          path: split/r0
+      - uses: actions/download-artifact@v4
+        with:
+          name: cp-i09-s0-${{ github.event.pull_request.head.sha || github.sha }}
+          path: split/s0
+      - uses: actions/download-artifact@v4
+        with:
+          name: cp-i09-w7d-${{ github.event.pull_request.head.sha || github.sha }}
+          path: split/w7d
+      - name: Compile exact CP-I09 evidence bundle
+        run: |
+          rm -rf artifacts/cp-i09
+          python3 -m tests.control_plane.generate_cp_i09_evidence \
+            --result-revision "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --workflow-run "${{ github.run_id }}" \
+            --r0-dir split/r0 \
+            --s0-dir split/s0 \
+            --w7d-dir split/w7d \
+            --output-dir artifacts/cp-i09
+      - name: Independently validate combined CP-I09 evidence contract
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          root = Path("artifacts/cp-i09")
+          expected = {
+              "r0-workload-manifest.json",
+              "r0-raw-timeseries.json",
+              "r0-latency-histograms.json",
+              "r0-performance.json",
+              "s0-workload-manifest.json",
+              "s0-raw-timeseries.json",
+              "s0-stress.json",
+              "w7d-workload-manifest.json",
+              "w7d-hourly-slices.json",
+              "w7d-raw-cost-events.json",
+              "w7d-cost-model.json",
+              "w7d-cost.json",
+              "engineering-handoff.json",
+              "evidence-manifest.json",
+          }
+          actual = {path.name for path in root.glob("*.json")}
+          if actual != expected:
+              raise SystemExit(f"unexpected CP-I09 final evidence set: {sorted(actual)}")
+          for path in root.glob("*.json"):
+              json.loads(path.read_text(encoding="utf-8"))
+
+          manifest = json.loads((root / "evidence-manifest.json").read_text(encoding="utf-8"))
+          result_revision = "${{ github.event.pull_request.head.sha || github.sha }}"
+          if manifest.get("package_id") != "CP-I09-P31-01" or manifest.get("package_ref") != "9f4b76d51ce2e8a2c0ac23d6fba323bc078a9385":
+              raise SystemExit("CP-I09 package provenance mismatch")
+          if manifest.get("result_revision") != result_revision:
+              raise SystemExit("CP-I09 result revision mismatch")
+          if manifest.get("task_anchor") != {"revision": "ac2bcf19acf46a749761ed455ecf0a995069700d", "relation": "ancestor"}:
+              raise SystemExit("CP-I09 task anchor mismatch")
+          if manifest.get("source_cp_i08_p34_review") != "5079977191":
+              raise SystemExit("CP-I09 predecessor Gate mismatch")
+          if manifest.get("workflow_run") != "${{ github.run_id }}":
+              raise SystemExit("CP-I09 workflow execution provenance mismatch")
+          if manifest.get("passed") is not True or any(manifest.get("metrics", {}).values()):
+              raise SystemExit("CP-I09 zero-tolerance evidence failed")
+          if len(manifest.get("metrics", {})) != 17:
+              raise SystemExit("CP-I09 zero-tolerance metric set incomplete")
+
+          r0 = manifest.get("r0", {})
+          if r0.get("clock_class") != "REAL_MONOTONIC_WALL_CLOCK" or float(r0.get("warmup_wall_seconds", 0)) < 600 or float(r0.get("measurement_wall_seconds", 0)) < 1800 or r0.get("passed") is not True:
+              raise SystemExit("CP-I09 R0 real-wall-clock evidence incomplete")
+          s0 = manifest.get("s0", {})
+          if s0.get("clock_class") != "REAL_MONOTONIC_WALL_CLOCK" or float(s0.get("stress_wall_seconds", 0)) < 900 or s0.get("offered_load_multiplier") != 4 or s0.get("recovery_below_yellow") is not True or s0.get("passed") is not True:
+              raise SystemExit("CP-I09 S0 real-wall-clock evidence incomplete")
+          w7d = manifest.get("w7d", {})
+          if w7d.get("measurement_class") != "ACCELERATED_REPLAY" or w7d.get("logical_hours") != 168 or float(w7d.get("independent_ratio", 1)) > 0.10 or w7d.get("passed") is not True:
+              raise SystemExit("CP-I09 seven-day cost evidence incomplete")
+
+          claims = manifest.get("claims", {})
+          if claims.get("p34_gate_pass") is not False or claims.get("evidence_compiler_gate_authority") is not False:
+              raise SystemExit("CP-I09 evidence compiler claimed Gate authority")
+          if claims.get("current_cross_primary_rollout") != "DENIED":
+              raise SystemExit("CP-I09 expanded cross-Primary rollout")
+          if claims.get("monthly_availability_attainment") != "NOT_CLAIMED_PRELAUNCH":
+              raise SystemExit("CP-I09 fabricated monthly availability")
+
+          for name, digest in manifest.get("files", {}).items():
+              actual_digest = "sha256:" + hashlib.sha256((root / name).read_bytes()).hexdigest()
+              if actual_digest != digest:
+                  raise SystemExit(f"CP-I09 file digest mismatch: {name}")
+          PY
+      - name: Upload combined CP-I09 reviewer evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp-i09-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/cp-i09
+          if-no-files-found: error
+          retention-days: 30
