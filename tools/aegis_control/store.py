@@ -53,6 +53,20 @@ ON canonical_records(record_id)
 WHERE kind = 'STAGE_OCCURRENCE' AND stage_state = 'TERMINAL';
 CREATE INDEX IF NOT EXISTS ix_canonical_lane_latest
 ON canonical_records(control_lane_id, kind, record_id, record_revision DESC);
+CREATE INDEX IF NOT EXISTS ix_stage_occurrence_scope_latest
+ON canonical_records(
+    json_extract(canonical_json, '$.work_scope_ref.id'),
+    record_id,
+    record_revision DESC
+)
+WHERE kind = 'STAGE_OCCURRENCE';
+CREATE INDEX IF NOT EXISTS ix_stage_occurrence_parent_scope_latest
+ON canonical_records(
+    json_extract(canonical_json, '$.work_scope_ref.child_work_binding.parent_work_scope_ref.id'),
+    record_id,
+    record_revision DESC
+)
+WHERE kind = 'STAGE_OCCURRENCE';
 CREATE TABLE IF NOT EXISTS lane_heads (
     lane_id TEXT PRIMARY KEY,
     version INTEGER NOT NULL,
@@ -177,6 +191,16 @@ class ControlStore:
         conn = self._connect(readonly=True)
         try:
             return _read_latest_records(conn, kind="STAGE_OCCURRENCE")
+        finally:
+            conn.close()
+
+    def read_latest_stage_occurrences_for_scope_family(self, work_scope_id: str) -> list[StoredRecord]:
+        """Read latest parent/direct-child occurrences for one WorkScope family only."""
+        if not isinstance(work_scope_id, str) or not work_scope_id:
+            return []
+        conn = self._connect(readonly=True)
+        try:
+            return _read_latest_stage_occurrences_for_scope_family(conn, work_scope_id)
         finally:
             conn.close()
 
@@ -632,6 +656,38 @@ def _read_latest_records(
         "AND latest.max_revision = c.record_revision "
         "ORDER BY c.kind, c.record_id",
         tuple(params),
+    ).fetchall()
+    return [_stored(row) for row in rows]
+
+
+def _read_latest_stage_occurrences_for_scope_family(
+    conn: sqlite3.Connection,
+    work_scope_id: str,
+) -> list[StoredRecord]:
+    rows = conn.execute(
+        "WITH relevant_ids AS ("
+        "  SELECT record_id FROM canonical_records "
+        "  WHERE kind = 'STAGE_OCCURRENCE' "
+        "    AND json_extract(canonical_json, '$.work_scope_ref.id') = ? "
+        "  UNION "
+        "  SELECT record_id FROM canonical_records "
+        "  WHERE kind = 'STAGE_OCCURRENCE' "
+        "    AND json_extract(canonical_json, '$.work_scope_ref.child_work_binding.parent_work_scope_ref.id') = ?"
+        "), latest AS ("
+        "  SELECT c.record_id, MAX(c.record_revision) AS max_revision "
+        "  FROM canonical_records AS c "
+        "  JOIN relevant_ids AS r ON r.record_id = c.record_id "
+        "  WHERE c.kind = 'STAGE_OCCURRENCE' "
+        "  GROUP BY c.record_id"
+        ") "
+        "SELECT c.canonical_json, c.digest "
+        "FROM canonical_records AS c "
+        "JOIN latest "
+        "ON c.kind = 'STAGE_OCCURRENCE' "
+        "AND c.record_id = latest.record_id "
+        "AND c.record_revision = latest.max_revision "
+        "ORDER BY c.record_id",
+        (work_scope_id, work_scope_id),
     ).fetchall()
     return [_stored(row) for row in rows]
 

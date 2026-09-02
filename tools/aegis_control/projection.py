@@ -92,14 +92,19 @@ class ProjectionEngine:
     ) -> ControlProjection:
         lane = self._store.read_lane_head(lane_id)
         latest = self._store.read_lane_latest_records(lane_id)
-        global_occurrences = self._store.read_latest_stage_occurrences()
         trust_snapshot = dict(trust_snapshot_bundle or {})
         state_token = tuple((record.record["kind"], record.record["id"], record.digest) for record in latest)
         work_scope_ref = self._lane_work_scope(latest)
+        work_scope_id = work_scope_ref.get("id") if isinstance(work_scope_ref, Mapping) else None
+        scope_occurrences = (
+            self._store.read_latest_stage_occurrences_for_scope_family(work_scope_id)
+            if isinstance(work_scope_id, str) and work_scope_id
+            else []
+        )
         child_state_token = tuple(
             sorted(
                 (item.record["id"], item.digest)
-                for item in global_occurrences
+                for item in scope_occurrences
                 if self._is_child_of(item.record.get("work_scope_ref"), work_scope_ref)
             )
         )
@@ -148,7 +153,7 @@ class ProjectionEngine:
                 repair_items.append((ordinal if isinstance(ordinal, int) else 0, occurrence.record["id"]))
         repair_lineage = tuple(item[1] for item in sorted(repair_items))
 
-        child_work = self._project_child_work(work_scope_ref, global_occurrences)
+        child_work = self._project_child_work(work_scope_ref, scope_occurrences)
         macro_phase, next_action = self._derive_phase_and_action(current)
         if next_action == "SCHEDULE_SUCCESSOR" and any(
             child.blocking_reason is not None
@@ -221,26 +226,26 @@ class ProjectionEngine:
     def _project_child_work(
         self,
         parent_scope: Mapping[str, Any] | None,
-        global_occurrences: list[StoredRecord],
+        scope_occurrences: list[StoredRecord],
     ) -> tuple[ChildWorkState, ...]:
         if parent_scope is None:
             return ()
         child_scopes: dict[str, Mapping[str, Any]] = {}
-        for item in global_occurrences:
+        for item in scope_occurrences:
             scope = item.record.get("work_scope_ref")
             if self._is_child_of(scope, parent_scope):
                 child_scopes.setdefault(scope["id"], deepcopy(dict(scope)))
-        values = [self._project_one_child(scope, global_occurrences) for scope in child_scopes.values()]
+        values = [self._project_one_child(scope, scope_occurrences) for scope in child_scopes.values()]
         return tuple(sorted(values, key=lambda item: item.work_scope_ref["id"]))
 
     def _project_one_child(
         self,
         child_scope: Mapping[str, Any],
-        global_occurrences: list[StoredRecord],
+        scope_occurrences: list[StoredRecord],
     ) -> ChildWorkState:
         child_id = child_scope["id"]
         records = [
-            item for item in global_occurrences
+            item for item in scope_occurrences
             if isinstance(item.record.get("work_scope_ref"), Mapping)
             and item.record["work_scope_ref"].get("id") == child_id
         ]
