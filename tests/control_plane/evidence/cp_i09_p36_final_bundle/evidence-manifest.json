@@ -1,0 +1,88 @@
+{
+  "candidate_revision": "18559f32ede7ebd845064fe8de7967ca358b785f",
+  "digest": "sha256:6169346550787f5de0cf6adf0bc7c4ab7377e54267faf43f57a65f2580999f27",
+  "inherited_evidence": [
+    {
+      "applicability": "REQUALIFIED",
+      "claim_id": "CPV-C01-C44",
+      "current_regression": "PASS",
+      "evidence_ref": "tests/control_plane/cp_i08_d0.py",
+      "lineage_basis": "ancestor plus current regression",
+      "source_gate_review": "5079977191",
+      "source_result_revision": "ac2bcf19acf46a749761ed455ecf0a995069700d"
+    },
+    {
+      "applicability": "REQUALIFIED",
+      "claim_id": "M01-M20",
+      "current_regression": "PASS",
+      "evidence_ref": "tests/control_plane/qualification.py",
+      "lineage_basis": "ancestor plus current regression",
+      "source_gate_review": "5079977191",
+      "source_result_revision": "ac2bcf19acf46a749761ed455ecf0a995069700d"
+    },
+    {
+      "applicability": "APPLICABLE",
+      "claim_id": "O-CRM",
+      "current_regression": "PASS",
+      "evidence_ref": "tests/control_plane/reference_model.py",
+      "lineage_basis": "independent oracle retained",
+      "source_gate_review": "5079977191",
+      "source_result_revision": "ac2bcf19acf46a749761ed455ecf0a995069700d"
+    },
+    {
+      "applicability": "APPLICABLE",
+      "claim_id": "O-COMPLETE",
+      "current_regression": "PASS",
+      "evidence_ref": "tests/control_plane/completeness_oracle.py",
+      "lineage_basis": "independent oracle retained",
+      "source_gate_review": "5079977191",
+      "source_result_revision": "ac2bcf19acf46a749761ed455ecf0a995069700d"
+    },
+    {
+      "applicability": "REQUALIFIED",
+      "claim_id": "P33-FOUR-OUTCOMES",
+      "current_regression": "PASS",
+      "evidence_ref": "tests/control_plane/test_cp_i05_resume_policy.py",
+      "lineage_basis": "current regression",
+      "source_gate_review": "5079977191",
+      "source_result_revision": "ac2bcf19acf46a749761ed455ecf0a995069700d"
+    },
+    {
+      "applicability": "REQUALIFIED",
+      "claim_id": "G44",
+      "current_regression": "PASS",
+      "evidence_ref": "tests/control_plane/test_cp_i08_golden_direct.py",
+      "lineage_basis": "current regression",
+      "source_gate_review": "5079977191",
+      "source_result_revision": "ac2bcf19acf46a749761ed455ecf0a995069700d"
+    }
+  ],
+  "new_platform_corroboration": {
+    "candidate_revision": "18559f32ede7ebd845064fe8de7967ca358b785f",
+    "classification": "NEW_PLATFORM_CORROBORATION",
+    "evidence_refs": [
+      "PR_51_comment_5529164129",
+      "PR_51_comment_5529233688"
+    ],
+    "fresh_installed_platform": "PASS",
+    "pfc01_pfc08": "PASS"
+  },
+  "old_CP_I09_P31_01": {
+    "R0": "FAIL",
+    "S0": "FAIL",
+    "W7D": "PASS",
+    "disposition": "HISTORICAL_ONLY"
+  },
+  "old_cp_i09": {
+    "disposition": "HISTORICAL_ONLY",
+    "r0": "FAIL",
+    "s0": "FAIL",
+    "w7d": "PASS"
+  },
+  "p34_gate_pass": false,
+  "package_id": "CP-I09-P31-02",
+  "package_ref": "a4b4f48c3dd3b38dc64498fecf2584b25413ab8a",
+  "platform_corroboration": "PASS",
+  "rollout": "DENIED",
+  "service_profile": "NOT_AUTHORIZED"
+}

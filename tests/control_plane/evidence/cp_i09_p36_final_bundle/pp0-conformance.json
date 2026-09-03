@@ -1,0 +1,38 @@
+{
+  "candidate_revision": "18559f32ede7ebd845064fe8de7967ca358b785f",
+  "canonical_expected_equals_actual": true,
+  "cohorts": {
+    "A": 8,
+    "B": 8,
+    "C": 8,
+    "D": 8,
+    "E": 8
+  },
+  "digest": "sha256:3a0a2b9d50986d3fa92a5e44c3a34905d7b34e4145101eeeb07efcaca07378f8",
+  "g01_g44": "PASS",
+  "implemented": true,
+  "m01_m20_detected": "20/20",
+  "m01_m20_false_acceptance": 0,
+  "metrics": {
+    "commit_before_dispatch_violations": 0,
+    "completed_work_replayed_on_resume": 0,
+    "duplicate_semantic_occurrences_from_transport": 0,
+    "historical_evidence_rewrites": 0,
+    "invalid_snapshot_tokens_accepted": 0,
+    "repair_budget_overruns": 0,
+    "required_child_barrier_violations": 0,
+    "semantic_oracle_mismatches": 0,
+    "silent_canonical_truncations": 0,
+    "stale_or_ambiguous_snapshot_successes": 0,
+    "unauthorized_canonical_mutations": 0,
+    "unexpected_open_occurrences_at_end": 0,
+    "unexpected_ready_outbox_at_end": 0,
+    "unexpected_unresolved_delivery_at_end": 0,
+    "unofficial_gate_decisions": 0,
+    "unresolvable_required_evidence_refs": 0,
+    "wrong_p33_classifications": 0
+  },
+  "p34_gate_pass": false,
+  "pp0_result": "PASS",
+  "rollout": "DENIED"
+}

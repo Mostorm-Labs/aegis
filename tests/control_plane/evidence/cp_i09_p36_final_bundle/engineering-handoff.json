@@ -1,0 +1,23 @@
+{
+  "actual_starting_revision": "67cee502cc330bf21e49bdb3a89415093148550f",
+  "candidate_unchanged": true,
+  "digest": "sha256:86fd69a78bc767fc9388d8dd9343df8e3bebfa0d57ae9cff5836adf184622311",
+  "evidence_only_repair": true,
+  "p34_gate_pass": false,
+  "package_id": "CP-I09-P31-02",
+  "package_ref": "a4b4f48c3dd3b38dc64498fecf2584b25413ab8a",
+  "platform_corroboration": "PASS",
+  "platform_evidence_refs": [
+    "PR_51_comment_5529164129",
+    "PR_51_comment_5529233688"
+  ],
+  "published_plugin_baseline": "38bf619ede0615431c7517bc0e07984136af28cf",
+  "repository_artifact": 9887426825,
+  "repository_artifact_digest": "sha256:e6c12837b065fc9a48b5d6bb8346cabe23cedcbbddf90025ed20f3eb5430fe59",
+  "repository_qualification": "PASS",
+  "repository_workflow": 33740273612,
+  "result_revision": "18559f32ede7ebd845064fe8de7967ca358b785f",
+  "rollout": "DENIED",
+  "service_profile": "NOT_AUTHORIZED",
+  "task_anchor": "ac2bcf19acf46a749761ed455ecf0a995069700d"
+}

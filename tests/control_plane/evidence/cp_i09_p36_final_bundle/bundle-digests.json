@@ -1,0 +1,8 @@
+{
+  "engineering-handoff.json": "sha256:fe826a4802620be2ce538f2bafc6a984c15c644fdad8641e034cd50eb560d665",
+  "evidence-manifest.json": "sha256:c063cefd30352e782e1f4e42b00b050e277bee9028fda76b72ad54513a076428",
+  "pp0-conformance.json": "sha256:77b1533da69da4743132b52f975ac3916b08f504ec540f4f34b7c70b58a9eb1f",
+  "pp0-platform-corroboration.json": "sha256:fb34610a7e54b0d8aa4dc0718a1a8d14a988e31ab9b125e11ac48051e3f90018",
+  "pp0-trace-corpus.json": "sha256:59cab620829b7c6cdb2ad5dff7b2246a04e577f360e31bb5bbf05898922cafcd",
+  "pp0-workload-manifest.json": "sha256:b1ed97a5c524af888deb8638c9bc7bfdbebf6d8b642fb6e068f3dfec79478b85"
+}

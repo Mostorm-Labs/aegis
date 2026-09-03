@@ -1,0 +1,29 @@
+{
+  "candidate_revision": "18559f32ede7ebd845064fe8de7967ca358b785f",
+  "digest": "sha256:fd5df3f3f1136408419e7f41848ad962be310ce7e4d17283670acabd533ea8d8",
+  "durable_evidence_refs": [
+    "PR_51_comment_5529164129",
+    "PR_51_comment_5529233688"
+  ],
+  "evidence_refs": [
+    "plugins/aegis/.codex-plugin/plugin.json",
+    "tests/skillset/test_openai_plugin_materialization.py",
+    "docs/execution-surface-contract-v0.2.md"
+  ],
+  "fresh_installed_platform": "PASS",
+  "p34_gate_pass": false,
+  "pfc01_exact_plugin": "PASS",
+  "pfc02_router_ownership": "PASS",
+  "pfc03_specialist_ownership": "PASS",
+  "pfc04_surface_handoff": "PASS",
+  "pfc05_codex_prefix": "PASS",
+  "pfc06_sessionless_resume": "PASS",
+  "pfc07_gate_ownership": "PASS",
+  "pfc08_rollout_denied": "PASS",
+  "platform_review_urls": [
+    "https://github.com/Mostorm-Labs/aegis/pull/51#issuecomment-5529164129",
+    "https://github.com/Mostorm-Labs/aegis/pull/51#issuecomment-5529233688"
+  ],
+  "rollout": "DENIED",
+  "service_profile": "NOT_AUTHORIZED"
+}

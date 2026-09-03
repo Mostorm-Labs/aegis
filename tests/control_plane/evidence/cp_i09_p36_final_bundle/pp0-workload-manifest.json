@@ -1,0 +1,374 @@
+{
+  "candidate_revision": "18559f32ede7ebd845064fe8de7967ca358b785f",
+  "digest": "sha256:46631a52f1251ed4429dbbfe6933949e16b2f7825b5a6863a50b45aa0f357b4c",
+  "interleavings": {
+    "same_lane_cas": 4,
+    "unrelated_lane": 8
+  },
+  "package_id": "CP-I09-P31-02",
+  "package_ref": "a4b4f48c3dd3b38dc64498fecf2584b25413ab8a",
+  "published_plugin_baseline": "38bf619ede0615431c7517bc0e07984136af28cf",
+  "task_anchor": "ac2bcf19acf46a749761ed455ecf0a995069700d",
+  "workscopes": [
+    {
+      "cohort": "A",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "A-fault-01"
+      ],
+      "id": "PP0-A-01",
+      "seed": 923506710
+    },
+    {
+      "cohort": "A",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "A-fault-02"
+      ],
+      "id": "PP0-A-02",
+      "seed": 676060130
+    },
+    {
+      "cohort": "A",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "A-fault-03"
+      ],
+      "id": "PP0-A-03",
+      "seed": 2213647749
+    },
+    {
+      "cohort": "A",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "A-fault-04"
+      ],
+      "id": "PP0-A-04",
+      "seed": 84902528
+    },
+    {
+      "cohort": "A",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "A-fault-05"
+      ],
+      "id": "PP0-A-05",
+      "seed": 3964417342
+    },
+    {
+      "cohort": "A",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "A-fault-06"
+      ],
+      "id": "PP0-A-06",
+      "seed": 1442433021
+    },
+    {
+      "cohort": "A",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "A-fault-07"
+      ],
+      "id": "PP0-A-07",
+      "seed": 773220421
+    },
+    {
+      "cohort": "A",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "A-fault-08"
+      ],
+      "id": "PP0-A-08",
+      "seed": 3632584943
+    },
+    {
+      "cohort": "B",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "B-fault-01"
+      ],
+      "id": "PP0-B-01",
+      "seed": 4176489519
+    },
+    {
+      "cohort": "B",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "B-fault-02"
+      ],
+      "id": "PP0-B-02",
+      "seed": 4060397430
+    },
+    {
+      "cohort": "B",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "B-fault-03"
+      ],
+      "id": "PP0-B-03",
+      "seed": 936947303
+    },
+    {
+      "cohort": "B",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "B-fault-04"
+      ],
+      "id": "PP0-B-04",
+      "seed": 3950437963
+    },
+    {
+      "cohort": "B",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "B-fault-05"
+      ],
+      "id": "PP0-B-05",
+      "seed": 646727848
+    },
+    {
+      "cohort": "B",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "B-fault-06"
+      ],
+      "id": "PP0-B-06",
+      "seed": 2440979490
+    },
+    {
+      "cohort": "B",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "B-fault-07"
+      ],
+      "id": "PP0-B-07",
+      "seed": 1736615198
+    },
+    {
+      "cohort": "B",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "B-fault-08"
+      ],
+      "id": "PP0-B-08",
+      "seed": 2126172085
+    },
+    {
+      "cohort": "C",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "C-fault-01"
+      ],
+      "id": "PP0-C-01",
+      "seed": 4285400376
+    },
+    {
+      "cohort": "C",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "C-fault-02"
+      ],
+      "id": "PP0-C-02",
+      "seed": 2425312609
+    },
+    {
+      "cohort": "C",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "C-fault-03"
+      ],
+      "id": "PP0-C-03",
+      "seed": 1352521443
+    },
+    {
+      "cohort": "C",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "C-fault-04"
+      ],
+      "id": "PP0-C-04",
+      "seed": 829879628
+    },
+    {
+      "cohort": "C",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "C-fault-05"
+      ],
+      "id": "PP0-C-05",
+      "seed": 95227529
+    },
+    {
+      "cohort": "C",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "C-fault-06"
+      ],
+      "id": "PP0-C-06",
+      "seed": 3966039527
+    },
+    {
+      "cohort": "C",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "C-fault-07"
+      ],
+      "id": "PP0-C-07",
+      "seed": 640883643
+    },
+    {
+      "cohort": "C",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "C-fault-08"
+      ],
+      "id": "PP0-C-08",
+      "seed": 964244410
+    },
+    {
+      "cohort": "D",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "D-fault-01"
+      ],
+      "id": "PP0-D-01",
+      "seed": 1212439637
+    },
+    {
+      "cohort": "D",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "D-fault-02"
+      ],
+      "id": "PP0-D-02",
+      "seed": 982817566
+    },
+    {
+      "cohort": "D",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "D-fault-03"
+      ],
+      "id": "PP0-D-03",
+      "seed": 3114722188
+    },
+    {
+      "cohort": "D",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "D-fault-04"
+      ],
+      "id": "PP0-D-04",
+      "seed": 510930502
+    },
+    {
+      "cohort": "D",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "D-fault-05"
+      ],
+      "id": "PP0-D-05",
+      "seed": 106523178
+    },
+    {
+      "cohort": "D",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "D-fault-06"
+      ],
+      "id": "PP0-D-06",
+      "seed": 332015464
+    },
+    {
+      "cohort": "D",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "D-fault-07"
+      ],
+      "id": "PP0-D-07",
+      "seed": 4177836454
+    },
+    {
+      "cohort": "D",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "D-fault-08"
+      ],
+      "id": "PP0-D-08",
+      "seed": 2988569732
+    },
+    {
+      "cohort": "E",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "E-fault-01"
+      ],
+      "id": "PP0-E-01",
+      "seed": 1489759448
+    },
+    {
+      "cohort": "E",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "E-fault-02"
+      ],
+      "id": "PP0-E-02",
+      "seed": 1086153202
+    },
+    {
+      "cohort": "E",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "E-fault-03"
+      ],
+      "id": "PP0-E-03",
+      "seed": 2167341848
+    },
+    {
+      "cohort": "E",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "E-fault-04"
+      ],
+      "id": "PP0-E-04",
+      "seed": 1367354571
+    },
+    {
+      "cohort": "E",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "E-fault-05"
+      ],
+      "id": "PP0-E-05",
+      "seed": 288319950
+    },
+    {
+      "cohort": "E",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "E-fault-06"
+      ],
+      "id": "PP0-E-06",
+      "seed": 1792944245
+    },
+    {
+      "cohort": "E",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "E-fault-07"
+      ],
+      "id": "PP0-E-07",
+      "seed": 1636571972
+    },
+    {
+      "cohort": "E",
+      "expected_final_state": "TERMINAL",
+      "fault_schedule": [
+        "E-fault-08"
+      ],
+      "id": "PP0-E-08",
+      "seed": 3594439431
+    }
+  ]
+}

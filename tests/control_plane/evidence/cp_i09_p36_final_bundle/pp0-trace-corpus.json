@@ -1,0 +1,286 @@
+{
+  "candidate_revision": "18559f32ede7ebd845064fe8de7967ca358b785f",
+  "digest": "sha256:70afff568f0c21a83ff7ffd38443226e2d0d292fb1321a093af598da2106c11e",
+  "traces": [
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": 1,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-A-01"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": 1,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-A-02"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": 1,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-A-03"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": 1,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-A-04"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-A-05"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-A-06"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-A-07"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-A-08"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-B-01"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-B-02"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-B-03"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-B-04"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-B-05"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-B-06"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-B-07"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-B-08"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-C-01"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-C-02"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-C-03"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-C-04"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-C-05"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-C-06"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-C-07"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-C-08"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-D-01"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-D-02"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-D-03"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-D-04"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-D-05"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-D-06"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-D-07"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-D-08"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-E-01"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-E-02"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-E-03"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-E-04"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-E-05"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-E-06"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-E-07"
+    },
+    {
+      "actual_canonical_revision": 1,
+      "expected_canonical_revision": 1,
+      "legal_cas_winners": null,
+      "terminal_state": "TERMINAL",
+      "workscope_id": "PP0-E-08"
+    }
+  ]
+}
