@@ -2,7 +2,7 @@
 
 Aegis is an evidence-driven software development control plane. The recommended installation is one native **Aegis Plugin** that materializes the exact nine canonical Skills. A portable **9-Skill Installation Kit** is available as a fallback.
 
-This guide describes the accepted Aegis `v0.1.0-beta.2` distribution paths.
+This guide describes the accepted Aegis `v0.1.0-beta.3` distribution paths.
 
 ## Choose an installation path
 
@@ -34,7 +34,7 @@ In ChatGPT:
 5. Leave **Path** empty so ChatGPT resolves the repository-root `.agents/plugins/marketplace.json`. Do not enter the manifest filename itself.
 6. Optionally set **Branch, tag, or commit**:
    - **Maintained repository state:** leave it empty to use the repository default branch, or select the workspace-approved maintained branch.
-   - **Immutable `v0.1.0-beta.2` installation:** pin the tag `v0.1.0-beta.2`.
+   - **Immutable `v0.1.0-beta.3` installation:** pin the tag `v0.1.0-beta.3`.
 7. Select **Import marketplace** and complete GitHub authorization if prompted.
 8. Review the import result.
 
@@ -82,21 +82,21 @@ Use this path when Plugin marketplace distribution is unavailable or when you ne
 
 ```text
 Release page:
-https://github.com/Mostorm-Labs/aegis/releases/tag/v0.1.0-beta.2
+https://github.com/Mostorm-Labs/aegis/releases/tag/v0.1.0-beta.3
 
 Installation Kit:
-https://github.com/Mostorm-Labs/aegis/releases/download/v0.1.0-beta.2/aegis-skill-installation-kit-v0.1.0-beta.2.zip
+https://github.com/Mostorm-Labs/aegis/releases/download/v0.1.0-beta.3/aegis-skill-installation-kit-v0.1.0-beta.3.zip
 
-Installation Kit SHA-256:
-1175ffcf0e66e52736dfb4e897e37bd39dbb51a2b41840de3f45c318f3cccd00
+Verification:
+Use the Release-provided SHA256SUMS or aegis-release-v0.1.0-beta.3.json.
 ```
 
-The Release also publishes `SHA256SUMS` and `aegis-release-v0.1.0-beta.2.json` for checksum and release-manifest verification.
+The Release publishes `SHA256SUMS` and `aegis-release-v0.1.0-beta.3.json` for checksum and release-manifest verification.
 
 ### Installation steps
 
-1. Download `aegis-skill-installation-kit-v0.1.0-beta.2.zip`.
-2. Optionally verify the archive against `SHA256SUMS` or the SHA-256 value above.
+1. Download `aegis-skill-installation-kit-v0.1.0-beta.3.zip`.
+2. Verify the archive against the Release-provided `SHA256SUMS` or `aegis-release-v0.1.0-beta.3.json`.
 3. Extract the **outer** Installation Kit exactly once.
 4. Keep the nine nested Skill ZIPs intact; do **not** unpack the nested ZIPs.
 5. In ChatGPT, open **Plugins** -> **Skills** -> **Create** -> **Upload from your computer**.
@@ -167,10 +167,12 @@ A newly imported GitHub marketplace has automatic daily sync enabled. To request
 4. Select **Sync now**.
 5. Review the sync result and verify the exact-nine catalog again before relying on the environment.
 
-For reproducible environments, pin an immutable tag or commit. For `v0.1.0-beta.2`, the immutable release tag is:
+The repository marketplace source/path remains stable across this maintenance update; the Aegis Plugin manifest version advances to `0.1.0-beta.3` together with the coherent exact-nine Skill tree. This makes `v0.1.0-beta.2` -> `v0.1.0-beta.3` a useful real-world whole-catalog sync test.
+
+For reproducible environments, pin an immutable tag or commit. For `v0.1.0-beta.3`, the immutable release tag is:
 
 ```text
-v0.1.0-beta.2
+v0.1.0-beta.3
 ```
 
 If an update to the existing Plugin is invalid, ChatGPT retains the last working version while valid updates can continue. Fix the source problem and use **Sync now** to retry. A partial Aegis catalog must never be treated as standalone compatibility.
@@ -198,7 +200,7 @@ Aegis Product
 └── Standalone / Release paths   ← compatibility, fallback, archive
 ```
 
-The authoritative distribution semantics are defined in [`plugin-distribution-contract-v0.1.md`](plugin-distribution-contract-v0.1.md). The published `v0.1.0-beta.2` release notes are in [`releases/v0.1.0-beta.2.md`](releases/v0.1.0-beta.2.md).
+The authoritative distribution semantics are defined in [`plugin-distribution-contract-v0.1.md`](plugin-distribution-contract-v0.1.md). The published `v0.1.0-beta.3` release notes are in [`releases/v0.1.0-beta.3.md`](releases/v0.1.0-beta.3.md).
 
 ## Platform references
 
