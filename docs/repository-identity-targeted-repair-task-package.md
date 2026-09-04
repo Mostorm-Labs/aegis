@@ -1,14 +1,16 @@
-# RI-I01-P31-01 — Repository Identity Execution Handoff Repair Task Package
+# RI-I01-P31-02 — Repository Identity Execution Handoff Repair Task Package
 
-Status: **P31 / CONTROL_REASONING / MATERIALIZED**
+Status: **P31 / CONTROL_REASONING / MATERIALIZED REPLACEMENT**
 
 ## Task identity
 
 ```yaml
-package_id: RI-I01-P31-01
+package_id: RI-I01-P31-02
 slice_id: RI-I01
 name: REPOSITORY_IDENTITY_EXECUTION_HANDOFF_REPAIR
 stage_owner: aegis-implementation
+supersedes_package_ref: b393d4f85b7826572d4ffb2cc94dbbd04d76b8eb
+supersession_reason: P31_SCOPE_CARDINALITY_AMBIGUITY
 repository:
   provider: github
   full_name: Mostorm-Labs/aegis
@@ -19,7 +21,9 @@ task_anchor:
 resume_cursor: null
 ```
 
-The exact `package_ref` is the final P31 materialized revision and is recorded by the P31 stage result. A P32 handoff is non-executable unless it carries that exact revision together with the same-repository `package_materialization_ref` above.
+The exact `package_ref` is the final P31 replacement revision and is recorded by the P31 stage result. A P32 handoff is non-executable unless it carries that exact revision together with the same-repository `package_materialization_ref` above.
+
+The prior package `b393d4f85b7826572d4ffb2cc94dbbd04d76b8eb` remains historical evidence. It is superseded for execution because it did not explicitly state whether scope authorization was path-based or numeric-cardinality-based. No upstream Authority or implementation semantics changed.
 
 ## Current Authority
 
@@ -42,19 +46,73 @@ Implement the narrow repository-addressing repair so Aegis repository-backed P31
 
 This is instruction-first. Do not introduce a repository resolver service, daemon, generalized cross-repository orchestrator, new Product object, or SERVICE_PROFILE behavior.
 
+## Scope authorization policy
+
+Scope authorization is **path/pattern based, not numeric-cardinality based**.
+
+There is **no invariant requiring exactly 15 changed files, exactly 18 changed files, or any other fixed total file count**. The executor MUST NOT invent a file-count limit from ambient instructions, prior tasks, or inferred plan structure.
+
+A P32 result is in scope when every authored change is contained in the authorized paths/patterns below, generated outputs are produced only by the named deterministic generators, and every forbidden path remains unchanged.
+
+```yaml
+authorization_mode: PATH_SET_PLUS_GENERATOR_OUTPUTS
+numeric_changed_file_count_constraint: NONE
+```
+
+### Exact authored path allowlist
+
+The following 18 authored paths are authorized:
+
+```text
+1.  skillset/shared/handoff-contract.md
+2.  skillset/skills/aegis-implementation/SKILL.md
+3.  skillset/skills/aegis-implementation/references/implementation-control.md
+4.  skillset/skills/aegis-gate-review/SKILL.md
+5.  skillset/skills/aegis-gate-review/references/gate-review.md
+6.  skillset/dogfood/repository-identity-v0.2.json
+7.  skillset/dogfood/repository-identity-negative-v0.2.json
+8.  tests/skillset/test_repository_identity_handoff.py
+9.  tests/skillset/test_execution_anchor_resume_cursor.py
+10. tools/aegis_skillset/package.py
+11. scripts/build_aegis_distributions.py
+12. tools/aegis_skillset/plugin_materialization.py
+13. scripts/build_openai_plugin_materialization.py
+14. scripts/build_candidate_plugin_parity.py
+15. tests/skillset/test_openai_plugin_materialization.py
+16. tests/skillset/test_candidate_plugin_parity.py
+17. .github/workflows/skillset.yml
+18. tests/skillset/test_workflow_paths.py
+```
+
+### Authorized generated outputs
+
+These are authorized only when produced by the existing deterministic generation flow required by this package:
+
+```text
+skills/**
+```
+
+`skillset/releases/aegis-0.1.0-task6.1.json` is conditionally authorized **only** if `python3 scripts/build_aegis_distributions.py --check` proves the current development-oracle manifest must be refreshed after generated Skill digests change. If that check does not require it, the file must remain unchanged.
+
+Generated `skills/**` files do not count against any numeric file limit because no numeric file-count constraint exists.
+
+### Explicit forbidden paths
+
+These must remain byte-for-byte unchanged from the task anchor:
+
+```text
+skillset/releases/aegis-0.1.0-beta.3.json
+plugins/aegis/**
+.aegis/**
+```
+
+Any authored change outside the exact authored allowlist, authorized generated outputs, or the conditional development manifest is `BLOCKED_SCOPE` unless a replacement P31 package explicitly authorizes it.
+
 ## Authorized changes
 
 ### A. Repository-bound canonical handoff semantics
 
-Modify:
-
-- `skillset/shared/handoff-contract.md`
-- `skillset/skills/aegis-implementation/SKILL.md`
-- `skillset/skills/aegis-implementation/references/implementation-control.md`
-- `skillset/skills/aegis-gate-review/SKILL.md`
-- `skillset/skills/aegis-gate-review/references/gate-review.md`
-
-Repository-backed P31/P32/P33/P36 must require:
+Modify only the five canonical paths listed above. Repository-backed P31/P32/P33/P36 must require:
 
 ```yaml
 repository:
@@ -90,12 +148,7 @@ P33 must establish repository identity before claiming `EXACT_CURSOR`, `DESCENDA
 
 ### B. Deterministic repository-identity proof
 
-Create/update only the narrow proof surfaces needed by P20/P30:
-
-- `skillset/dogfood/repository-identity-v0.2.json`
-- `skillset/dogfood/repository-identity-negative-v0.2.json`
-- `tests/skillset/test_repository_identity_handoff.py`
-- `tests/skillset/test_execution_anchor_resume_cursor.py`
+Use only the four authored proof paths in the allowlist plus their two dogfood JSON files.
 
 Mandatory: `RI-S01..RI-S10 = 10/10`, `RI-M01..RI-M06 = 6/6`, `negative_false_acceptance = 0`.
 
@@ -112,15 +165,7 @@ p36_repository_contract_omissions: 0
 
 ### C. Separate immutable beta.3 history from current candidate Plugin parity
 
-Authorized implementation surfaces:
-
-- `tools/aegis_skillset/package.py`
-- `scripts/build_aegis_distributions.py`
-- `tools/aegis_skillset/plugin_materialization.py`
-- `scripts/build_openai_plugin_materialization.py`
-- new `scripts/build_candidate_plugin_parity.py`
-- `tests/skillset/test_openai_plugin_materialization.py`
-- new `tests/skillset/test_candidate_plugin_parity.py`
+Use only the seven authored Plugin-parity/history paths in the allowlist.
 
 Implement two distinct evidence classes:
 
@@ -131,18 +176,11 @@ Candidate evidence must not write `plugins/aegis/**`.
 
 ### D. Regenerate current distributed Skills only
 
-Use existing deterministic generators. Generated `skills/**` must carry the repository identity contract. `skillset/releases/aegis-0.1.0-task6.1.json` may change only if the current development-oracle manifest requires updated digests.
-
-Must remain unchanged from the task anchor:
-
-```text
-skillset/releases/aegis-0.1.0-beta.3.json
-plugins/aegis/**
-```
+Use existing deterministic generators. Generated `skills/**` must carry the repository identity contract. `skillset/releases/aegis-0.1.0-task6.1.json` may change only under the conditional rule above.
 
 ### E. Exact-head CI evidence
 
-Modify `.github/workflows/skillset.yml` and `tests/skillset/test_workflow_paths.py` only as required to:
+Modify only `.github/workflows/skillset.yml` and `tests/skillset/test_workflow_paths.py` as required to:
 
 - validate beta.3 using explicit published-history modes;
 - stop building a current-head candidate labeled `0.1.0-beta.3`;
@@ -204,13 +242,15 @@ The executor MUST NOT:
 - Repository identity/package resolution occurs before anchor/cursor reconciliation.
 - If `Mostorm-Labs/aegis` cannot be safely established, do not continue in another repository.
 
-Return `BLOCKED_REPOSITORY_IDENTITY` for repository-addressing failure, `BLOCKED_AUTHORITY` for unresolved upstream decisions, `BLOCKED_EVIDENCE` for missing durable evidence, and `BLOCKED_EXECUTION_DIVERGENCE` only after repository identity succeeds and ancestry is genuinely incompatible.
+Return `BLOCKED_REPOSITORY_IDENTITY` for repository-addressing failure, `BLOCKED_SCOPE` for any requested authored path outside this explicit path policy, `BLOCKED_AUTHORITY` for unresolved upstream decisions, `BLOCKED_EVIDENCE` for missing durable evidence, and `BLOCKED_EXECUTION_DIVERGENCE` only after repository identity succeeds and ancestry is genuinely incompatible.
 
 ## Exit criteria
 
 ```yaml
 repository_contract_implemented: true
 repository_preflight_before_anchor_cursor: true
+scope_authorization_mode: PATH_SET_PLUS_GENERATOR_OUTPUTS
+numeric_changed_file_count_constraint: NONE
 mandatory_scenarios: 10/10
 negative_cases_rejected: 6/6
 negative_false_acceptance: 0
@@ -236,10 +276,10 @@ P34_claimed_by_P32: false
 
 ## P32 handoff rendering rule
 
-Do not render or execute P32 until this P31 package is durably materialized and the handoff carries the exact final `package_ref`, the same-repository `package_materialization_ref`, the repository object, and the task anchor.
+Do not render or execute P32 until this replacement P31 package is durably materialized and the handoff carries the exact final `package_ref`, the same-repository `package_materialization_ref`, the repository object, and the task anchor.
 
 Whenever the future handoff uses `preferred_executor: codex`, place this exact prefix immediately before the YAML:
 
 > 请按以下 Aegis handoff 直接执行：以 `package_ref` 为任务授权，按 `task_anchor/resume_cursor` 核对当前状态并从首个未完成步骤继续；若状态冲突则 fail closed。
 
-This P31 package alone does not execute P32.
+This replacement P31 package alone does not execute P32.
