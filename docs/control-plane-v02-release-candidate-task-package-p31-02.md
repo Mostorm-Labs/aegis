@@ -35,7 +35,7 @@ supersession_reason: REPOSITORY_IDENTITY_EXECUTION_ENVELOPE_REISSUE
 repository:
   provider: github
   full_name: Mostorm-Labs/aegis
-package_materialization_ref: PENDING_PR_MATERIALIZATION
+package_materialization_ref: https://github.com/Mostorm-Labs/aegis/pull/64
 task_anchor:
   revision: 63d65472278448f8d2b5fa2bc2991189dcd0825a
   relation: ancestor
@@ -96,7 +96,7 @@ Repository-backed execution MUST begin with:
 repository:
   provider: github
   full_name: Mostorm-Labs/aegis
-package_materialization_ref: <same-repository PR for this P31 package>
+package_materialization_ref: https://github.com/Mostorm-Labs/aegis/pull/64
 task_anchor:
   revision: 63d65472278448f8d2b5fa2bc2991189dcd0825a
   relation: ancestor
@@ -381,7 +381,7 @@ P32_return:
   repository:
     provider: github
     full_name: Mostorm-Labs/aegis
-  package_materialization_ref: <this P31 PR>
+  package_materialization_ref: https://github.com/Mostorm-Labs/aegis/pull/64
   task_anchor:
     revision: 63d65472278448f8d2b5fa2bc2991189dcd0825a
     relation: ancestor
