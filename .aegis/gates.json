@@ -14,7 +14,8 @@
     {"id":"gate-project-state-v05-pr14","stage":"P34","authority_ids":["aegis-project-state-v0.5"]},
     {"id":"gate-execution-surface-v02-pr16","stage":"P34","authority_ids":["aegis-execution-surface-v0.2"]},
     {"id":"gate-plugin-distribution-v01-pr13","stage":"P34","authority_ids":["aegis-plugin-distribution-v0.1"]},
-    {"id":"gate-control-plane-v02-pr51","stage":"P34","authority_ids":["aegis-control-plane-product-v0.2","aegis-control-plane-verification-v0.2"]}
+    {"id":"gate-control-plane-v02-pr51","stage":"P34","authority_ids":["aegis-control-plane-product-v0.2","aegis-control-plane-verification-v0.2"]},
+    {"id":"gate-repository-identity-pr62","stage":"P34","authority_ids":["aegis-repository-identity-platform-v0.2","aegis-repository-identity-verification-v0.2","aegis-repository-identity-materialization-v0.2"]}
   ],
   "decisions": [
     {"id":"gate-eval-framework-pr1::decision::0001","gate_id":"gate-eval-framework-pr1","verdict":"PASS","evidence_ids":["ev-pr1-merged","ev-pr1-ci"]},
@@ -31,6 +32,7 @@
     {"id":"gate-project-state-v05-pr14::decision::0001","gate_id":"gate-project-state-v05-pr14","verdict":"PASS","evidence_ids":["ev-f09-07-authority","ev-pr14-project-state-ci-33236194931","ev-pr14-p34"]},
     {"id":"gate-execution-surface-v02-pr16::decision::0001","gate_id":"gate-execution-surface-v02-pr16","verdict":"PASS","evidence_ids":["ev-pr16-execution-position-dogfood","ev-pr16-project-state-ci-33248782773","ev-pr16-skillset-ci-33248782758","ev-pr16-p34"]},
     {"id":"gate-plugin-distribution-v01-pr13::decision::0001","gate_id":"gate-plugin-distribution-v01-pr13","verdict":"PASS","evidence_ids":["ev-pr13-p34","ev-pr13-post-merge-project-state-ci-33291923091","ev-pr13-post-merge-skillset-ci-33291923094"]},
-    {"id":"gate-control-plane-v02-pr51::decision::0001","gate_id":"gate-control-plane-v02-pr51","verdict":"PASS","evidence_ids":["ev-cp-v02-verification-p23","ev-pr51-qualification-33740273612","ev-pr51-platform-final","ev-pr51-p34"]}
+    {"id":"gate-control-plane-v02-pr51::decision::0001","gate_id":"gate-control-plane-v02-pr51","verdict":"PASS","evidence_ids":["ev-cp-v02-verification-p23","ev-pr51-qualification-33740273612","ev-pr51-platform-final","ev-pr51-p34"]},
+    {"id":"gate-repository-identity-pr62::decision::0001","gate_id":"gate-repository-identity-pr62","verdict":"PASS","evidence_ids":["ev-ri-core-p23","ev-ri-materialization-p23","ev-pr62-exact-head-ci-33848037699","ev-pr62-platform-final","ev-pr62-p34"]}
   ]
 }
