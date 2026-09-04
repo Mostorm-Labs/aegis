@@ -59,6 +59,18 @@ class SkillsetWorkflowPathTests(unittest.TestCase):
             with self.subTest(needle=needle):
                 self.assertIn(needle, workflow)
 
+    def test_workflow_uses_published_history_and_exact_head_candidate_parity(self):
+        workflow = WORKFLOW.read_text(encoding='utf-8')
+        for needle in (
+            'scripts/build_aegis_distributions.py --published-history --version 0.1.0-beta.3 --check',
+            'scripts/build_openai_plugin_materialization.py --published-history --release-version 0.1.0-beta.3 --check',
+            'scripts/build_candidate_plugin_parity.py --output /tmp/aegis-candidate-plugin-parity.json',
+            'name: aegis-candidate-plugin-parity-${{ github.sha }}',
+        ):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, workflow)
+        self.assertNotIn('aegis-skill-installation-kit-0.1.0-beta.3-candidate', workflow)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -12,15 +12,39 @@ from tools.aegis_skillset.package import (
     build_skill_installation_kit_archive,
     build_source_bundles,
     render_release_manifest,
+    tree_sha256,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_VERSION = "0.1.0-task6.1"
 
 
+def check_published_history(root: Path, version: str) -> None:
+    """Verify immutable release metadata against its committed Plugin payload."""
+    target = root / f"skillset/releases/aegis-{version}.json"
+    if not target.is_file():
+        raise ValueError(f"missing committed published release manifest: {target}")
+    release = json.loads(target.read_text(encoding="utf-8"))
+    if release.get("release_version") != version:
+        raise ValueError("published release manifest version mismatch")
+    entries = release.get("plugin", {}).get("skills", [])
+    if len(entries) != 9 or len({entry.get("name") for entry in entries}) != 9:
+        raise ValueError("published beta.3 Plugin history must contain exactly nine Skills")
+    for entry in entries:
+        name = entry["name"]
+        payload = root / "plugins/aegis/skills" / name
+        if not payload.is_dir() or tree_sha256(payload) != entry.get("tree_sha256"):
+            raise ValueError(f"published Plugin payload drift for {name}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--version", default=DEFAULT_VERSION)
+    parser.add_argument(
+        "--published-history",
+        action="store_true",
+        help="Explicitly operate on the immutable published beta.3 history.",
+    )
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--write-manifest", action="store_true")
     parser.add_argument("--package-dir")
@@ -28,6 +52,17 @@ def main():
     args = parser.parse_args()
 
     version = args.version
+    if args.published_history and version != "0.1.0-beta.3":
+        parser.error("--published-history is only valid with --version 0.1.0-beta.3")
+
+    if args.published_history:
+        try:
+            check_published_history(ROOT, version)
+        except (OSError, ValueError, json.JSONDecodeError) as error:
+            print(f"PUBLISHED_HISTORY_ERROR: {error}", file=sys.stderr)
+            return 1
+        print("PUBLISHED_HISTORY_OK")
+        return 0
     target = ROOT / f"skillset/releases/aegis-{version}.json"
     manifest = render_release_manifest(ROOT, version)
     text = json.dumps(manifest, sort_keys=True, indent=2) + "\n"

@@ -25,12 +25,23 @@ Default execution surface: `CODE_EXECUTION`. Inspect repository/task Authority b
 
 For `task_anchor.relation: ancestor`, verify that the anchor is an ancestor of the accepted starting revision. Do not require historical HEAD equality when the declared contract is ancestry. Record the actual starting revision before edits.
 
+Repository identity is the first P32 preflight. Resolve the declared
+`repository.provider/full_name`, then the same-repository
+`package_materialization_ref`, before resolving the package or checking
+anchor/cursor ancestry. Missing, mismatched, ambiguous, or unavailable
+identity returns `BLOCKED_REPOSITORY_IDENTITY` with `continue_execution:
+false`; a bare revision is never a repository locator.
+
 Before returning to `CONTROL_REVIEW`, materialize the exact result at the package-defined reviewer-accessible evidence boundary and return its `materialized_ref`. If materialization is unavailable, return `BLOCKED_EVIDENCE` with the exact blocker.
 
 ## P33 Resume Interrupted Work
 Default execution surface: `CODE_EXECUTION`. Inspect branch/diff/artifacts/tests/Authority, report completed vs pending work, preserve valid modifications, and resume at the first incomplete verified step. A resumable task must not use historical HEAD equality as its only starting-state predicate. If a control-plane-accepted continuation point is known, the handoff MUST carry its non-null `resume_cursor` before execution resumes.
 
 Classify the observed repository position before changing files:
+
+P33 performs the same repository identity preflight before any anchor/cursor
+classification. A repository-addressing failure is `BLOCKED_REPOSITORY_IDENTITY`,
+not execution divergence.
 
 - `EXACT_CURSOR`: observed HEAD equals `resume_cursor.revision`; resume from `next_action`.
 - `DESCENDANT_CURSOR`: `resume_cursor.revision` is an ancestor of observed HEAD; inspect only the delta after the cursor, preserve verified valid work, and do not replay completed work.

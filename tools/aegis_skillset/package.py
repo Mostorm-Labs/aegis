@@ -10,6 +10,20 @@ from pathlib import Path
 from .model import load_skillset
 
 
+def validate_repository_identity(repository: object, expected: str = "Mostorm-Labs/aegis") -> dict[str, str]:
+    """Validate the declared GitHub repository before package/anchor work."""
+    if not isinstance(repository, dict):
+        raise ValueError("BLOCKED_REPOSITORY_IDENTITY: repository declaration is missing")
+    provider = repository.get("provider")
+    full_name = repository.get("full_name")
+    if provider != "github" or full_name != expected:
+        raise ValueError(
+            "BLOCKED_REPOSITORY_IDENTITY: declared repository must be "
+            f"github/{expected}"
+        )
+    return {"provider": provider, "full_name": full_name}
+
+
 def tree_sha256(directory: Path) -> str:
     digest = hashlib.sha256()
     for path in sorted(p for p in Path(directory).rglob("*") if p.is_file()):

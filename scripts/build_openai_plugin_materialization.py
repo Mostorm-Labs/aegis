@@ -25,10 +25,18 @@ def main() -> int:
         required=True,
         help="Committed Aegis release version used to bind the Plugin materialization.",
     )
+    parser.add_argument(
+        "--published-history",
+        action="store_true",
+        help="Explicitly validate the immutable published beta.3 history.",
+    )
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--write", action="store_true")
     mode.add_argument("--check", action="store_true")
     args = parser.parse_args()
+
+    if args.published_history and args.release_version != "0.1.0-beta.3":
+        parser.error("--published-history is only valid with --release-version 0.1.0-beta.3")
 
     try:
         if args.write:

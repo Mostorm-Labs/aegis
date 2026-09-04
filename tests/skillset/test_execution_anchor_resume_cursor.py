@@ -128,6 +128,11 @@ class ExecutionAnchorResumeCursorTests(unittest.TestCase):
         ):
             self.assertIn(required, text)
 
+    def test_repository_identity_precedes_anchor_cursor(self):
+        text = self._read("skillset/skills/aegis-implementation/SKILL.md")
+        self.assertIn("BLOCKED_REPOSITORY_IDENTITY", text)
+        self.assertLess(text.find("repository.provider/full_name"), text.find("task_anchor"))
+
 
 if __name__ == "__main__":
     unittest.main()
