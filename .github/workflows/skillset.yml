@@ -145,6 +145,10 @@ jobs:
         run: python3 -m unittest discover -s tests/skillset -v
       - name: Run Project State regressions
         run: python3 -m unittest discover -s tests/project_state -v
+      - name: Validate Project State manifests
+        run: python3 -m tools.aegis_state.cli validate .
+      - name: Check generated Project State
+        run: python3 -m tools.aegis_state.cli check .
       - name: Validate protected Aegis evaluation corpus
         run: python3 evals/scripts/validate_corpus.py
       - name: Run Aegis evaluation regressions
