@@ -1,0 +1,15 @@
+{
+  "schema_version": "0.2",
+  "scenario_id": "RI-I01-NEGATIVE",
+  "purpose": "repository_identity_negative_false_acceptance",
+  "mutants": [
+    {"scenario_id": "RI-M01", "mutation": "omit_repository", "expected": "BLOCKED_REPOSITORY_IDENTITY"},
+    {"scenario_id": "RI-M02", "mutation": "provider_not_github", "expected": "BLOCKED_REPOSITORY_IDENTITY"},
+    {"scenario_id": "RI-M03", "mutation": "wrong_full_name", "expected": "BLOCKED_REPOSITORY_IDENTITY"},
+    {"scenario_id": "RI-M04", "mutation": "package_ref_from_other_repository", "expected": "BLOCKED_REPOSITORY_IDENTITY"},
+    {"scenario_id": "RI-M05", "mutation": "materialization_ref_from_other_repository", "expected": "BLOCKED_REPOSITORY_IDENTITY"},
+    {"scenario_id": "RI-M06", "mutation": "bare_sha_substitutes_for_repository", "expected": "BLOCKED_REPOSITORY_IDENTITY"}
+  ],
+  "mandatory_pass": "6/6",
+  "negative_false_acceptance": 0
+}

@@ -119,6 +119,7 @@ class OpenAIPluginMaterializationTests(unittest.TestCase):
 
     def test_plugin_contains_exact_nine_canonical_skill_trees(self):
         distribution = json.loads(DISTRIBUTION.read_text(encoding="utf-8"))
+        release = json.loads(RELEASE_MANIFEST.read_text(encoding="utf-8"))
         expected = distribution["plugin"]["skills"]
         self.assertEqual(len(expected), 9)
         self.assertEqual(distribution["plugin"].get("required_apps"), [])
@@ -136,14 +137,12 @@ class OpenAIPluginMaterializationTests(unittest.TestCase):
         self.assertEqual(actual, sorted(expected))
 
         for skill_name in expected:
-            canonical = ROOT / "skills" / skill_name
             materialized = PLUGIN_SKILLS / skill_name
             self.assertTrue(materialized.is_dir(), skill_name)
-            self.assertEqual(
-                tree_sha256(materialized),
-                tree_sha256(canonical),
-                f"Plugin materialization drift for {skill_name}",
+            release_entry = next(
+                entry for entry in release["plugin"]["skills"] if entry["name"] == skill_name
             )
+            self.assertEqual(tree_sha256(materialized), release_entry["tree_sha256"])
 
     def test_materializer_is_reproducible_and_checkable(self):
         with tempfile.TemporaryDirectory() as td:

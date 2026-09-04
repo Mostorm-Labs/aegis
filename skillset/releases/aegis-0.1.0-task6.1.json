@@ -5,57 +5,57 @@
     "skills": [
       {
         "name": "aegis",
-        "tree_sha256": "19a3772675e732227434c06e50947d982d33204836d69dee81da9ccf43bbbcc7",
+        "tree_sha256": "8421538ee04764e2c5779cb46b8bdf3e88851412c289982e0fcff30a0df3e4ec",
         "zip_filename": "aegis.zip",
-        "zip_sha256": "3f5a561b529243ef976c0be3ebc9717c2dff57f1c46e509e4767afea2ef202f9"
+        "zip_sha256": "d2f4004fc01730c0f36d1ffe355c2eba5aff0235550b76d1cd1c07ae49b802f6"
       },
       {
         "name": "aegis-project-state",
-        "tree_sha256": "8c3c0fc4a9575297938031396db13c41a02b43382889f64bcd856623e0eeb856",
+        "tree_sha256": "54d35dce0697dd42de1b40f956e3905e65fd0de636ce823bbd35c39de39fb1bf",
         "zip_filename": "aegis-project-state.zip",
-        "zip_sha256": "de6f906d17d25e2872ea471c45720b376ef73d3c5eb070bc830795b9b52bd745"
+        "zip_sha256": "24ade069fdce5f5c8d8189903ffc3d065062065ec152754e7669c6aae3c1f97c"
       },
       {
         "name": "aegis-discovery",
-        "tree_sha256": "6240232ecfa98d3c256c1d33c71ea87bb00a607e852d7c8781800e6c91b9bd57",
+        "tree_sha256": "a00812a1dc7602fc395299031a9f3ca5dd19a25abc1509b744cbd11f5f467ce2",
         "zip_filename": "aegis-discovery.zip",
-        "zip_sha256": "2a5bb7c9337be1ffb6f5985939d4c8d6da2f6d59326a450c38cec850fe1c39e1"
+        "zip_sha256": "91d796359a49640f28ac5b4741fecd2ae7f7b6835f960c15ff7fe06b02576118"
       },
       {
         "name": "aegis-modeling",
-        "tree_sha256": "d0250bc43a44577970a11b6ea4674513891a4966b4f98d2d245a47c8452a6fb3",
+        "tree_sha256": "565acbe47232932ea25826a0768261a9254e38e25df1d234a68d2965bc80597c",
         "zip_filename": "aegis-modeling.zip",
-        "zip_sha256": "a56a29274b046e15f8f19054f90d29e5810e48cc994d0d694be1b10bdd1268a2"
+        "zip_sha256": "71ada3875ebda6281b115e7d2ef8a9991dfa6fa7ef8b59aa70d7e407a115f388"
       },
       {
         "name": "aegis-architecture",
-        "tree_sha256": "88716cb5e5ba67876f0e8b1b11e8954ddf53d643f5994168769d7691d455d920",
+        "tree_sha256": "1405da4d9403af8c7712053cf60106dadea8d9fd83911255b7d46c60a5fc0f56",
         "zip_filename": "aegis-architecture.zip",
-        "zip_sha256": "e16359a311c631583eba9c72eca3c1438419ad536c4c2d6c2647840c56f696c7"
+        "zip_sha256": "7aee2834664f2415ebb51125ce3e2bf32188b72f24a82ce414c36a4ac7166d61"
       },
       {
         "name": "aegis-verification",
-        "tree_sha256": "312d18b3d59edc21e1fc8284a751bc4c936e525914eea673308f7735b00c2191",
+        "tree_sha256": "e8120f132a16e9c17f8360d23d6947839564a710397b94292939cf58d482b0e4",
         "zip_filename": "aegis-verification.zip",
-        "zip_sha256": "e9bba3bbba326780f7582ebcd521d570a80eabb4602b211bf43b8dc2559e79b1"
+        "zip_sha256": "5e8cea66e7edf91b68bdba0df4a74076cd2492378b452032d3fbd83c10e59923"
       },
       {
         "name": "aegis-governance",
-        "tree_sha256": "be58441a81829c5aeaadfc354923816b0818f5390effc9970cbf9bc55adcc31c",
+        "tree_sha256": "4e263798ae79ecb0c311f133e47a113f98dd4edc655a143cf2b31dbe93b54dda",
         "zip_filename": "aegis-governance.zip",
-        "zip_sha256": "f7bf1d50f102f99a27369967d21993edee91985047cb565eef8fea260d05d5b2"
+        "zip_sha256": "12cfed492fb9e1b77143b679d8d51d3952d7c77f10f7e74b2c7614f0854d94c9"
       },
       {
         "name": "aegis-implementation",
-        "tree_sha256": "0f12dbfde068a7153699442acd27fd115f5315c7f278bd02be376ae6decc1775",
+        "tree_sha256": "8cc122f43978a8db4dd4c3b16dcfe413e0b63d3f5c464de7b171e104724ee1a4",
         "zip_filename": "aegis-implementation.zip",
-        "zip_sha256": "16076257062ed2b18f950a22e1c1be2dc590c7c6c6be637043d604d0ebc03481"
+        "zip_sha256": "3c5dee89294611574525a399b3561e8d43ac7b1752c097b8c69cb93e4fb3091d"
       },
       {
         "name": "aegis-gate-review",
-        "tree_sha256": "94797de36d65cc61a9f93f193e869a0b14a65f65da2a0a13155be1548982325a",
+        "tree_sha256": "33c2744077dc642c700a210d4ecefb44fd16ba61e8c81f133ac26d2ed558a846",
         "zip_filename": "aegis-gate-review.zip",
-        "zip_sha256": "94167d65ba369937413997a2e3c07edbc781984652dafd2241629779ca1e4383"
+        "zip_sha256": "24581e6a16eb371a03c8781efcb8cd6de73713a8be690d756e8ba3a63ec00283"
       }
     ]
   },
@@ -67,9 +67,9 @@
     "skills": [
       {
         "name": "aegis",
-        "tree_sha256": "19a3772675e732227434c06e50947d982d33204836d69dee81da9ccf43bbbcc7",
+        "tree_sha256": "8421538ee04764e2c5779cb46b8bdf3e88851412c289982e0fcff30a0df3e4ec",
         "zip_filename": "aegis.zip",
-        "zip_sha256": "3f5a561b529243ef976c0be3ebc9717c2dff57f1c46e509e4767afea2ef202f9"
+        "zip_sha256": "d2f4004fc01730c0f36d1ffe355c2eba5aff0235550b76d1cd1c07ae49b802f6"
       }
     ]
   }

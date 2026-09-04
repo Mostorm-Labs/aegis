@@ -1,0 +1,39 @@
+{
+  "schema_version": "0.2",
+  "scenario_id": "RI-I01",
+  "purpose": "repository_identity_execution_preflight",
+  "repository": {
+    "provider": "github",
+    "full_name": "Mostorm-Labs/aegis"
+  },
+  "required_order": [
+    "repository_identity",
+    "declared_repository_checkout",
+    "package_resolution",
+    "materialization_ref_repository_match",
+    "task_anchor_ancestry",
+    "resume_cursor_classification",
+    "authored_mutation"
+  ],
+  "scenarios": [
+    {"scenario_id": "RI-S01", "case": "declared_repository_matches_checkout", "decision": "CONTINUE"},
+    {"scenario_id": "RI-S02", "case": "package_materialization_ref_same_repository", "decision": "CONTINUE"},
+    {"scenario_id": "RI-S03", "case": "task_anchor_after_identity_preflight", "decision": "CONTINUE"},
+    {"scenario_id": "RI-S04", "case": "resume_cursor_after_identity_preflight", "decision": "CONTINUE"},
+    {"scenario_id": "RI-S05", "case": "missing_repository_identity", "decision": "BLOCKED_REPOSITORY_IDENTITY"},
+    {"scenario_id": "RI-S06", "case": "wrong_provider", "decision": "BLOCKED_REPOSITORY_IDENTITY"},
+    {"scenario_id": "RI-S07", "case": "wrong_full_name", "decision": "BLOCKED_REPOSITORY_IDENTITY"},
+    {"scenario_id": "RI-S08", "case": "ambiguous_checkout", "decision": "BLOCKED_REPOSITORY_IDENTITY"},
+    {"scenario_id": "RI-S09", "case": "unavailable_declared_repository", "decision": "BLOCKED_REPOSITORY_IDENTITY"},
+    {"scenario_id": "RI-S10", "case": "bare_sha_is_not_repository_locator", "decision": "BLOCKED_REPOSITORY_IDENTITY"}
+  ],
+  "mandatory_pass": "10/10",
+  "safety_metrics": {
+    "wrong_repository_authored_mutations": 0,
+    "unrelated_dirty_work_loss_events": 0,
+    "cross_repository_sha_follow_events": 0,
+    "package_materialization_repository_mismatches_accepted": 0,
+    "p33_repository_preflight_order_violations": 0,
+    "p36_repository_contract_omissions": 0
+  }
+}
