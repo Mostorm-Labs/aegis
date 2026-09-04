@@ -78,6 +78,11 @@
       "verdict": "PASS"
     },
     {
+      "decision_id": "gate-repository-identity-pr62::decision::0001",
+      "gate_id": "gate-repository-identity-pr62",
+      "verdict": "PASS"
+    },
+    {
       "decision_id": "gate-skill-decomposition-v02-pr9::decision::0002",
       "gate_id": "gate-skill-decomposition-v02-pr9",
       "verdict": "PASS"
@@ -136,6 +141,10 @@
     {
       "applicability": "historical",
       "integration_id": "int-pr6"
+    },
+    {
+      "applicability": "current",
+      "integration_id": "int-pr62"
     },
     {
       "applicability": "historical",
@@ -203,6 +212,11 @@
     },
     {
       "conformance": "conforming",
+      "gate_decision_id": "gate-repository-identity-pr62::decision::0001",
+      "integration_id": "int-pr62"
+    },
+    {
+      "conformance": "conforming",
       "gate_decision_id": "gate-project-state-v02-pr7::decision::0001",
       "integration_id": "int-pr7"
     },
@@ -217,7 +231,7 @@
       "integration_id": "int-pr9"
     }
   ],
-  "manifest_digest": "d781f50caf2d1ef07d7a58eec547061b23f2575a1d56783766b29941b85d2450",
+  "manifest_digest": "c47928a86201bfd28adc18f0f4eb41851000cfc742898ec2df5d565c372aa596",
   "needs_review_authorities": [],
   "needs_review_gates": [],
   "nonconforming_integrations": [
