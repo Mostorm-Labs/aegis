@@ -16,16 +16,122 @@
     "authored_mutation"
   ],
   "scenarios": [
-    {"scenario_id": "RI-S01", "case": "declared_repository_matches_checkout", "decision": "CONTINUE"},
-    {"scenario_id": "RI-S02", "case": "package_materialization_ref_same_repository", "decision": "CONTINUE"},
-    {"scenario_id": "RI-S03", "case": "task_anchor_after_identity_preflight", "decision": "CONTINUE"},
-    {"scenario_id": "RI-S04", "case": "resume_cursor_after_identity_preflight", "decision": "CONTINUE"},
-    {"scenario_id": "RI-S05", "case": "missing_repository_identity", "decision": "BLOCKED_REPOSITORY_IDENTITY"},
-    {"scenario_id": "RI-S06", "case": "wrong_provider", "decision": "BLOCKED_REPOSITORY_IDENTITY"},
-    {"scenario_id": "RI-S07", "case": "wrong_full_name", "decision": "BLOCKED_REPOSITORY_IDENTITY"},
-    {"scenario_id": "RI-S08", "case": "ambiguous_checkout", "decision": "BLOCKED_REPOSITORY_IDENTITY"},
-    {"scenario_id": "RI-S09", "case": "unavailable_declared_repository", "decision": "BLOCKED_REPOSITORY_IDENTITY"},
-    {"scenario_id": "RI-S10", "case": "bare_sha_is_not_repository_locator", "decision": "BLOCKED_REPOSITORY_IDENTITY"}
+    {
+      "scenario_id": "RI-S01",
+      "declared_repository": "Mostorm-Labs/aegis",
+      "current_repository": "Mostorm-Labs/aegis",
+      "package_in_declared_repository": true,
+      "package_materialization_matches": true,
+      "anchor_relation": "valid",
+      "cursor_relation": "not_evaluated",
+      "expected": "CONTINUE_TO_ANCHOR_PREFLIGHT",
+      "expected_mutated_repositories": [],
+      "expected_repository_for_execution": "Mostorm-Labs/aegis"
+    },
+    {
+      "scenario_id": "RI-S02",
+      "declared_repository": "Mostorm-Labs/aegis",
+      "current_repository": "Mostorm-Labs/axtp",
+      "available_declared_repository": true,
+      "anchor_relation": "not_evaluated",
+      "cursor_relation": "not_evaluated",
+      "expected": "ISOLATE_DECLARED_REPOSITORY",
+      "wrong_repository_mutation": 0,
+      "expected_mutated_repositories": [],
+      "expected_repository_for_execution": "Mostorm-Labs/aegis"
+    },
+    {
+      "scenario_id": "RI-S03",
+      "declared_repository": "Mostorm-Labs/aegis",
+      "current_repository": "Mostorm-Labs/axtp",
+      "available_declared_repository": false,
+      "anchor_relation": "not_evaluated",
+      "cursor_relation": "not_evaluated",
+      "expected": "BLOCKED_REPOSITORY_IDENTITY",
+      "continue_execution": false,
+      "expected_mutated_repositories": [],
+      "expected_repository_for_execution": null
+    },
+    {
+      "scenario_id": "RI-S04",
+      "repository": null,
+      "package_ref": "present",
+      "anchor_relation": "not_evaluated",
+      "cursor_relation": "not_evaluated",
+      "expected": "BLOCKED_REPOSITORY_IDENTITY",
+      "expected_mutated_repositories": [],
+      "expected_repository_for_execution": null
+    },
+    {
+      "scenario_id": "RI-S05",
+      "declared_repository": "Mostorm-Labs/aegis",
+      "package_in_declared_repository": false,
+      "package_in_other_repository": "Mostorm-Labs/axtp",
+      "anchor_relation": "not_evaluated",
+      "cursor_relation": "not_evaluated",
+      "expected": "BLOCKED_REPOSITORY_IDENTITY",
+      "follow_other_repository": false,
+      "expected_mutated_repositories": [],
+      "expected_repository_for_execution": null
+    },
+    {
+      "scenario_id": "RI-S06",
+      "declared_repository": "Mostorm-Labs/aegis",
+      "package_materialization_repository": "Mostorm-Labs/axtp",
+      "anchor_relation": "not_evaluated",
+      "cursor_relation": "not_evaluated",
+      "expected": "BLOCKED_REPOSITORY_IDENTITY",
+      "expected_mutated_repositories": [],
+      "expected_repository_for_execution": null
+    },
+    {
+      "scenario_id": "RI-S07",
+      "declared_repository": "Mostorm-Labs/aegis",
+      "available_repositories": ["Mostorm-Labs/aegis", "Mostorm-Labs/axtp"],
+      "ambient_context_repository": "Mostorm-Labs/axtp",
+      "anchor_relation": "not_evaluated",
+      "cursor_relation": "not_evaluated",
+      "expected": "CONTINUE",
+      "expected_repository_for_execution": "Mostorm-Labs/aegis",
+      "ambient_guessing": false,
+      "expected_mutated_repositories": []
+    },
+    {
+      "scenario_id": "RI-S08",
+      "declared_repository": "Mostorm-Labs/aegis",
+      "current_repository": "Mostorm-Labs/aegis",
+      "correct_repository_dirty": true,
+      "anchor_relation": "not_evaluated",
+      "cursor_relation": "not_evaluated",
+      "expected": "PRESERVE_DIRTY_AND_ISOLATE_SAME_REPOSITORY_IF_NEEDED",
+      "switch_to_other_repository": false,
+      "expected_mutated_repositories": [],
+      "expected_repository_for_execution": "Mostorm-Labs/aegis"
+    },
+    {
+      "scenario_id": "RI-S09",
+      "declared_repository": "Mostorm-Labs/aegis",
+      "current_repository": "Mostorm-Labs/axtp",
+      "cursor_sha_resolves_in_wrong_repository": true,
+      "anchor_relation": "not_evaluated",
+      "cursor_relation": "not_evaluated",
+      "expected": "BLOCKED_REPOSITORY_IDENTITY_BEFORE_CURSOR_CLASSIFICATION",
+      "p33_classification_performed": false,
+      "expected_mutated_repositories": [],
+      "expected_repository_for_execution": null
+    },
+    {
+      "scenario_id": "RI-S10",
+      "stage": "P36",
+      "declared_repository": "Mostorm-Labs/aegis",
+      "current_repository": "Mostorm-Labs/axtp",
+      "anchor_relation": "not_evaluated",
+      "cursor_relation": "not_evaluated",
+      "expected": "SAME_REPOSITORY_PREFLIGHT_RULES_AS_P32_P33",
+      "wrong_repository_mutation": 0,
+      "expected_mutated_repositories": [],
+      "expected_repository_for_execution": "Mostorm-Labs/aegis"
+    }
   ],
   "mandatory_pass": "10/10",
   "safety_metrics": {

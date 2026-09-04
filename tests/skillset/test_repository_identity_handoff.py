@@ -22,6 +22,12 @@ class RepositoryIdentityHandoffTests(unittest.TestCase):
         self.assertEqual(proof["mandatory_pass"], "10/10")
         self.assertEqual(len(proof["scenarios"]), 10)
         self.assertEqual([case["scenario_id"] for case in proof["scenarios"]], [f"RI-S{i:02d}" for i in range(1, 11)])
+        self.assertEqual(proof["scenarios"][0]["expected"], "CONTINUE_TO_ANCHOR_PREFLIGHT")
+        self.assertEqual(proof["scenarios"][1]["expected"], "ISOLATE_DECLARED_REPOSITORY")
+        self.assertEqual(proof["scenarios"][2]["expected"], "BLOCKED_REPOSITORY_IDENTITY")
+        self.assertFalse(proof["scenarios"][8]["p33_classification_performed"])
+        self.assertEqual(proof["scenarios"][9]["stage"], "P36")
+        self.assertTrue(all(case["expected_mutated_repositories"] == [] for case in proof["scenarios"]))
         self.assertEqual(proof["safety_metrics"]["wrong_repository_authored_mutations"], 0)
         self.assertEqual(proof["safety_metrics"]["p33_repository_preflight_order_violations"], 0)
 
