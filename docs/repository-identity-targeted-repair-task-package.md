@@ -1,6 +1,6 @@
 # RI-I01-P31-01 — Repository Identity Execution Handoff Repair Task Package
 
-Status: **P31 / CONTROL_REASONING**
+Status: **P31 / CONTROL_REASONING / MATERIALIZED**
 
 ## Task identity
 
@@ -12,13 +12,14 @@ stage_owner: aegis-implementation
 repository:
   provider: github
   full_name: Mostorm-Labs/aegis
+package_materialization_ref: https://github.com/Mostorm-Labs/aegis/pull/61
 task_anchor:
   revision: 8fc76fc6c10951c4748c04be60bbc1c953e6de7e
   relation: ancestor
 resume_cursor: null
 ```
 
-The exact `package_ref` is the final P31 materialized revision and is recorded by the P31 stage result. A P32 handoff is non-executable unless it carries that exact revision together with this package's same-repository durable materialization ref.
+The exact `package_ref` is the final P31 materialized revision and is recorded by the P31 stage result. A P32 handoff is non-executable unless it carries that exact revision together with the same-repository `package_materialization_ref` above.
 
 ## Current Authority
 
