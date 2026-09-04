@@ -1,0 +1,52 @@
+name: Aegis Control Plane CP-I01 Foundation
+
+on:
+  push:
+    paths:
+      - "tools/aegis_control/**"
+      - "tests/control_plane/**"
+      - ".github/workflows/control-plane-foundation.yml"
+  pull_request:
+    paths:
+      - "tools/aegis_control/**"
+      - "tests/control_plane/**"
+      - ".github/workflows/control-plane-foundation.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: control-plane-foundation-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run CP-I01 focused qualification
+        run: python3 -m unittest discover -s tests/control_plane -v
+      - name: Run Project State regression suite
+        run: python3 -m unittest discover -s tests/project_state -v
+      - name: Run Skillset regression suite
+        run: python3 -m unittest discover -s tests/skillset -v
+      - name: Materialize CP-I01 evidence manifest
+        env:
+          PACKAGE_REF: e8b2fa8c2bd29778a6a3c8bf5beb3d65ff9c364c
+          RESULT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python3 tests/control_plane/generate_evidence.py \
+            --result-revision "$RESULT_REVISION" \
+            --package-ref "$PACKAGE_REF" \
+            --output artifacts/cp-i01/evidence-manifest.json
+          python3 -m json.tool artifacts/cp-i01/evidence-manifest.json >/dev/null
+      - name: Upload CP-I01 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp-i01-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/cp-i01/evidence-manifest.json
+          if-no-files-found: error
+          retention-days: 30

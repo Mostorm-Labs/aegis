@@ -1,0 +1,57 @@
+name: Aegis Control Plane CP-I09 Plugin Profile
+
+on:
+  push:
+    branches: [chatgpt/control-plane-cp-i09-plugin-profile-implementation-v0.2]
+  pull_request:
+    paths:
+      - ".github/workflows/control-plane-cp-i09-plugin-profile.yml"
+      - "tests/control_plane/**"
+      - "tests/skillset/**"
+      - "skillset/dogfood/control-plane-v0.2-plugin-profile*.json"
+
+jobs:
+  contract-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: python3 -m unittest discover -s tests/control_plane -v
+  baseline-and-inheritance-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: python3 -m unittest tests.control_plane.test_cp_i08_d0 -v
+      - run: python3 -m unittest discover -s tests/control_plane -p 'test_qualification.py' -v
+  pp0-deterministic-qualification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: python3 -m unittest tests.control_plane.test_cp_i09_plugin_profile -v
+  skillset-plugin-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: python3 -m unittest discover -s tests/skillset -v
+      - run: python3 -m unittest discover -s tests/project_state -v
+  combine-evidence:
+    if: always()
+    needs: [contract-regression, baseline-and-inheritance-check, pp0-deterministic-qualification, skillset-plugin-regression]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: test "${{ needs.pp0-deterministic-qualification.result }}" = success
+      - run: python3 tests/control_plane/generate_cp_i09_plugin_profile_evidence.py --out cp-i09-evidence --revision "$GITHUB_SHA"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cp-i09-plugin-profile-evidence-${{ github.sha }}
+          path: cp-i09-evidence/

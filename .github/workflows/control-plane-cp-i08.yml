@@ -1,0 +1,116 @@
+name: Aegis Control Plane CP-I08 Integrated D0
+
+on:
+  push:
+    paths:
+      - "tools/aegis_control/**"
+      - "tests/control_plane/test_cp_i08_*.py"
+      - "tests/control_plane/cp_i08_d0.py"
+      - "tests/control_plane/generate_cp_i08_evidence.py"
+      - ".github/workflows/control-plane-cp-i08.yml"
+  pull_request:
+    paths:
+      - "tools/aegis_control/**"
+      - "tests/control_plane/test_cp_i08_*.py"
+      - "tests/control_plane/cp_i08_d0.py"
+      - "tests/control_plane/generate_cp_i08_evidence.py"
+      - ".github/workflows/control-plane-cp-i08.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: control-plane-cp-i08-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run CP-I08 focused tests
+        run: python3 -m unittest discover -s tests/control_plane -p 'test_cp_i08_*.py' -v
+      - name: Run full Control Plane regression suite
+        run: python3 -m unittest discover -s tests/control_plane -v
+      - name: Run Project State regression suite
+        run: python3 -m unittest discover -s tests/project_state -v
+      - name: Run Skillset regression suite
+        run: python3 -m unittest discover -s tests/skillset -v
+      - name: Materialize CP-I08 P36 exact evidence bundle
+        run: |
+          rm -rf artifacts/cp-i08
+          python3 -m tests.control_plane.generate_cp_i08_evidence \
+            --result-revision "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --workflow-run "${{ github.run_id }}" \
+            --workflow-job "verify" \
+            --output-dir artifacts/cp-i08
+      - name: Validate CP-I08 P36 JSON evidence
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("artifacts/cp-i08")
+          expected = {
+              "d0-conformance.json",
+              "verifier-qualification.json",
+              "retention-replay.json",
+              "observability-cost.json",
+              "operational-retention.json",
+              "alerting-conformance.json",
+              "availability-evaluator-qualification.json",
+              "evidence-manifest.json",
+          }
+          actual = {p.name for p in root.glob("*.json")}
+          if actual != expected:
+              raise SystemExit(f"unexpected CP-I08 evidence set: {sorted(actual)}")
+          for path in root.glob("*.json"):
+              json.loads(path.read_text(encoding="utf-8"))
+          manifest = json.loads((root / "evidence-manifest.json").read_text(encoding="utf-8"))
+          if manifest.get("package_id") != "CP-I08-P31-01" or manifest.get("package_ref") != "55ca192347739779a611cb5d387f05132db37b06":
+              raise SystemExit("CP-I08 package provenance mismatch")
+          if manifest.get("result_revision") != "${{ github.event.pull_request.head.sha || github.sha }}":
+              raise SystemExit("CP-I08 result revision mismatch")
+          if manifest.get("workflow_run") != "${{ github.run_id }}" or manifest.get("workflow_job") != "verify":
+              raise SystemExit("CP-I08 workflow execution provenance mismatch")
+          repair = manifest.get("p36_repair", {})
+          if repair.get("repair_package_id") != "CP-I08-P36-01":
+              raise SystemExit("CP-I08 P36 repair package provenance mismatch")
+          if repair.get("source_p34_review") != "5079847388" or repair.get("source_p35_comment") != "5496205447":
+              raise SystemExit("CP-I08 P36 source review/classification mismatch")
+          if manifest.get("d0") != {"golden_passed": 44, "golden_total": 44}:
+              raise SystemExit("CP-I08 G01-G44 closure incomplete")
+          q = manifest.get("qualification", {})
+          if q.get("detected") != 20 or q.get("mandatory_total") != 20 or q.get("false_acceptance") != 0:
+              raise SystemExit("CP-I08 M01-M20 qualification incomplete")
+          d0 = json.loads((root / "d0-conformance.json").read_text(encoding="utf-8"))
+          golden = d0.get("golden_results", {})
+          if set(golden) != {f"G{i:02d}" for i in range(1, 45)}:
+              raise SystemExit("CP-I08 exact G01-G44 identity set mismatch")
+          for gid, result in golden.items():
+              if result.get("passed") is not True or result.get("tests_run") != 1 or result.get("failures") or result.get("errors"):
+                  raise SystemExit(f"CP-I08 {gid} execution result invalid")
+              execution = result.get("execution", {})
+              if execution.get("workflow_run") != "${{ github.run_id }}" or execution.get("workflow_job") != "verify":
+                  raise SystemExit(f"CP-I08 {gid} execution provenance mismatch")
+          if manifest.get("passed") is not True or any(manifest.get("metrics", {}).values()):
+              raise SystemExit("CP-I08 P36 zero-tolerance evidence failed")
+          if len(manifest.get("metrics", {})) != 18:
+              raise SystemExit("CP-I08 P36 zero-metric set incomplete")
+          claims = manifest.get("claims", {})
+          if claims.get("p34_gate_pass") is not False or claims.get("evidence_compiler_gate_authority") is not False:
+              raise SystemExit("CP-I08 evidence compiler claimed Gate authority")
+          if claims.get("current_cross_primary_rollout") != "DENIED" or claims.get("cp_i09_plus") is not False:
+              raise SystemExit("CP-I08 scope or rollout expanded")
+          if claims.get("r0_pass") or claims.get("s0_pass") or claims.get("seven_day_cost_pass") or claims.get("monthly_availability_attainment"):
+              raise SystemExit("CP-I08 made prohibited engineering/availability claim")
+          PY
+      - name: Upload CP-I08 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp-i08-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/cp-i08
+          if-no-files-found: error
+          retention-days: 30
