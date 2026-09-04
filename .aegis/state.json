@@ -13,6 +13,11 @@
   ],
   "current_gate_decisions": [
     {
+      "decision_id": "gate-control-plane-v02-pr51::decision::0001",
+      "gate_id": "gate-control-plane-v02-pr51",
+      "verdict": "PASS"
+    },
+    {
       "decision_id": "gate-eval-framework-pr1::decision::0001",
       "gate_id": "gate-eval-framework-pr1",
       "verdict": "PASS"
@@ -125,6 +130,10 @@
       "integration_id": "int-pr4"
     },
     {
+      "applicability": "current",
+      "integration_id": "int-pr51"
+    },
+    {
       "applicability": "historical",
       "integration_id": "int-pr6"
     },
@@ -189,6 +198,11 @@
     },
     {
       "conformance": "conforming",
+      "gate_decision_id": "gate-control-plane-v02-pr51::decision::0001",
+      "integration_id": "int-pr51"
+    },
+    {
+      "conformance": "conforming",
       "gate_decision_id": "gate-project-state-v02-pr7::decision::0001",
       "integration_id": "int-pr7"
     },
@@ -203,7 +217,7 @@
       "integration_id": "int-pr9"
     }
   ],
-  "manifest_digest": "f1d1010378f3fd7adbbf6c73d5123321a21fca9261b88a86b6655946456800cc",
+  "manifest_digest": "d781f50caf2d1ef07d7a58eec547061b23f2575a1d56783766b29941b85d2450",
   "needs_review_authorities": [],
   "needs_review_gates": [],
   "nonconforming_integrations": [
