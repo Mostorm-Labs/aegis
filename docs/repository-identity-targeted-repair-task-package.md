@@ -21,7 +21,7 @@ task_anchor:
 resume_cursor: null
 ```
 
-The exact replacement `package_ref` is recorded by the P31 stage result and PR metadata. A P32 handoff is non-executable unless it carries that exact revision together with the same-repository `package_materialization_ref` above.
+The exact replacement `package_ref` is the final P31 head revision and is recorded by the P31 stage result and PR metadata. A P32 handoff is non-executable unless it carries that exact revision together with the same-repository `package_materialization_ref` above.
 
 The prior package `b393d4f85b7826572d4ffb2cc94dbbd04d76b8eb` remains historical evidence. It is superseded for execution because it did not explicitly state whether scope authorization was path-based or numeric-cardinality-based. No upstream Authority or implementation semantics changed.
 
