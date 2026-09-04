@@ -10,6 +10,7 @@ REQUIRED_V02_PATHS = (
     'docs/superpowers/specs/*multi-skill-composition*.md',
     'docs/superpowers/plans/*multi-skill-composition*.md',
 )
+EXACT_EVIDENCE_EXPR = '${{ github.event.pull_request.head.sha || github.sha }}'
 
 
 class SkillsetWorkflowPathTests(unittest.TestCase):
@@ -64,11 +65,15 @@ class SkillsetWorkflowPathTests(unittest.TestCase):
         for needle in (
             'scripts/build_aegis_distributions.py --published-history --version 0.1.0-beta.3 --check',
             'scripts/build_openai_plugin_materialization.py --published-history --release-version 0.1.0-beta.3 --check',
+            f'AEGIS_EVIDENCE_REVISION: {EXACT_EVIDENCE_EXPR}',
+            f'ref: {EXACT_EVIDENCE_EXPR}',
+            'run: test "$(git rev-parse HEAD)" = "$AEGIS_EVIDENCE_REVISION"',
             'scripts/build_candidate_plugin_parity.py --output /tmp/aegis-candidate-plugin-parity.json',
-            'name: aegis-candidate-plugin-parity-${{ github.sha }}',
+            f'name: aegis-candidate-plugin-parity-{EXACT_EVIDENCE_EXPR}',
         ):
             with self.subTest(needle=needle):
                 self.assertIn(needle, workflow)
+        self.assertNotIn('name: aegis-candidate-plugin-parity-${{ github.sha }}', workflow)
         self.assertNotIn('aegis-skill-installation-kit-0.1.0-beta.3-candidate', workflow)
 
 
