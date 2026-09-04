@@ -18,8 +18,8 @@ PLUGIN_ROOT = ROOT / "plugins/aegis"
 PLUGIN_MANIFEST = PLUGIN_ROOT / ".codex-plugin/plugin.json"
 PLUGIN_SKILLS = PLUGIN_ROOT / "skills"
 DISTRIBUTION = ROOT / "skillset/distribution.json"
-RELEASE_MANIFEST = ROOT / "skillset/releases/aegis-0.1.0-beta.3.json"
-RELEASE_VERSION = "0.1.0-beta.3"
+CURRENT_RELEASE_MANIFEST = ROOT / "skillset/releases/aegis-0.2.0-beta.1.json"
+CURRENT_RELEASE_VERSION = "0.2.0-beta.1"
 SEMVER_RE = re.compile(
     r"^(0|[1-9]\d*)\."
     r"(0|[1-9]\d*)\."
@@ -36,9 +36,9 @@ def _seed_release_inputs(target: Path) -> list[str]:
 
     (target / "skillset").mkdir(parents=True, exist_ok=True)
     shutil.copy2(DISTRIBUTION, target / "skillset/distribution.json")
-    release_target = target / "skillset/releases" / RELEASE_MANIFEST.name
+    release_target = target / "skillset/releases" / CURRENT_RELEASE_MANIFEST.name
     release_target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(RELEASE_MANIFEST, release_target)
+    shutil.copy2(CURRENT_RELEASE_MANIFEST, release_target)
 
     for skill_name in skill_names:
         shutil.copytree(ROOT / "skills" / skill_name, target / "skills" / skill_name)
@@ -84,7 +84,7 @@ class OpenAIPluginMaterializationTests(unittest.TestCase):
             "PD-P34-01 requires plugins/aegis/.codex-plugin/plugin.json",
         )
         plugin = json.loads(PLUGIN_MANIFEST.read_text(encoding="utf-8"))
-        release = json.loads(RELEASE_MANIFEST.read_text(encoding="utf-8"))
+        release = json.loads(CURRENT_RELEASE_MANIFEST.read_text(encoding="utf-8"))
 
         self.assertEqual(plugin.get("name"), "aegis")
         self.assertEqual(plugin.get("version"), release.get("release_version"))
@@ -119,7 +119,7 @@ class OpenAIPluginMaterializationTests(unittest.TestCase):
 
     def test_plugin_contains_exact_nine_canonical_skill_trees(self):
         distribution = json.loads(DISTRIBUTION.read_text(encoding="utf-8"))
-        release = json.loads(RELEASE_MANIFEST.read_text(encoding="utf-8"))
+        release = json.loads(CURRENT_RELEASE_MANIFEST.read_text(encoding="utf-8"))
         expected = distribution["plugin"]["skills"]
         self.assertEqual(len(expected), 9)
         self.assertEqual(distribution["plugin"].get("required_apps"), [])
@@ -149,12 +149,12 @@ class OpenAIPluginMaterializationTests(unittest.TestCase):
             target = Path(td)
             expected_skills = _seed_release_inputs(target)
 
-            write_materialization(target, RELEASE_VERSION)
-            check_materialization(target, RELEASE_VERSION)
+            write_materialization(target, CURRENT_RELEASE_VERSION)
+            check_materialization(target, CURRENT_RELEASE_VERSION)
             first = _snapshot_files(target)
 
-            write_materialization(target, RELEASE_VERSION)
-            check_materialization(target, RELEASE_VERSION)
+            write_materialization(target, CURRENT_RELEASE_VERSION)
+            check_materialization(target, CURRENT_RELEASE_VERSION)
             second = _snapshot_files(target)
 
             self.assertEqual(first, second)
@@ -165,7 +165,7 @@ class OpenAIPluginMaterializationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             target = Path(td)
             _seed_release_inputs(target)
-            write_materialization(target, RELEASE_VERSION)
+            write_materialization(target, CURRENT_RELEASE_VERSION)
 
             drifted = target / "plugins/aegis/skills/aegis/SKILL.md"
             drifted.write_text(
@@ -174,7 +174,7 @@ class OpenAIPluginMaterializationTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "Plugin materialization drift for aegis"):
-                check_materialization(target, RELEASE_VERSION)
+                check_materialization(target, CURRENT_RELEASE_VERSION)
 
 
 if __name__ == "__main__":

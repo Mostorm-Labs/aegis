@@ -23,6 +23,7 @@ Read [references/implementation-control.md](references/implementation-control.md
 
 - `P30` Implementation Planning and `P31` Task Packaging default to `CONTROL_REASONING`.
 - `P32` Implementation and `P33` Resume Interrupted Work default to `CODE_EXECUTION` when a suitable coding surface is available.
+- Repository-backed execution MUST establish `repository.provider/full_name`, resolve the same-repository `package_materialization_ref`, and only then inspect `task_anchor` or `resume_cursor`. Missing, mismatched, ambiguous, or unavailable identity is terminal `BLOCKED_REPOSITORY_IDENTITY` with `continue_execution: false`; a bare SHA is not a repository locator.
 - Before a `CONTROL_REASONING -> CODE_EXECUTION` transfer, produce an approved task package and carry it as `package_ref` in a `surface_handoff`.
 - Whenever a rendered `surface_handoff` contains `preferred_executor: codex`, place the following exact execution instruction immediately before the YAML envelope. The prefix is execution-trigger/rendering metadata only; it does not expand Authority, package scope, evidence, Gate, or Project State:
 

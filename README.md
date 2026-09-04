@@ -14,7 +14,7 @@ Aegis turns those concerns into a reusable workflow rather than relying on indiv
 
 ## What is included
 
-Aegis v0.1 is distributed primarily as one native **Aegis Plugin** that materializes the exact nine canonical Skills:
+Aegis v0.2 is delivered as one native **Aegis Plugin** that materializes the exact nine canonical Skills:
 
 1. `aegis`
 2. `aegis-project-state`
@@ -26,7 +26,7 @@ Aegis v0.1 is distributed primarily as one native **Aegis Plugin** that material
 8. `aegis-implementation`
 9. `aegis-gate-review`
 
-The GitHub Release also publishes a portable **9-Skill Installation Kit** containing nine directly uploadable Skill ZIPs for environments where Plugin marketplace distribution is unavailable.
+The Release path also provides a portable **9-Skill Installation Kit** containing nine directly uploadable Skill ZIPs for environments where Plugin marketplace distribution is unavailable.
 
 The control plane routes into 25 core stages:
 
@@ -44,6 +44,8 @@ Aegis finds the **Earliest Untrusted Layer** instead of blindly starting from co
 `Code Complete != Gate Complete`
 
 A result becomes a stable dependency only when its required evidence passes the relevant gate.
+
+Aegis v0.2 also formalizes repository-backed execution safety: repository identity is resolved before package, task-anchor, or execution-cursor reasoning. A revision is not a repository locator, and unresolved or mismatched repository identity fails closed.
 
 ## Evaluation & dogfooding
 
@@ -84,22 +86,34 @@ Use the repository root marketplace manifest (`.agents/plugins/marketplace.json`
 
 ### Alternative: 9-Skill Installation Kit
 
-Download the `v0.1.0-beta.3` Release asset:
+Current release-candidate identity:
 
 ```text
-https://github.com/Mostorm-Labs/aegis/releases/download/v0.1.0-beta.3/aegis-skill-installation-kit-v0.1.0-beta.3.zip
+v0.2.0-beta.1
+```
+
+After publication, the intended Release asset is:
+
+```text
+https://github.com/Mostorm-Labs/aegis/releases/download/v0.2.0-beta.1/aegis-skill-installation-kit-v0.2.0-beta.1.zip
 ```
 
 Extract the outer archive once, then upload the nine nested Skill ZIPs without unpacking them.
 
-See [`docs/installation-and-usage-v0.1.md`](docs/installation-and-usage-v0.1.md) for exact installation, verification, usage, update, and troubleshooting instructions.
+See [`docs/installation-and-usage-v0.2.md`](docs/installation-and-usage-v0.2.md) for installation, verification, usage, update, repository-backed execution, rollback, and troubleshooting guidance.
+
+Until `v0.2.0-beta.1` is actually published, immutable `v0.1.0-beta.3` remains the previous published rollback/reproducibility boundary.
 
 ## Status
 
-**v0.1 — Usable evidence-driven development control plane with accepted native Plugin distribution and a published nine-Skill Installation Kit.**
+**v0.2 — Control Plane candidate `v0.2.0-beta.1`, delivered as one Plugin + exact nine Skills, pending final P24 release-readiness review and publication.**
+
+This candidate does not claim `SERVICE_PROFILE`, R0/S0/W7D service-scale qualification, rollout expansion, or zero-user-turn cross-Primary substantive chaining.
 
 ## Documentation
 
+- [`docs/installation-and-usage-v0.2.md`](docs/installation-and-usage-v0.2.md)
+- [`docs/releases/v0.2.0-beta.1.md`](docs/releases/v0.2.0-beta.1.md)
 - [`docs/installation-and-usage-v0.1.md`](docs/installation-and-usage-v0.1.md)
 - [`docs/plugin-distribution-contract-v0.1.md`](docs/plugin-distribution-contract-v0.1.md)
 - [`docs/methodology.md`](docs/methodology.md)

@@ -61,8 +61,15 @@ concurrency:
 jobs:
   deterministic-skillset:
     runs-on: ubuntu-latest
+    env:
+      AEGIS_EVIDENCE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact evidence checkout
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$AEGIS_EVIDENCE_REVISION"
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -72,12 +79,29 @@ jobs:
         run: python3 scripts/build_skillset.py --check
       - name: Validate Aegis distribution contract
         run: python3 -m tools.aegis_skillset.cli distribution-check .
-      - name: Check Aegis release manifest
+      - name: Check Aegis development release manifest
         run: python3 scripts/build_aegis_distributions.py --check
-      - name: Check published beta.3 release history
-        run: python3 scripts/build_aegis_distributions.py --published-history --version 0.1.0-beta.3 --check
-      - name: Check OpenAI native Plugin materialization
-        run: python3 scripts/build_openai_plugin_materialization.py --published-history --release-version 0.1.0-beta.3 --check
+      - name: Check Control Plane v0.2 release manifest
+        run: python3 scripts/build_aegis_distributions.py --version 0.2.0-beta.1 --check
+      - name: Check published beta.3 historical source binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --force origin refs/tags/v0.1.0-beta.3:refs/tags/v0.1.0-beta.3
+          test "$(git rev-parse refs/tags/v0.1.0-beta.3^{commit})" = "38bf619ede0615431c7517bc0e07984136af28cf"
+          historical_root="$(mktemp -d)"
+          git archive refs/tags/v0.1.0-beta.3 | tar -x -C "$historical_root"
+          cp scripts/build_aegis_distributions.py "$historical_root/scripts/build_aegis_distributions.py"
+          cp scripts/build_openai_plugin_materialization.py "$historical_root/scripts/build_openai_plugin_materialization.py"
+          rm -rf "$historical_root/tools/aegis_skillset"
+          cp -R tools/aegis_skillset "$historical_root/tools/aegis_skillset"
+          (
+            cd "$historical_root"
+            python3 scripts/build_aegis_distributions.py --published-history --version 0.1.0-beta.3 --check
+            python3 scripts/build_openai_plugin_materialization.py --published-history --release-version 0.1.0-beta.3 --check
+          )
+      - name: Check Control Plane v0.2 native Plugin materialization
+        run: python3 scripts/build_openai_plugin_materialization.py --release-version 0.2.0-beta.1 --check
       - name: Build Aegis test distribution source bundles
         run: python3 scripts/build_aegis_distributions.py --package-dir /tmp/aegis-plugin-dist
       - name: Upload Aegis test distribution source bundles
@@ -92,12 +116,23 @@ jobs:
           name: aegis-skill-installation-kit-0.1.0-task6.1
           path: /tmp/aegis-plugin-dist/aegis-skills-0.1.0-task6.1/
           if-no-files-found: error
+      - name: Build Control Plane v0.2 candidate Installation Kit
+        run: |
+          rm -rf /tmp/aegis-v02-release-candidate
+          mkdir -p /tmp/aegis-v02-release-candidate
+          python3 scripts/build_aegis_distributions.py --version 0.2.0-beta.1 --installation-kit-archive-dir /tmp/aegis-v02-release-candidate
+      - name: Upload Control Plane v0.2 candidate Installation Kit
+        uses: actions/upload-artifact@v4
+        with:
+          name: aegis-skill-installation-kit-0.2.0-beta.1-candidate
+          path: /tmp/aegis-v02-release-candidate/aegis-skill-installation-kit-0.2.0-beta.1.zip
+          if-no-files-found: error
       - name: Build exact-head candidate Plugin parity evidence
         run: python3 scripts/build_candidate_plugin_parity.py --output /tmp/aegis-candidate-plugin-parity.json
       - name: Upload exact-head candidate Plugin parity evidence
         uses: actions/upload-artifact@v4
         with:
-          name: aegis-candidate-plugin-parity-${{ github.sha }}
+          name: aegis-candidate-plugin-parity-${{ github.event.pull_request.head.sha || github.sha }}
           path: /tmp/aegis-candidate-plugin-parity.json
           if-no-files-found: error
       - name: Validate intended routing and handoffs
@@ -110,6 +145,10 @@ jobs:
         run: python3 -m unittest discover -s tests/skillset -v
       - name: Run Project State regressions
         run: python3 -m unittest discover -s tests/project_state -v
+      - name: Validate Project State manifests
+        run: python3 -m tools.aegis_state.cli validate .
+      - name: Check generated Project State
+        run: python3 -m tools.aegis_state.cli check .
       - name: Validate protected Aegis evaluation corpus
         run: python3 evals/scripts/validate_corpus.py
       - name: Run Aegis evaluation regressions

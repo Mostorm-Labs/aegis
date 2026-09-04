@@ -39,6 +39,9 @@ The recipient named in an `ownership_handoff` becomes the final-answer owner onl
 
 A surface handoff changes where authorized work executes. It does not transfer ownership, change Current Authority, create Evidence, issue a Gate verdict, or mutate Project State merely by occurring.
 
+Repository identity is resolved before any `task_anchor` or `resume_cursor`
+handling. A bare revision is not a repository locator.
+
 A Codex execution prefix is rendering/trigger metadata only. It does not transfer ownership, expand Authority or package scope, create Evidence, issue a Gate verdict, or mutate Project State. Whenever a rendered `surface_handoff` contains `preferred_executor: codex`, it MUST place this exact execution instruction immediately before the YAML envelope:
 
 > 请按以下 Aegis handoff 直接执行：以 `package_ref` 为任务授权，按 `task_anchor/resume_cursor` 核对当前状态并从首个未完成步骤继续；若状态冲突则 fail closed。
@@ -58,6 +61,33 @@ task_anchor:
 resume_cursor: null
 return_surface: CONTROL_REVIEW
 ```
+
+### Repository identity preflight
+
+Every repository-backed handoff MUST establish the declared repository before
+resolving a package, checking an anchor, classifying a cursor, or mutating a
+worktree:
+
+```yaml
+repository:
+  provider: github
+  full_name: <owner/repository>
+package_ref: <exact-package-revision>
+package_materialization_ref: <durable-same-repository-ref>
+```
+
+The executor resolves the declared repository and package materialization ref
+in that order. A missing, mismatched, ambiguous, or unavailable repository
+identity is terminal:
+
+```yaml
+status: BLOCKED_REPOSITORY_IDENTITY
+continue_execution: false
+```
+
+`repository identity != task anchor != execution cursor`; a bare SHA is never
+a repository locator. This preflight also applies to P33 resume and P36
+reverification, before any anchor/cursor classification or repair mutation.
 
 The `stage_owner` remains the Primary Owner across a surface handoff unless a separate valid `ownership_handoff` occurs. `package_ref` identifies the approved P31 task package or equivalent execution contract. The receiving execution surface must fail closed rather than invent missing semantic or Authority decisions.
 
