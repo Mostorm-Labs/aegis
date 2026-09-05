@@ -23,7 +23,7 @@ class ECV0ApplicabilityTests(unittest.TestCase):
         self.assertIn(f"git archive refs/tags/{HISTORICAL_TAG}", workflow)
         self.assertIn('cd "$historical_root"', workflow)
         self.assertIn(
-            f"python3 scripts/build_aegis_distributions.py --version {HISTORICAL_VERSION} --check",
+            f"python3 scripts/build_aegis_distributions.py --check --version {HISTORICAL_VERSION}",
             workflow,
         )
 
