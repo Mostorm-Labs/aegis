@@ -40,7 +40,12 @@ jobs:
         with:
           python-version: "3.12"
       - name: Run Verification Productization suite
-        run: python3 -m unittest discover -s tests/verification_productization -v
+        run: |
+          mkdir -p artifacts/ecv0
+          set +e
+          python3 -m unittest discover -s tests/verification_productization -v 2>&1 | tee artifacts/ecv0/verification-productization.txt
+          code=${PIPESTATUS[0]}
+          exit "$code"
       - name: Run Control Plane regressions
         run: python3 -m unittest discover -s tests/control_plane -v
       - name: Run Project State regressions
@@ -56,12 +61,12 @@ jobs:
           python3 -m tools.aegis_skillset.cli distribution-check .
       - name: Materialize ECV0 structured evidence
         run: |
-          mkdir -p artifacts/ecv0
           python3 tests/verification_productization/run_ecv0.py --output artifacts/ecv0/ecv0.json
           python3 -m json.tool artifacts/ecv0/ecv0.json >/dev/null
           python3 scripts/build_candidate_plugin_parity.py --output artifacts/ecv0/candidate-plugin-parity.json
           python3 -m json.tool artifacts/ecv0/candidate-plugin-parity.json >/dev/null
       - name: Upload exact-candidate ECV0 evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: verification-productization-ecv0-${{ github.event.pull_request.head.sha || github.sha }}
