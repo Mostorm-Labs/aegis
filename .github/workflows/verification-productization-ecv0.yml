@@ -59,6 +59,7 @@ jobs:
           set +e
           python3 -m unittest discover -s tests/skillset -v 2>&1 | tee artifacts/ecv0/skillset.txt
           code=${PIPESTATUS[0]}
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit "$code"
       - name: Regenerate and verify canonical Skill distribution
         run: |
@@ -84,7 +85,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Enforce full qualification
-        if: steps.skillset_regressions.outcome != 'success'
+        if: always() && steps.skillset_regressions.outputs.exit_code != '0'
         run: |
           echo 'BLOCKED: inherited skillset regression failed'
           exit 1
