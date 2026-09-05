@@ -1,0 +1,175 @@
+{
+  "schema_version": "0.1",
+  "kind": "VP_I02_P36_REVERIFICATION_EVIDENCE",
+  "not_gate_verdict": true,
+  "not_proof_evaluation": true,
+  "repository": {
+    "provider": "github",
+    "full_name": "Mostorm-Labs/aegis"
+  },
+  "package_id": "VP-I02-P31-01",
+  "package_ref": "9a724830992d27681b223c8b424891e46623aeed",
+  "package_materialization_ref": "https://github.com/Mostorm-Labs/aegis/pull/73",
+  "prior_p34_review": 5121480049,
+  "p35_classification_review": 5121485739,
+  "blocked_result_revision": "37d65b549ea9be8150a08b911dff2892535810d3",
+  "repaired_result_revision": "8b98a58874268a8d6fae05d0406bd795a311f041",
+  "implementation_materialized_ref": "https://github.com/Mostorm-Labs/aegis/pull/74",
+  "qualification_pr": "https://github.com/Mostorm-Labs/aegis/pull/75",
+  "result_tree": "d86d811ce4b49b9845dda2e8835a3f6ff6812dd6",
+  "qualification_merge_ref": {
+    "revision": "cecf62a377e21da7808c5d8e0d729f9aa32c8ac4",
+    "tree": "d86d811ce4b49b9845dda2e8835a3f6ff6812dd6",
+    "candidate_equivalent_tree": true
+  },
+  "repair_scope": [
+    "tools/aegis_proof/evaluation.py",
+    "tools/aegis_proof/evidence.py",
+    "tests/verification_productization/test_evaluation_review.py",
+    "tests/verification_productization/test_evidence_compiler.py",
+    "tests/verification_productization/test_evidence_repair.py"
+  ],
+  "source_blobs": {
+    "tools/aegis_proof/evaluation.py": "f701cb0da22f175b36eb95d6e6b129da48fe5d91",
+    "tools/aegis_proof/evidence.py": "da75f4a608677349a0df1d6c22eb51c72a4cd7a1",
+    "tests/verification_productization/test_evaluation_review.py": "ef5d43e258e98a647330d641b9abc24aaa27fb57",
+    "tests/verification_productization/test_evidence_compiler.py": "5e126d9635341a6fc1b2e1160823c352bfb52e4d",
+    "tests/verification_productization/test_evidence_repair.py": "c7baf4361aff4a839c76b42c8357cfd0f807bc28"
+  },
+  "tdd": {
+    "red_history": [
+      {
+        "raw_output_sha256": "sha256:5cfe2bab35c3b3455f8258c985bba053434261d87c9ffd2726081f597f5c225a",
+        "focused_tests_run": 20,
+        "observed_failures": 4,
+        "purpose": "P34-B1/P34-B2 production repair RED"
+      },
+      {
+        "raw_output_sha256": "sha256:46b48ba7778f30b9615a45f66bebf785bbee71bfcf0f9bb3eb073e3658289d1e",
+        "focused_tests_run": 21,
+        "observed_failures": 2,
+        "purpose": "ExactRefResolver trust-boundary hardening RED"
+      }
+    ],
+    "final_focused": {
+      "command": "python3 -m unittest tests.verification_productization.test_evidence_compiler tests.verification_productization.test_evidence_repair tests.verification_productization.test_evaluation_review -v",
+      "path": "artifacts/verification-productization/vp-i02-p36/focused-vp-i02.txt",
+      "raw_output_sha256": "sha256:3501257683766b69c42af679e612f78e61ec51897f5a9482d1af84da0d5fea05",
+      "tests_run": 21,
+      "exit_code": 0
+    },
+    "final_accumulated": {
+      "command": "python3 -m unittest discover -s tests/verification_productization -v",
+      "path": "artifacts/verification-productization/vp-i02-p36/accumulated-verification-productization.txt",
+      "raw_output_sha256": "sha256:498fe29e80d70ab80ceb597c832ad1aca5369c70648763b86d96ed12da31ed67",
+      "tests_run": 36,
+      "exit_code": 0
+    },
+    "interpreter": "Python 3.13.5"
+  },
+  "repair_facts": {
+    "P34_B1_exact_evidence_resolution": "REPAIRED_WITH_EXISTING_EXACT_REF_RESOLVER_PORT",
+    "P34_B1_arbitrary_status_mapping_fails_closed": true,
+    "P34_B1_inline_resolved_artifact_without_resolver_fails_closed": true,
+    "P34_B1_ref_digest_provider_native_id_reviewer_binding_checked": true,
+    "P34_B1_frozen_proof_contract_descriptor_checked": true,
+    "P34_B1_review_required_remains_exception": true,
+    "P34_B2_authoritative_conflict_fails_closed": true,
+    "P34_B2_duplicate_authoritative_batches_do_not_silently_collapse": true
+  },
+  "mutant_results": {
+    "EC-M01_detected": true,
+    "EC-M04_detected": true,
+    "EC-M05_detected": true,
+    "EC-M13_detected": true,
+    "EC-M14_detected": true,
+    "EC-M15_detected": true,
+    "EC-M17_detected": true,
+    "mutant_false_acceptance": 0
+  },
+  "hosted_regressions": {
+    "runner_python": "3.12.14",
+    "control_plane": {
+      "command": "python3 -m unittest discover -s tests/control_plane -v",
+      "tests_run": 230,
+      "result": "OK"
+    },
+    "project_state": {
+      "command": "python3 -m unittest discover -s tests/project_state -v",
+      "tests_run": 82,
+      "result": "OK"
+    },
+    "skillset": {
+      "command": "python3 -m unittest discover -s tests/skillset -v",
+      "tests_run": 133,
+      "result": "OK"
+    },
+    "all_applicable_runs_terminal_success": true,
+    "provider_runs": [
+      {
+        "name": "Aegis Control Plane CP-I01 Foundation",
+        "run_id": 33970964251,
+        "job_ids": [101319281251],
+        "artifact_id": 9970902544,
+        "artifact_digest": "sha256:f1441ab0e0af6e1584d7e3c5bb393032845f970d2a39c7bf11c8929dfd5d87ad"
+      },
+      {
+        "name": "Aegis Control Plane CP-I02 Mutation",
+        "run_id": 33970964307,
+        "job_ids": [101319285155],
+        "artifact_id": 9970903082,
+        "artifact_digest": "sha256:494e0c994f94dea06759d7f98aaf56bbbb73cb1f01aa5cbb534b13a23561f460"
+      },
+      {
+        "name": "Aegis Control Plane CP-I04 Historical Trust",
+        "run_id": 33970964218,
+        "job_ids": [101319284718],
+        "artifact_id": 9970903590,
+        "artifact_digest": "sha256:43b202c62e3931795f5a54aec78e346b69d71bb559d50f2d229d5ba6c719e1f8"
+      },
+      {
+        "name": "Aegis Control Plane CP-I05 Dispatch Reconciliation",
+        "run_id": 33970964186,
+        "job_ids": [101319283981],
+        "artifact_id": 9970902919,
+        "artifact_digest": "sha256:ebf6b5af5d710892aac45ba044eef39355847bdc5893c32683dac473c23b9038"
+      },
+      {
+        "name": "Aegis Control Plane CP-I06 Repair Recovery",
+        "run_id": 33970964246,
+        "job_ids": [101319285194],
+        "artifact_id": 9970902448,
+        "artifact_digest": "sha256:3b9c5f8f0647e4d46e9f26b5e2b25db2289b16b6855ceb333eb48a810fd26579"
+      },
+      {
+        "name": "Aegis Control Plane CP-I07 Platform Boundary",
+        "run_id": 33970964359,
+        "job_ids": [101319285075],
+        "artifact_id": 9970903157,
+        "artifact_digest": "sha256:61c6e20c0f38fe7387dd094f39c6c1c77dbdeb0674b7a87d8139aa0b3b4ed518"
+      },
+      {
+        "name": "Aegis Control Plane CP-I08 Integrated D0",
+        "run_id": 33970964147,
+        "job_ids": [101319284830],
+        "artifact_id": 9970903260,
+        "artifact_digest": "sha256:23ea29c70479094cb60c596360c1dac8c105691fdcca4cafcd0669fd3cb2d5b2"
+      },
+      {
+        "name": "Aegis Control Plane CP-I09 Plugin Profile",
+        "run_id": 33970964193,
+        "job_ids": [101319278334, 101319278450, 101319278475, 101319278487, 101319338100],
+        "artifact_id": 9970905070,
+        "artifact_digest": "sha256:615f297648c467b4e659854a258a71b0a0c248bd5301e3c1aaf304dbcb85ebe2"
+      }
+    ]
+  },
+  "scope_deviation": "none",
+  "authority_deviation": "none",
+  "upstream_authority_repair_required": false,
+  "replacement_p31_package_required": false,
+  "P34_pass_issued_by_P36": false,
+  "merge_authorized": false,
+  "release_authorized": false,
+  "VP_I03_authorized": false
+}
