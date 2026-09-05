@@ -622,20 +622,22 @@ def _git_commit_for_ref(repository_root: Path, ref: str) -> str | None:
 
 
 def _materialize_git_revision(repository_root: Path, revision: str, destination: Path) -> bool:
-    proc = subprocess.run(
+    archive = subprocess.run(
         ["git", "-C", str(repository_root), "archive", "--format=tar", revision],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
     )
-    if proc.returncode != 0:
+    if archive.returncode != 0:
         return False
-    try:
-        with tarfile.open(fileobj=io.BytesIO(proc.stdout), mode="r:") as archive:
-            archive.extractall(destination)
-    except (tarfile.TarError, OSError):
-        return False
-    return True
+    extract = subprocess.run(
+        ["tar", "-x", "-C", str(destination)],
+        input=archive.stdout,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    return extract.returncode == 0
 
 
 def historical_release_source_is_coherent(
