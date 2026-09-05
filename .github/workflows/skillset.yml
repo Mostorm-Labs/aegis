@@ -92,7 +92,7 @@ jobs:
           cp -R tools/aegis_skillset "$historical_root/tools/aegis_skillset"
           (
             cd "$historical_root"
-            python3 scripts/build_aegis_distributions.py --version 0.2.0-beta.1 --check
+            python3 scripts/build_aegis_distributions.py --check --version 0.2.0-beta.1
           )
       - name: Check published beta.3 historical source binding
         shell: bash
