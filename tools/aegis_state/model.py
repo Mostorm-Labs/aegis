@@ -150,7 +150,7 @@ def decision_sequence(decision: dict) -> int | None:
 
 
 def current_decisions_by_gate(manifests: ManifestSet) -> dict[str, dict]:
-    if manifests.schema_version != "0.5":
+    if manifests.schema_version not in {"0.5", "0.6"}:
         return {}
     decisions = manifests.decision_items
     superseded = {

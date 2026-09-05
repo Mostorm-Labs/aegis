@@ -5,7 +5,27 @@ v0.6 uses occurrence-time immutable `gate_decision_binding` (`bound` or
 imply `Absent`; later PASS decisions do not rewrite historical bindings. O1-O6
 are semantic vocabulary, not runtime APIs.
 
-Use this reference when a project contains `.aegis/` or when the user asks to persist, inspect, validate, supersede, resume, or integrate machine-readable project state. Project State tooling is version-aware: apply v0.4 semantics only to v0.4 manifests and preserve v0.3 semantics for v0.3 projects.
+Use this reference when a project contains `.aegis/` or when the user asks to persist, inspect, validate, supersede, resume, or integrate machine-readable project state. Project State tooling is version-aware: v0.3, v0.4, v0.5, and v0.6 are distinct compatibility contracts. Apply each version's semantics to that version only; do not reinterpret v0.3/v0.4/v0.5 history as v0.6.
+
+## Compatibility and v0.6 vocabulary
+
+v0.5 Gate Contract and Gate Decision lineage remain immutable in v0.6. A
+v0.5→v0.6 migration changes the schema version and adds occurrence-time
+binding; it does not infer historical `Absent`. A v0.6→v0.6 transition keeps
+Gate Contract, Gate Decision, Integration occurrence identity, and
+`gate_decision_binding` immutable while allowing only append-only history.
+
+`Bound` and `Absent` are projection vocabulary, not runtime APIs (O1–O6 are
+also semantic vocabulary, never runtime APIs). `Bound(PASS)`,
+`Bound(BLOCKED)`, and `Absent` remain distinct projections. Missing, failed,
+unresolved, stale, unavailable, empty, or lookup-error evidence is not
+`Absent`; only an explicit accepted absence basis may produce `Absent`.
+
+Binding is recorded at occurrence time. A later PASS may append a new Gate
+Decision but cannot rewrite a historical `Bound(BLOCKED)` or `Absent` binding.
+All integrated identity fields and corroborating occurrence evidence remain
+immutable; deterministic replay and conflicting historical identity must fail
+closed. Read failure is an unknown/error state, never an absence claim.
 
 ## Canonical layout
 
@@ -38,7 +58,7 @@ Read authored manifests
 
 If `tools.aegis_state` exists, prefer its deterministic `validate`, `recompute`, and `check` commands over conversational reimplementation.
 
-## Core v0.4 semantic split
+## Core semantic split (v0.3 / v0.4 / v0.5 / v0.6)
 
 Keep these dimensions independent:
 

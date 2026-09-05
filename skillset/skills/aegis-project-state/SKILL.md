@@ -23,6 +23,12 @@ In v0.6, `gate_decision_binding` is occurrence-time immutable. `missing`, `faile
 or `unresolved` evidence never means `Absent`; a later PASS cannot rewrite a
 historical binding. O1-O6 are semantic vocabulary, not runtime APIs.
 
+This Skill preserves v0.3/v0.4/v0.5 compatibility and v0.5 Gate Contract /
+Gate Decision lineage. v0.6 distinguishes `Bound(PASS)`, `Bound(BLOCKED)`, and
+`Absent`; only explicit accepted absence evidence permits `Absent`. Read,
+lookup, stale, missing, failed, and unresolved states remain unknown/error.
+Later PASS decisions append history and never rewrite historical bindings.
+
 ## Composition boundary
 
 **Direct Project State task:** when the user's task is Project State inspection, validation, recomputation, persistence, or diagnosis itself, `aegis-project-state` is the final-answer owner.

@@ -274,13 +274,13 @@ def compute_state(manifests: ManifestSet) -> dict:
             stale_gates.append(gid)
         elif effective == "needs_review":
             needs_review_gates.append(gid)
-        if schema_version != "0.5" and declared in {"current", "needs_review", "stale"} and declared != effective:
+        if schema_version not in {"0.5", "0.6"} and declared in {"current", "needs_review", "stale"} and declared != effective:
             findings.append(f"gate {gid} validity drift: declared={declared}, computed={effective}")
 
-        is_declared_current = schema_version == "0.5" or declared == "current"
+        is_declared_current = schema_version in {"0.5", "0.6"} or declared == "current"
         if is_declared_current and effective == "current" and verdict in _GATE_BLOCK_ROUTE:
             blocking_gates.append(gid)
-            if schema_version == "0.5" and current and isinstance(current.get("id"), str):
+            if schema_version in {"0.5", "0.6"} and current and isinstance(current.get("id"), str):
                 blocking_gate_decisions.append(current["id"])
             layer, stage = _GATE_BLOCK_ROUTE[str(verdict)]
             route_candidates.append((layer, stage, None))

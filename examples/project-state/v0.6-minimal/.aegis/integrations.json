@@ -243,7 +243,11 @@
       "target_ref": "main"
     },
     {
-      "evidence_ids": [],
+      "evidence_ids": [
+        "ev-pr82-occurrence-basis",
+        "ev-pr82-non-authorization-basis",
+        "ev-pr82-accepted-absence-basis"
+      ],
       "gate_decision_binding": {
         "kind": "absent",
         "reason": "no_applicable_integration_gate_decision"

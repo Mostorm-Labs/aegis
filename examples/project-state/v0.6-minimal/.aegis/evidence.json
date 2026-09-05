@@ -1,6 +1,27 @@
 {
   "evidence": [
     {
+      "id": "ev-pr82-occurrence-basis",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/82",
+      "status": "available",
+      "subject_ids": ["int-pr82"],
+      "type": "occurrence_basis"
+    },
+    {
+      "id": "ev-pr82-non-authorization-basis",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/82#issuecomment-5122113780",
+      "status": "available",
+      "subject_ids": ["int-pr82"],
+      "type": "non_authorization_basis"
+    },
+    {
+      "id": "ev-pr82-accepted-absence-basis",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/82#issuecomment-5553423707",
+      "status": "available",
+      "subject_ids": ["int-pr82"],
+      "type": "accepted_absence_basis"
+    },
+    {
       "id": "ev-pr1-merged",
       "ref": "https://github.com/Mostorm-Labs/aegis/pull/1",
       "status": "available",
