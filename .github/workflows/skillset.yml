@@ -79,10 +79,21 @@ jobs:
         run: python3 scripts/build_skillset.py --check
       - name: Validate Aegis distribution contract
         run: python3 -m tools.aegis_skillset.cli distribution-check .
-      - name: Check Aegis development release manifest
-        run: python3 scripts/build_aegis_distributions.py --check
-      - name: Check Control Plane v0.2 release manifest
-        run: python3 scripts/build_aegis_distributions.py --version 0.2.0-beta.1 --check
+      - name: Check Control Plane v0.2 published source binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --force origin refs/tags/v0.2.0-beta.1:refs/tags/v0.2.0-beta.1
+          test "$(git rev-parse refs/tags/v0.2.0-beta.1^{commit})" = "3253abced7a17d66d8754fa84d7953408aae49d4"
+          historical_root="$(mktemp -d)"
+          git archive refs/tags/v0.2.0-beta.1 | tar -x -C "$historical_root"
+          cp scripts/build_aegis_distributions.py "$historical_root/scripts/build_aegis_distributions.py"
+          rm -rf "$historical_root/tools/aegis_skillset"
+          cp -R tools/aegis_skillset "$historical_root/tools/aegis_skillset"
+          (
+            cd "$historical_root"
+            python3 scripts/build_aegis_distributions.py --version 0.2.0-beta.1 --check
+          )
       - name: Check published beta.3 historical source binding
         shell: bash
         run: |
