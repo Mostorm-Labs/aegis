@@ -36,6 +36,14 @@ Read [references/implementation-control.md](references/implementation-control.md
 - Before returning P32/P33 results to `CONTROL_REVIEW`, materialize the exact result into a reviewer-accessible durable evidence boundary and return its `materialized_ref`. A local-only commit/worktree/test transcript is not sufficient `CONTROL_REVIEW` evidence.
 - If the result cannot be materialized for independent review, return `BLOCKED_EVIDENCE` with the exact blocker instead of claiming review readiness.
 
+## Verification-bound repository execution
+
+For a repository-backed P32/P33 task governed by a Verification-bound package, do not begin mutation until all package-frozen proof bindings are exact: VerificationSpec, obligation-set when required, TrustedBasis, scope contract, acceptance-oracle refs, and evidence-compilation contract. Run `PackageBindingPreflight` and `EvidenceContractPreflight` before execution; a floating label, future-phase dependency, structurally unsatisfiable requirement, unresolved semantic choice, or provider-impossible requirement is a blocker rather than executor discretion.
+
+Repository identity preflight still occurs first. Never pass floating labels such as `accepted A4`, `latest Gate`, `latest run`, or ambient branch truth to the executor as trust identities.
+
+Execution returns must carry exact `result_revision`, reviewer-resolvable `materialized_ref`, exact `evidence_input_refs`, and exact provider run/attempt/job/artifact refs required by the package. Do not manually type proof totals already owned by EvidenceArtifact / ProofEvaluation, and do not emit or imply official Gate PASS.
+
 ## P33 resume reconciliation
 
 Before resuming interrupted repository work, classify the observed execution position:

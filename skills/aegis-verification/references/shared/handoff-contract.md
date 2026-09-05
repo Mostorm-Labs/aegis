@@ -124,7 +124,7 @@ P33 classifies the observed repository position before resuming:
 
 - `EXACT_CURSOR`: observed HEAD equals `resume_cursor.revision`; resume from `next_action`.
 - `DESCENDANT_CURSOR`: the cursor revision is an ancestor of observed HEAD; inspect only the delta after the cursor, preserve verified valid work, and do not replay completed work.
-- `ANCHOR_DESCENDANT_WITHOUT_CURSOR`: no accepted cursor exists but `task_anchor.revision` is an ancestor of observed HEAD; reconcile completed versus pending work, establish a cursor, then resume at the first incomplete verified step.
+- `ANCHOR_DESCENDANT_WITHOUT_CURSOR`: no accepted cursor exists but the task anchor is an ancestor of observed HEAD; reconcile completed versus pending work, establish a cursor, then resume at the first incomplete verified step.
 - `DIVERGED`: neither the accepted cursor nor required anchor relation can be established, or repository history/state contradicts Authority or authorized scope; fail closed with `BLOCKED_EXECUTION_DIVERGENCE` or a more specific existing Authority/environment blocker.
 
 A historical expected-HEAD mismatch by itself is not divergence when the observed revision is a valid descendant under the declared anchor/cursor relation.
@@ -144,3 +144,20 @@ Before an execution surface returns result evidence to a review surface, the exa
 The evidence return must carry `materialized_ref` identifying that reviewer-accessible result. A local-only commit SHA, worktree path/state, test transcript, or executor message is context only and is insufficient for P34 corroboration.
 
 If the executor cannot produce a reviewer-accessible `materialized_ref`, return `BLOCKED_EVIDENCE` with the exact materialization blocker instead of claiming review readiness. The review surface resolves `materialized_ref` independently before relying on executor claims.
+
+## Verification-bound execution return
+
+When a P31 package carries a frozen VerificationSpec / obligation-set / TrustedBasis / scope / acceptance-oracle / evidence-compilation binding, execution returns carry exact identities and navigation only. They may include:
+
+```yaml
+result_revision: <exact-result-revision>
+materialized_ref: <reviewer-resolvable-exact-result-ref>
+evidence_input_refs:
+  - <exact-EvidenceInputRef>
+provider_run_refs:
+  - <exact-provider-run-attempt-job-artifact-identity>
+```
+
+They MUST NOT introduce independently authored duplicate proof facts such as `tests_passed`, `tests_skipped`, copied obligation totals, copied ProofEvaluation state totals, or a Gate verdict. Machine facts remain owned by the exact EvidenceArtifact / provider observation / ProofEvaluation that produced them. A return may navigate to those objects but cannot become a competing evidence producer.
+
+A P32/P33 execution return MUST NOT claim official P34 PASS. Any platform corroboration owned by CONTROL_REVIEW remains pending until `aegis-gate-review` independently resolves the exact result/evidence/provider graph.

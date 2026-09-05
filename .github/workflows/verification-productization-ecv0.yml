@@ -1,0 +1,91 @@
+name: Aegis Verification Productization ECV0
+
+on:
+  pull_request:
+    paths:
+      - "tools/aegis_proof/adapters/**"
+      - "tools/aegis_proof/cli.py"
+      - "tools/aegis_proof/__main__.py"
+      - "tests/verification_productization/**"
+      - "skillset/shared/handoff-contract.md"
+      - "skillset/skills/aegis-implementation/**"
+      - "skillset/skills/aegis-gate-review/**"
+      - "skills/**"
+      - ".github/workflows/verification-productization-ecv0.yml"
+  push:
+    paths:
+      - "tools/aegis_proof/adapters/**"
+      - "tools/aegis_proof/cli.py"
+      - "tools/aegis_proof/__main__.py"
+      - "tests/verification_productization/**"
+      - "skillset/shared/handoff-contract.md"
+      - "skillset/skills/aegis-implementation/**"
+      - "skillset/skills/aegis-gate-review/**"
+      - "skills/**"
+      - ".github/workflows/verification-productization-ecv0.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verification-productization-ecv0-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run Verification Productization suite
+        run: |
+          mkdir -p artifacts/ecv0
+          set +e
+          python3 -m unittest discover -s tests/verification_productization -v 2>&1 | tee artifacts/ecv0/verification-productization.txt
+          code=${PIPESTATUS[0]}
+          exit "$code"
+      - name: Run Control Plane regressions
+        run: python3 -m unittest discover -s tests/control_plane -v
+      - name: Run Project State regressions
+        run: python3 -m unittest discover -s tests/project_state -v
+      - name: Run Skillset regressions
+        id: skillset_regressions
+        continue-on-error: true
+        run: |
+          set +e
+          python3 -m unittest discover -s tests/skillset -v 2>&1 | tee artifacts/ecv0/skillset.txt
+          code=${PIPESTATUS[0]}
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit "$code"
+      - name: Regenerate and verify canonical Skill distribution
+        run: |
+          python3 scripts/build_skillset.py --write
+          git diff --exit-code -- skills
+          python3 scripts/build_skillset.py --check
+          python3 scripts/validate_generated_skills.py
+          python3 -m tools.aegis_skillset.cli validate .
+          python3 -m tools.aegis_skillset.cli routing-check .
+          python3 -m tools.aegis_skillset.cli distribution-check .
+      - name: Materialize ECV0 structured evidence
+        run: |
+          python3 tests/verification_productization/run_ecv0.py --output artifacts/ecv0/ecv0.json
+          python3 -m json.tool artifacts/ecv0/ecv0.json >/dev/null
+          python3 scripts/build_candidate_plugin_parity.py --output artifacts/ecv0/candidate-plugin-parity.json
+          python3 -m json.tool artifacts/ecv0/candidate-plugin-parity.json >/dev/null
+      - name: Upload exact-candidate ECV0 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-productization-ecv0-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/ecv0/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Enforce full qualification
+        if: always() && steps.skillset_regressions.outputs.exit_code != '0'
+        run: |
+          echo 'BLOCKED: inherited skillset regression failed'
+          exit 1

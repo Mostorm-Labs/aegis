@@ -32,6 +32,18 @@ anchor/cursor ancestry. Missing, mismatched, ambiguous, or unavailable
 identity returns `BLOCKED_REPOSITORY_IDENTITY` with `continue_execution:
 false`; a bare revision is never a repository locator.
 
+For Verification-bound repository execution, after repository identity succeeds and before mutation:
+
+1. resolve exact VerificationSpec, obligation-set when required, TrustedBasis, scope, acceptance-oracle, and evidence-compilation bindings from the approved package;
+2. require `PackageBindingPreflight` success;
+3. require `EvidenceContractPreflight` success;
+4. reject floating labels or mutable-only trust identities rather than passing them into CODE_EXECUTION;
+5. keep local filesystem/worktree artifacts staging-only until exact durable materialization exists;
+6. treat structured EvidenceArtifact / provider observations / ProofEvaluation as the owners of their machine facts; do not copy their totals into the execution return as a second source of truth;
+7. return exact `result_revision`, reviewer-resolvable `materialized_ref`, exact `evidence_input_refs`, and exact provider run/attempt/job/artifact refs required by the package.
+
+P32 may prepare all exact inputs needed by CONTROL_REVIEW, but it MUST NOT emit or imply official P34 PASS. If a required review-produced value is needed during P32, classify the phase dependency instead of waiting for or synthesizing the future review verdict.
+
 Before returning to `CONTROL_REVIEW`, materialize the exact result at the package-defined reviewer-accessible evidence boundary and return its `materialized_ref`. If materialization is unavailable, return `BLOCKED_EVIDENCE` with the exact blocker.
 
 ## P33 Resume Interrupted Work
@@ -45,8 +57,10 @@ not execution divergence.
 
 - `EXACT_CURSOR`: observed HEAD equals `resume_cursor.revision`; resume from `next_action`.
 - `DESCENDANT_CURSOR`: `resume_cursor.revision` is an ancestor of observed HEAD; inspect only the delta after the cursor, preserve verified valid work, and do not replay completed work.
-- `ANCHOR_DESCENDANT_WITHOUT_CURSOR`: no accepted cursor exists but `task_anchor.revision` is an ancestor of observed HEAD; reconcile completed versus pending work, establish a cursor, and resume at the first incomplete verified step.
+- `ANCHOR_DESCENDANT_WITHOUT_CURSOR`: no accepted cursor exists but the task anchor is an ancestor of observed HEAD; reconcile completed versus pending work, establish a cursor, then resume at the first incomplete verified step.
 - `DIVERGED`: neither accepted cursor nor required anchor ancestry can be established, history is incompatibly rewritten, or observed state contradicts Authority/scope; fail closed with `BLOCKED_EXECUTION_DIVERGENCE` or a more specific existing Authority/environment blocker.
+
+Apply the same Verification-bound preflights and exact-return discipline when resuming P33. A resume cursor is navigation only; it cannot replace any required exact proof binding.
 
 Apply the same evidence-materialization requirement before returning a completed result to review. An execution cursor is not P34 evidence; P34 still resolves the returned `materialized_ref` independently.
 
