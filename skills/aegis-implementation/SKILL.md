@@ -42,7 +42,7 @@ For a repository-backed P32/P33 task governed by a Verification-bound package, d
 
 Repository identity preflight still occurs first. Never pass floating labels such as `accepted A4`, `latest Gate`, `latest run`, or ambient branch truth to the executor as trust identities.
 
-Execution returns must carry exact `result_revision`, reviewer-resolvable `materialized_ref`, exact `evidence_input_refs`, and exact provider run/attempt/job/artifact refs required by the package. Do not manually type proof totals already owned by EvidenceArtifact / ProofEvaluation, and do not emit or imply P34 PASS.
+Execution returns must carry exact `result_revision`, reviewer-resolvable `materialized_ref`, exact `evidence_input_refs`, and exact provider run/attempt/job/artifact refs required by the package. Do not manually type proof totals already owned by EvidenceArtifact / ProofEvaluation, and do not emit or imply official Gate PASS.
 
 ## P33 resume reconciliation
 
