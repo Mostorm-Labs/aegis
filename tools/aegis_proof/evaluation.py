@@ -5,6 +5,8 @@ import hashlib
 import json
 from typing import Any, Mapping, Sequence
 
+from .ports import ExactRefResolverPort
+
 
 @dataclass(frozen=True)
 class EvaluationResult:
@@ -14,6 +16,9 @@ class EvaluationResult:
 
 class ProofEvaluator:
     ALLOWED = {"SATISFIED", "EXCEPTION", "UNSATISFIED"}
+
+    def __init__(self, *, resolver: ExactRefResolverPort | None = None):
+        self._resolver = resolver
 
     @staticmethod
     def _artifact_digest(artifact: Mapping[str, Any]) -> str:
@@ -64,15 +69,14 @@ class ProofEvaluator:
                 return descriptor
         return None
 
-    @classmethod
     def _deterministic_status(
-        cls,
+        self,
         *,
         obligation: Mapping[str, Any],
         verification_spec: Mapping[str, Any],
         evidence_input_refs: Sequence[Mapping[str, Any]],
     ) -> str:
-        if cls._resolved_descriptor(verification_spec=verification_spec, obligation=obligation) is None:
+        if self._resolved_descriptor(verification_spec=verification_spec, obligation=obligation) is None:
             return "UNSATISFIED"
 
         oid = str(obligation.get("id"))
@@ -82,15 +86,6 @@ class ProofEvaluator:
         for evidence_ref in evidence_input_refs:
             if not isinstance(evidence_ref, Mapping):
                 continue
-            artifact = evidence_ref.get("resolved_artifact")
-            if not isinstance(artifact, Mapping):
-                continue
-            subjects = artifact.get("subjects")
-            if not isinstance(subjects, Mapping) or oid not in {
-                str(item) for item in subjects.get("obligation_ids", ())
-            }:
-                continue
-
             if not (
                 isinstance(evidence_ref.get("evidence_id"), str)
                 and evidence_ref.get("evidence_id")
@@ -99,11 +94,43 @@ class ProofEvaluator:
                 and isinstance(evidence_ref.get("digest"), str)
                 and evidence_ref.get("digest").startswith("sha256:")
                 and len(evidence_ref.get("digest")) == 71
+                and isinstance(evidence_ref.get("provider"), str)
+                and evidence_ref.get("provider")
+                and isinstance(evidence_ref.get("native_id"), str)
+                and evidence_ref.get("native_id")
                 and evidence_ref.get("reviewer_resolvable") is True
-                and evidence_ref.get("producer_class") == artifact.get("producer_class")
-                and cls._artifact_digest(artifact) == evidence_ref.get("digest")
+            ):
+                continue
+            if self._resolver is None:
+                continue
+            try:
+                resolved = self._resolver.resolve(evidence_ref)
+            except Exception:
+                return "UNSATISFIED"
+            if not isinstance(resolved, Mapping):
+                return "UNSATISFIED"
+            if not (
+                resolved.get("ref") == evidence_ref.get("ref")
+                and resolved.get("digest") == evidence_ref.get("digest")
+                and resolved.get("provider") == evidence_ref.get("provider")
+                and str(resolved.get("native_id")) == str(evidence_ref.get("native_id"))
+                and resolved.get("reviewer_resolvable") is True
             ):
                 return "UNSATISFIED"
+
+            artifact = resolved.get("content")
+            if not isinstance(artifact, Mapping):
+                return "UNSATISFIED"
+            if self._artifact_digest(artifact) != evidence_ref.get("digest"):
+                return "UNSATISFIED"
+            if evidence_ref.get("producer_class") != artifact.get("producer_class"):
+                return "UNSATISFIED"
+
+            subjects = artifact.get("subjects")
+            if not isinstance(subjects, Mapping) or oid not in {
+                str(item) for item in subjects.get("obligation_ids", ())
+            }:
+                continue
 
             observations = [
                 item
