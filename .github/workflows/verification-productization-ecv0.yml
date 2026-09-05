@@ -53,6 +53,8 @@ jobs:
       - name: Run Project State regressions
         run: python3 -m unittest discover -s tests/project_state -v
       - name: Run Skillset regressions
+        id: skillset_regressions
+        continue-on-error: true
         run: |
           set +e
           python3 -m unittest discover -s tests/skillset -v 2>&1 | tee artifacts/ecv0/skillset.txt
@@ -81,3 +83,8 @@ jobs:
           path: artifacts/ecv0/
           if-no-files-found: error
           retention-days: 30
+      - name: Enforce full qualification
+        if: steps.skillset_regressions.outcome != 'success'
+        run: |
+          echo 'BLOCKED: inherited skillset regression failed'
+          exit 1
