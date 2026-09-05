@@ -1,42 +1,82 @@
+import tempfile
 import unittest
 from pathlib import Path
 
+from tests.verification_productization import ecv0_fixtures as fixtures
 
-ROOT = Path(__file__).resolve().parents[2]
+
 HISTORICAL_VERSION = "0.2.0-beta.1"
 HISTORICAL_TAG = f"v{HISTORICAL_VERSION}"
-HISTORICAL_SOURCE = "3253abced7a17d66d8754fa84d7953408aae49d4"
+
+
+def _write_shape_only_skillset_workflow(root: Path, source: str) -> None:
+    target = root / ".github/workflows/skillset.yml"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        "\n".join(
+            (
+                "Check Control Plane v0.2 published source binding",
+                f"refs/tags/{HISTORICAL_TAG}",
+                source,
+                f"git archive refs/tags/{HISTORICAL_TAG}",
+                'cd "$historical_root"',
+                f"python3 scripts/build_aegis_distributions.py --check --version {HISTORICAL_VERSION}",
+            )
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_shape_only_release_workflow(root: Path) -> None:
+    target = root / ".github/workflows/release.yml"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        "\n".join(
+            (
+                'python3 scripts/build_aegis_distributions.py --version "$VERSION" --check',
+                "embedded == manifest",
+                'hashlib.sha256(data).hexdigest() == entry["zip_sha256"]',
+                "sha256sum -c SHA256SUMS",
+            )
+        ),
+        encoding="utf-8",
+    )
 
 
 class ECV0ApplicabilityTests(unittest.TestCase):
-    def test_ec_ap01_non_release_candidate_uses_historical_source_binding(self):
-        workflow = (ROOT / ".github/workflows/skillset.yml").read_text(encoding="utf-8")
+    def test_ec_ap01_rejects_shape_only_historical_source_claim(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            fake_source = "f" * 40
+            _write_shape_only_skillset_workflow(root, fake_source)
 
-        self.assertNotIn(
-            "Check Aegis development release manifest",
-            workflow,
-            "legacy development snapshot must not gate unrelated non-release candidate bytes",
-        )
-        self.assertIn("Check Control Plane v0.2 published source binding", workflow)
-        self.assertIn(f"refs/tags/{HISTORICAL_TAG}", workflow)
-        self.assertIn(HISTORICAL_SOURCE, workflow)
-        self.assertIn(f"git archive refs/tags/{HISTORICAL_TAG}", workflow)
-        self.assertIn('cd "$historical_root"', workflow)
-        self.assertIn(
-            f"python3 scripts/build_aegis_distributions.py --check --version {HISTORICAL_VERSION}",
-            workflow,
-        )
+            original_root = fixtures.ROOT
+            original_source = fixtures.HISTORICAL_SOURCE
+            try:
+                fixtures.ROOT = root
+                fixtures.HISTORICAL_SOURCE = fake_source
+                self.assertFalse(
+                    fixtures.run_applicability("EC-AP01"),
+                    "EC-AP01 must resolve and execute the historical source, not accept workflow text shape",
+                )
+            finally:
+                fixtures.ROOT = original_root
+                fixtures.HISTORICAL_SOURCE = original_source
 
-    def test_ec_ap02_active_release_candidate_still_fails_closed_on_mismatch(self):
-        workflow = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+    def test_ec_ap02_rejects_shape_only_release_mismatch_claim(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write_shape_only_release_workflow(root)
 
-        self.assertIn(
-            'python3 scripts/build_aegis_distributions.py --version "$VERSION" --check',
-            workflow,
-        )
-        self.assertIn("embedded == manifest", workflow)
-        self.assertIn("hashlib.sha256(data).hexdigest() == entry[\"zip_sha256\"]", workflow)
-        self.assertIn("sha256sum -c SHA256SUMS", workflow)
+            original_root = fixtures.ROOT
+            try:
+                fixtures.ROOT = root
+                self.assertFalse(
+                    fixtures.run_applicability("EC-AP02"),
+                    "EC-AP02 must execute a release-applicable mismatch and observe rejection",
+                )
+            finally:
+                fixtures.ROOT = original_root
 
 
 if __name__ == "__main__":
