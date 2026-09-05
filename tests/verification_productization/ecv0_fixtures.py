@@ -20,6 +20,11 @@ from tools.aegis_proof.spec import VerificationSpecValidator
 
 SCENARIO_IDS = tuple(f"EC-S{i:02d}" for i in range(1, 18))
 MUTANT_IDS = tuple(f"EC-M{i:02d}" for i in range(1, 18))
+APPLICABILITY_IDS = ("EC-AP01", "EC-AP02")
+ROOT = Path(__file__).resolve().parents[2]
+HISTORICAL_VERSION = "0.2.0-beta.1"
+HISTORICAL_TAG = f"v{HISTORICAL_VERSION}"
+HISTORICAL_SOURCE = "3253abced7a17d66d8754fa84d7953408aae49d4"
 
 
 def load_required_module(name: str):
@@ -597,3 +602,40 @@ MUTANTS = {
 
 def run_mutant(mutant_id: str) -> bool:
     return bool(MUTANTS[mutant_id]())
+
+
+def _applicability_01() -> bool:
+    workflow = (ROOT / ".github/workflows/skillset.yml").read_text(encoding="utf-8")
+    required = (
+        "Check Control Plane v0.2 published source binding",
+        f"refs/tags/{HISTORICAL_TAG}",
+        HISTORICAL_SOURCE,
+        f"git archive refs/tags/{HISTORICAL_TAG}",
+        'cd "$historical_root"',
+        f"python3 scripts/build_aegis_distributions.py --check --version {HISTORICAL_VERSION}",
+    )
+    return (
+        "Check Aegis development release manifest" not in workflow
+        and all(token in workflow for token in required)
+    )
+
+
+def _applicability_02() -> bool:
+    workflow = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+    required = (
+        'python3 scripts/build_aegis_distributions.py --version "$VERSION" --check',
+        "embedded == manifest",
+        'hashlib.sha256(data).hexdigest() == entry["zip_sha256"]',
+        "sha256sum -c SHA256SUMS",
+    )
+    return all(token in workflow for token in required)
+
+
+APPLICABILITY = {
+    "EC-AP01": _applicability_01,
+    "EC-AP02": _applicability_02,
+}
+
+
+def run_applicability(applicability_id: str) -> bool:
+    return bool(APPLICABILITY[applicability_id]())
