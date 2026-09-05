@@ -286,6 +286,152 @@ def _validate_stage_ownership(record: Mapping[str, Any]) -> None:
         raise CanonicalValidationError("StageOccurrence primary_owner does not match stage ownership")
 
 
+
+def _canonical_ref_sort_key(ref: Mapping[str, Any]) -> tuple[str, str, str, str]:
+    identity = ref["identity"]
+    return (
+        ref["object_type"],
+        ref["id"],
+        identity["scheme"],
+        identity["value"],
+    )
+
+
+def validate_trusted_basis(value: Mapping[str, Any]) -> None:
+    expected = {
+        "authority_refs", "contract_refs", "verification_refs",
+        "accepted_fact_refs", "basis_digest",
+    }
+    if not isinstance(value, Mapping) or set(value) != expected:
+        raise CanonicalValidationError("TrustedBasis has invalid fields")
+    arrays = {
+        "authority_refs": ("AUTHORITY",),
+        "contract_refs": ("CONTRACT",),
+        "verification_refs": ("VERIFICATION_SPEC", "PROOF_OBLIGATION_SET"),
+        "accepted_fact_refs": ("GATE_DECISION", "RESULT", "INTEGRATION", "EXTERNAL_DECISION"),
+    }
+    for field, allowed_types in arrays.items():
+        refs = value[field]
+        if not isinstance(refs, list):
+            raise CanonicalValidationError(f"TrustedBasis {field} must be a list")
+        if field == "authority_refs" and not refs:
+            raise CanonicalValidationError("TrustedBasis authority_refs must be non-empty")
+        seen: set[str] = set()
+        for ref in refs:
+            validate_canonical_ref(ref)
+            if ref["object_type"] not in allowed_types:
+                raise CanonicalValidationError(
+                    f"TrustedBasis {field} ref must target one of {sorted(allowed_types)}"
+                )
+            digest = canonical_digest(ref)
+            if digest in seen:
+                raise CanonicalValidationError(f"TrustedBasis {field} contains duplicate refs")
+            seen.add(digest)
+        if refs != sorted(refs, key=_canonical_ref_sort_key):
+            raise CanonicalValidationError(f"TrustedBasis {field} must be canonically sorted")
+    validate_digest(value["basis_digest"])
+    payload = {key: item for key, item in value.items() if key != "basis_digest"}
+    if canonical_digest(payload) != value["basis_digest"]:
+        raise CanonicalValidationError("TrustedBasis basis_digest mismatch")
+
+
+def validate_verification_binding(value: Mapping[str, Any]) -> None:
+    expected = {
+        "verification_spec_ref", "obligation_set_ref", "acceptance_oracle_refs",
+        "evidence_compilation_contract_ref",
+    }
+    if not isinstance(value, Mapping) or set(value) != expected:
+        raise CanonicalValidationError("verification_binding has invalid fields")
+    validate_canonical_ref(value["verification_spec_ref"])
+    if value["verification_spec_ref"]["object_type"] != "VERIFICATION_SPEC":
+        raise CanonicalValidationError("verification_spec_ref must target VERIFICATION_SPEC")
+    obligation_set_ref = value["obligation_set_ref"]
+    if obligation_set_ref is not None:
+        validate_canonical_ref(obligation_set_ref)
+        if obligation_set_ref["object_type"] != "PROOF_OBLIGATION_SET":
+            raise CanonicalValidationError("obligation_set_ref must target PROOF_OBLIGATION_SET")
+    oracles = value["acceptance_oracle_refs"]
+    if not isinstance(oracles, list) or not oracles:
+        raise CanonicalValidationError("acceptance_oracle_refs must be a non-empty list")
+    _validate_ref_list(
+        oracles,
+        object_type="CONTRACT",
+        duplicate_message="duplicate acceptance oracle ref",
+    )
+    validate_canonical_ref(value["evidence_compilation_contract_ref"])
+    if value["evidence_compilation_contract_ref"]["object_type"] != "CONTRACT":
+        raise CanonicalValidationError("evidence_compilation_contract_ref must target CONTRACT")
+
+
+def _validate_scope(value: Mapping[str, Any]) -> None:
+    expected = {"scope_id", "scope_contract_ref"}
+    if not isinstance(value, Mapping) or set(value) != expected:
+        raise CanonicalValidationError("package scope has invalid fields")
+    if not isinstance(value.get("scope_id"), str) or not value["scope_id"]:
+        raise CanonicalValidationError("package scope_id is required")
+    validate_canonical_ref(value["scope_contract_ref"])
+    if value["scope_contract_ref"]["object_type"] != "CONTRACT":
+        raise CanonicalValidationError("scope_contract_ref must target CONTRACT")
+
+
+def _validate_policy_binding(value: Mapping[str, Any]) -> None:
+    expected = {"gate_policy_ref", "control_autonomy", "repair_policy", "policy_digest"}
+    if not isinstance(value, Mapping) or set(value) != expected:
+        raise CanonicalValidationError("PolicyBinding has invalid fields")
+    validate_canonical_ref(value["gate_policy_ref"])
+    if value["gate_policy_ref"]["object_type"] != "CONTRACT":
+        raise CanonicalValidationError("gate_policy_ref must target CONTRACT")
+    if value["control_autonomy"] not in {"AUTONOMOUS", "REVIEW_GUARDED", "HUMAN_DECISION"}:
+        raise CanonicalValidationError("PolicyBinding control_autonomy invalid")
+    repair_policy = value["repair_policy"]
+    expected_repair = {
+        "allowed_classes", "max_attempts", "require_reverification",
+        "require_fresh_independent_review", "escalation_conditions",
+    }
+    if not isinstance(repair_policy, Mapping) or set(repair_policy) != expected_repair:
+        raise CanonicalValidationError("RepairPolicy has invalid fields")
+    if not isinstance(repair_policy["allowed_classes"], list):
+        raise CanonicalValidationError("RepairPolicy allowed_classes must be a list")
+    max_attempts = repair_policy["max_attempts"]
+    if not isinstance(max_attempts, int) or isinstance(max_attempts, bool) or max_attempts < 0:
+        raise CanonicalValidationError("RepairPolicy max_attempts must be an integer >= 0")
+    for field in ("require_reverification", "require_fresh_independent_review"):
+        if not isinstance(repair_policy[field], bool):
+            raise CanonicalValidationError(f"RepairPolicy {field} must be boolean")
+    if not isinstance(repair_policy["escalation_conditions"], list):
+        raise CanonicalValidationError("RepairPolicy escalation_conditions must be a list")
+    validate_digest(value["policy_digest"])
+    payload = {key: item for key, item in value.items() if key != "policy_digest"}
+    if canonical_digest(payload) != value["policy_digest"]:
+        raise CanonicalValidationError("PolicyBinding policy_digest mismatch")
+
+
+def _validate_task_anchor(value: Mapping[str, Any] | None) -> None:
+    if value is None:
+        return
+    if not isinstance(value, Mapping) or set(value) != {"revision", "relation"}:
+        raise CanonicalValidationError("task_anchor requires exactly revision and relation")
+    if value.get("relation") != "ancestor":
+        raise CanonicalValidationError("task_anchor relation must be ancestor")
+    if not isinstance(value.get("revision"), str) or not value["revision"]:
+        raise CanonicalValidationError("task_anchor revision is required")
+
+
+def validate_verification_bound_package(record: Mapping[str, Any]) -> None:
+    missing = KIND_FIELDS["VERIFICATION_BOUND_IMPLEMENTATION_PACKAGE"] - set(record)
+    if missing:
+        raise CanonicalValidationError(
+            f"VerificationBoundImplementationPackage missing fields: {sorted(missing)}"
+        )
+    validate_trusted_basis(record["trusted_basis"])
+    _validate_scope(record["scope"])
+    validate_verification_binding(record["verification_binding"])
+    _validate_policy_binding(record["policy_binding"])
+    _validate_task_anchor(record["task_anchor"])
+    validate_digest(record["package_digest"])
+    if canonical_digest(record, self_digest_field="package_digest") != record["package_digest"]:
+        raise CanonicalValidationError("package_digest mismatch")
+
 def validate_record(record: Mapping[str, Any]) -> None:
     if not isinstance(record, Mapping):
         raise CanonicalValidationError("canonical record must be an object")
@@ -316,6 +462,8 @@ def validate_record(record: Mapping[str, Any]) -> None:
         if "work_scope_ref" not in record:
             raise CanonicalValidationError("work_scope_ref is required")
         validate_work_scope_ref(record["work_scope_ref"])
+    if kind == "VERIFICATION_BOUND_IMPLEMENTATION_PACKAGE":
+        validate_verification_bound_package(record)
     if kind == "STAGE_OCCURRENCE":
         _validate_stage_ownership(record)
         state = record.get("state")

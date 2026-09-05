@@ -25,17 +25,82 @@ def expected_state(**overrides):
     return value
 
 
-def package_record(package_id='pkg_01', lane_id='lane_pkg', revision=1, scope_name='cp-i02'):
+def _exact_ref(object_type, ident):
+    ref = f'test://{object_type.lower()}/{ident}'
+    identity = canonical_digest({
+        'object_type': object_type,
+        'id': ident,
+        'ref': ref,
+    })
     return {
-        'schema_version':'0.2','kind':'VERIFICATION_BOUND_IMPLEMENTATION_PACKAGE',
-        'id_scheme':'verification-bound-package-v0.2','id':package_id,
-        'record_revision':revision,'recorded_at':NOW,'extensions':{},
-        'control_lane_id':lane_id,'work_scope_ref':root_work_scope_ref(lane_id),
-        'trusted_basis':{'authority':['P13','P15','P16','P17','P20']},
-        'scope':{'name':scope_name},'verification_binding':{'spec':'CPV-C01'},
-        'policy_binding':{'control_autonomy':'REVIEW_GUARDED'},
-        'task_anchor':{'revision':ANCHOR,'relation':'ancestor'},'package_digest':'sha256:' + '0'*64,
+        'object_type': object_type,
+        'id': ident,
+        'ref': ref,
+        'identity': {'scheme': 'sha256', 'value': identity},
     }
+
+
+def _trusted_package_basis():
+    value = {
+        'authority_refs': [
+            _exact_ref('AUTHORITY', authority)
+            for authority in ('P13', 'P15', 'P16', 'P17', 'P20')
+        ],
+        'contract_refs': [_exact_ref('CONTRACT', 'control-plane-package-v0.2')],
+        'verification_refs': [_exact_ref('VERIFICATION_SPEC', 'CPV-C01')],
+        'accepted_fact_refs': [],
+    }
+    value['basis_digest'] = canonical_digest(value)
+    return value
+
+
+def _package_policy_binding():
+    value = {
+        'gate_policy_ref': _exact_ref('CONTRACT', 'control-plane-gate-policy-v0.2'),
+        'control_autonomy': 'REVIEW_GUARDED',
+        'repair_policy': {
+            'allowed_classes': ['IMPLEMENTATION_DEFECT'],
+            'max_attempts': 1,
+            'require_reverification': True,
+            'require_fresh_independent_review': True,
+            'escalation_conditions': ['AUTHORITY_CONFLICT'],
+        },
+    }
+    value['policy_digest'] = canonical_digest(value)
+    return value
+
+
+def package_record(package_id='pkg_01', lane_id='lane_pkg', revision=1, scope_name='cp-i02'):
+    record = {
+        'schema_version': '0.2',
+        'kind': 'VERIFICATION_BOUND_IMPLEMENTATION_PACKAGE',
+        'id_scheme': 'verification-bound-package-v0.2',
+        'id': package_id,
+        'record_revision': revision,
+        'recorded_at': NOW,
+        'extensions': {},
+        'control_lane_id': lane_id,
+        'work_scope_ref': root_work_scope_ref(lane_id),
+        'trusted_basis': _trusted_package_basis(),
+        'scope': {
+            'scope_id': scope_name,
+            'scope_contract_ref': _exact_ref('CONTRACT', f'scope-{scope_name}'),
+        },
+        'verification_binding': {
+            'verification_spec_ref': _exact_ref('VERIFICATION_SPEC', 'CPV-C01'),
+            'obligation_set_ref': None,
+            'acceptance_oracle_refs': [
+                _exact_ref('CONTRACT', 'CPV-C01-acceptance-oracle')
+            ],
+            'evidence_compilation_contract_ref': _exact_ref(
+                'CONTRACT', 'CPV-C01-evidence-compilation'
+            ),
+        },
+        'policy_binding': _package_policy_binding(),
+        'task_anchor': {'revision': ANCHOR, 'relation': 'ancestor'},
+    }
+    record['package_digest'] = canonical_digest(record)
+    return record
 
 
 def occurrence_record(occurrence_id='so_01', lane_id='lane_01'):
