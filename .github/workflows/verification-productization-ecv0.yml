@@ -1,0 +1,70 @@
+name: Aegis Verification Productization ECV0
+
+on:
+  pull_request:
+    paths:
+      - "tools/aegis_proof/adapters/**"
+      - "tools/aegis_proof/cli.py"
+      - "tools/aegis_proof/__main__.py"
+      - "tests/verification_productization/**"
+      - "skillset/shared/handoff-contract.md"
+      - "skillset/skills/aegis-implementation/**"
+      - "skillset/skills/aegis-gate-review/**"
+      - "skills/**"
+      - ".github/workflows/verification-productization-ecv0.yml"
+  push:
+    paths:
+      - "tools/aegis_proof/adapters/**"
+      - "tools/aegis_proof/cli.py"
+      - "tools/aegis_proof/__main__.py"
+      - "tests/verification_productization/**"
+      - "skillset/shared/handoff-contract.md"
+      - "skillset/skills/aegis-implementation/**"
+      - "skillset/skills/aegis-gate-review/**"
+      - "skills/**"
+      - ".github/workflows/verification-productization-ecv0.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verification-productization-ecv0-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run Verification Productization suite
+        run: python3 -m unittest discover -s tests/verification_productization -v
+      - name: Run Control Plane regressions
+        run: python3 -m unittest discover -s tests/control_plane -v
+      - name: Run Project State regressions
+        run: python3 -m unittest discover -s tests/project_state -v
+      - name: Run Skillset regressions
+        run: python3 -m unittest discover -s tests/skillset -v
+      - name: Verify generated Skill distribution
+        run: |
+          python3 scripts/build_skillset.py --check
+          python3 scripts/validate_generated_skills.py
+          python3 -m tools.aegis_skillset.cli validate .
+          python3 -m tools.aegis_skillset.cli routing-check .
+          python3 -m tools.aegis_skillset.cli distribution-check .
+      - name: Materialize ECV0 structured evidence
+        run: |
+          mkdir -p artifacts/ecv0
+          python3 tests/verification_productization/run_ecv0.py --output artifacts/ecv0/ecv0.json
+          python3 -m json.tool artifacts/ecv0/ecv0.json >/dev/null
+          python3 scripts/build_candidate_plugin_parity.py --output artifacts/ecv0/candidate-plugin-parity.json
+          python3 -m json.tool artifacts/ecv0/candidate-plugin-parity.json >/dev/null
+      - name: Upload exact-candidate ECV0 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-productization-ecv0-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/ecv0/
+          if-no-files-found: error
+          retention-days: 30
