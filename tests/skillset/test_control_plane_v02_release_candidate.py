@@ -1,13 +1,11 @@
 import io
 import json
+import shutil
 import subprocess
 import tarfile
 import tempfile
 import unittest
 from pathlib import Path
-
-from tools.aegis_skillset.package import render_release_manifest
-from tools.aegis_skillset.plugin_materialization import check_materialization
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -54,12 +52,43 @@ class ControlPlaneV02ReleaseCandidateTests(unittest.TestCase):
             f"historical beta.1 source must be archivable: {proc.stderr.decode('utf-8', errors='replace').strip()}",
         )
         with tarfile.open(fileobj=io.BytesIO(proc.stdout), mode="r:") as archive:
-            archive.extractall(destination)
+            archive.extractall(destination, filter="data")
+
+    def _install_current_checker(self, historical_root: Path) -> None:
+        shutil.copy2(
+            ROOT / "scripts/build_aegis_distributions.py",
+            historical_root / "scripts/build_aegis_distributions.py",
+        )
+        target = historical_root / "tools/aegis_skillset"
+        if target.exists():
+            shutil.rmtree(target)
+        shutil.copytree(ROOT / "tools/aegis_skillset", target)
 
     def test_public_release_identity_is_bound_to_historical_source(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             historical_root = Path(temporary_directory)
             self._extract_historical_source(historical_root)
+            self._install_current_checker(historical_root)
+
+            check = subprocess.run(
+                [
+                    "python3",
+                    "scripts/build_aegis_distributions.py",
+                    "--check",
+                    "--version",
+                    VERSION,
+                ],
+                cwd=historical_root,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            self.assertEqual(
+                0,
+                check.returncode,
+                f"historical beta.1 release source must satisfy its frozen manifest: {check.stdout}{check.stderr}",
+            )
 
             plugin = json.loads(
                 (historical_root / "plugins/aegis/.codex-plugin/plugin.json").read_text(
@@ -72,9 +101,6 @@ class ControlPlaneV02ReleaseCandidateTests(unittest.TestCase):
 
             self.assertEqual(VERSION, plugin["version"])
             self.assertEqual(VERSION, release["release_version"])
-            self.assertEqual(render_release_manifest(historical_root, VERSION), release)
-            check_materialization(historical_root, VERSION)
-
             names = [entry["name"] for entry in release["plugin"]["skills"]]
             self.assertEqual(9, len(names))
             self.assertEqual(9, len(set(names)))
