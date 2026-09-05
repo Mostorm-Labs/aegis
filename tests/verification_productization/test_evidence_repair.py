@@ -8,11 +8,13 @@ from tools.aegis_proof.ports import ImmutableArtifactLocator
 class MemoryStore:
     def __init__(self):
         self.items = []
+
     def materialize(self, data, *, media_type, metadata):
         digest = "sha256:" + hashlib.sha256(data).hexdigest()
         locator = ImmutableArtifactLocator("memory", str(len(self.items) + 1), f"memory://{len(self.items)+1}", digest, True)
         self.items.append((locator, data, metadata))
         return locator
+
     def resolve(self, locator):
         return next(data for loc, data, _ in self.items if loc == locator)
 
@@ -33,12 +35,19 @@ class EvidenceRepairTests(unittest.TestCase):
         new_sha = hashlib.sha256(new_bytes).hexdigest()
         self.assertNotEqual(old_sha, new_sha)
 
-    def test_EC_M05_same_result_false_claim_after_mutation_is_detected(self):
+    def _assert_result_identity_oracle(self, *, result_bytes, claimed_sha):
+        actual = hashlib.sha256(result_bytes).hexdigest()
+        self.assertEqual(claimed_sha, actual)
+
+    def test_EC_M05_false_old_result_identity_mutant_is_killed(self):
         old_bytes = b"implementation-v1"
         new_bytes = b"implementation-v2"
-        claimed = hashlib.sha256(old_bytes).hexdigest()
-        actual = hashlib.sha256(new_bytes).hexdigest()
-        self.assertNotEqual(claimed, actual)
+        old_sha = hashlib.sha256(old_bytes).hexdigest()
+        new_sha = hashlib.sha256(new_bytes).hexdigest()
+
+        with self.assertRaises(AssertionError):
+            self._assert_result_identity_oracle(result_bytes=new_bytes, claimed_sha=old_sha)
+        self._assert_result_identity_oracle(result_bytes=new_bytes, claimed_sha=new_sha)
 
 
 if __name__ == "__main__":
