@@ -1,6 +1,6 @@
 ---
 name: aegis-project-state
-description: Inspect, validate, recompute, and compare Aegis .aegis project-control manifests and Project State v0.4, while preserving v0.3 compatibility. Use when the user explicitly asks to read, validate, repair, persist, or diagnose .aegis manifests, state.json drift, Integration occurrence versus Gate conformance, current versus historical applicability, or deterministic project-state recomputation.
+description: Inspect, validate, recompute, and compare Aegis .aegis project-control manifests and Project State v0.6, while preserving v0.3-v0.5 compatibility.
 ---
 
 # Aegis Project State
@@ -17,7 +17,11 @@ If authored manifests conflict with Current Authority or repository evidence, re
 
 **Earlier untrusted layer:** when Project State reveals an earlier Authority or Gate blocker, report it and hand back to `aegis`; do not repair unrelated lifecycle stages here.
 
-Read [references/project-state.md](references/project-state.md) for the version-aware v0.4/v0.3 contract and [references/shared/authority-contract.md](references/shared/authority-contract.md) for global Authority semantics.
+Read [references/project-state.md](references/project-state.md) for the version-aware v0.6 contract and [references/shared/authority-contract.md](references/shared/authority-contract.md) for global Authority semantics.
+
+In v0.6, `gate_decision_binding` is occurrence-time immutable. `missing`, `failed`,
+or `unresolved` evidence never means `Absent`; a later PASS cannot rewrite a
+historical binding. O1-O6 are semantic vocabulary, not runtime APIs.
 
 ## Composition boundary
 

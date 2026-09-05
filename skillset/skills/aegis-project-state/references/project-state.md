@@ -1,4 +1,9 @@
-# Project State Manifest v0.4
+# Project State Manifest v0.6
+
+v0.6 uses occurrence-time immutable `gate_decision_binding` (`bound` or
+`absent`). Missing, failed, and unresolved evidence are unknown and never
+imply `Absent`; later PASS decisions do not rewrite historical bindings. O1-O6
+are semantic vocabulary, not runtime APIs.
 
 Use this reference when a project contains `.aegis/` or when the user asks to persist, inspect, validate, supersede, resume, or integrate machine-readable project state. Project State tooling is version-aware: apply v0.4 semantics only to v0.4 manifests and preserve v0.3 semantics for v0.3 projects.
 

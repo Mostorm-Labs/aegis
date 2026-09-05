@@ -5,8 +5,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-SCHEMA_VERSION = "0.5"
-SUPPORTED_SCHEMA_VERSIONS = {"0.3", "0.4", "0.5"}
+SCHEMA_VERSION = "0.6"
+SUPPORTED_SCHEMA_VERSIONS = {"0.3", "0.4", "0.5", "0.6"}
 AUTHORITY_STATUSES = {"Proposed", "Current", "Superseded", "Historical"}
 GATE_VERDICTS = {
     "PASS", "PASS_WITH_FINDINGS", "BLOCKED_IMPLEMENTATION",
@@ -46,7 +46,7 @@ class ManifestSet:
 
     @property
     def decision_items(self) -> list[dict]:
-        if self.schema_version != "0.5":
+        if self.schema_version not in {"0.5", "0.6"}:
             return []
         return list(self.gates.get("decisions", []))
 
@@ -212,7 +212,7 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
         ("authority", authorities), ("gate", gates), ("evidence", evidence),
         ("integration", integrations), ("impact review", reviews),
     ]
-    if schema_version == "0.5":
+    if schema_version in {"0.5", "0.6"}:
         registry_items.append(("gate decision", decisions))
     for registry_name, items in registry_items:
         for duplicate in sorted(_duplicates(items, "id")):
@@ -224,6 +224,11 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
     evidence_by_id = {item.get("id"): item for item in evidence if isinstance(item.get("id"), str)}
 
     def integration_gate_id(item: dict) -> str | None:
+        if schema_version == "0.6":
+            binding = item.get("gate_decision_binding")
+            decision_item = decision_by_id.get(binding.get("gate_decision_id")) if isinstance(binding, dict) and binding.get("kind") == "bound" else None
+            gid = decision_item.get("gate_id") if decision_item else None
+            return gid if isinstance(gid, str) else None
         if schema_version == "0.5":
             decision_item = decision_by_id.get(item.get("gate_decision_id"))
             gid = decision_item.get("gate_id") if decision_item else None
@@ -290,7 +295,7 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
             errors.append(f"evidence {eid}: invalid status {item.get('status')}")
 
     current_decisions: dict[str, dict] = {}
-    if schema_version == "0.5":
+    if schema_version in {"0.5", "0.6"}:
         decisions_by_gate: dict[str, list[dict]] = {str(g.get("id")): [] for g in gates if isinstance(g.get("id"), str)}
         child_map: dict[str, list[str]] = {}
         lineage_graph: dict[str, list[str]] = {}
@@ -481,7 +486,7 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
 
     for integration in integrations:
         iid = integration.get("id")
-        required = ("id", "kind", "ref", "gate_decision_id", "status", "target_ref") if schema_version == "0.5" else ("id", "kind", "ref", "gate_id", "status", "target_ref")
+        required = ("id", "kind", "ref", "status", "target_ref") + (("gate_decision_id",) if schema_version == "0.5" else (("gate_id",) if schema_version not in {"0.6"} else ()))
         for name in required:
             if not isinstance(integration.get(name), str) or not integration.get(name):
                 errors.append(f"integration {iid or '<unknown>'}: missing non-empty {name}")
@@ -491,7 +496,21 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
         decision_item = None
         gate = None
         gate_id = None
-        if schema_version == "0.5":
+        if schema_version == "0.6":
+            binding = integration.get("gate_decision_binding")
+            if not isinstance(binding, dict) or binding.get("kind") not in {"bound", "absent"}:
+                errors.append(f"integration {iid}: gate_decision_binding must be bound or absent")
+            elif binding.get("kind") == "bound":
+                gate_decision_id = binding.get("gate_decision_id")
+                decision_item = decision_by_id.get(gate_decision_id)
+                if not isinstance(gate_decision_id, str) or gate_decision_id not in decision_by_id:
+                    errors.append(f"integration {iid}: dangling gate decision {gate_decision_id}")
+                if decision_item:
+                    gate_id = decision_item.get("gate_id")
+                    gate = gate_by_id.get(gate_id)
+            elif binding.get("reason") != "no_applicable_integration_gate_decision":
+                errors.append(f"integration {iid}: absent binding requires canonical reason")
+        elif schema_version == "0.5":
             gate_decision_id = integration.get("gate_decision_id")
             decision_item = decision_by_id.get(gate_decision_id)
             if gate_decision_id not in decision_by_id:
@@ -513,6 +532,13 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
             if eid not in evidence_by_id:
                 errors.append(f"integration {iid}: dangling evidence id {eid}")
         status = integration.get("status")
+        binding = integration.get("gate_decision_binding") if schema_version == "0.6" else None
+        if schema_version == "0.6":
+            kind = binding.get("kind") if isinstance(binding, dict) else None
+            if status in {"awaiting_integration", "closed_unmerged"} and kind != "bound":
+                errors.append(f"integration {iid}: {status} requires bound gate_decision_binding")
+            if status == "integrated" and kind not in {"bound", "absent"}:
+                errors.append(f"integration {iid}: integrated requires bound or absent gate_decision_binding")
         revision = integration.get("integrated_revision")
         if status == "integrated" and (not isinstance(revision, str) or not revision):
             errors.append(f"integration {iid}: integrated_revision is required when status=integrated")
@@ -526,7 +552,7 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
                 if ev and ev.get("status") != "available":
                     errors.append(f"integration {iid}: uses unavailable evidence {eid}")
         if strict_gate_validity and status == "awaiting_integration":
-            if schema_version == "0.5":
+            if schema_version in {"0.5", "0.6"}:
                 current = current_decisions.get(str(gate_id)) if gate_id is not None else None
                 if not decision_item or current is not decision_item or decision_item.get("verdict") not in PASS_VERDICTS:
                     errors.append(f"integration {iid}: requires current PASS/PASS_WITH_FINDINGS gate decision {integration.get('gate_decision_id')}")

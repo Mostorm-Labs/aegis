@@ -58,9 +58,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Parse project-state v0.3, v0.4, and v0.5 schemas
+      - name: Parse project-state v0.3, v0.4, v0.5, and v0.6 schemas
         run: |
-          for version in v0.3 v0.4 v0.5; do
+          for version in v0.3 v0.4 v0.5 v0.6; do
             for schema in schemas/project-state/$version/*.json; do
               python3 -m json.tool "$schema" >/dev/null
             done
@@ -83,6 +83,10 @@ jobs:
             diff -u examples/project-state/v0.5-minimal/.aegis/state.json /tmp/minimal-v05-state.json || true
             exit 1
           fi
+      - name: Validate minimal v0.6 project manifests
+        run: python3 -m tools.aegis_state.cli validate examples/project-state/v0.6-minimal
+      - name: Check generated minimal v0.6 project state
+        run: python3 -m tools.aegis_state.cli check examples/project-state/v0.6-minimal
       - name: Run project-state unit tests
         run: python3 -m unittest discover -s tests/project_state -v
 
@@ -102,7 +106,7 @@ jobs:
             diff -u .aegis/state.json /tmp/root-state.json || true
             exit 1
           fi
-      - name: Enforce v0.5 Gate transition history on pull requests
+      - name: Enforce v0.5/v0.6 Gate transition history on pull requests
         if: github.event_name == 'pull_request'
         env:
           PREVIOUS_SHA: ${{ github.event.pull_request.base.sha }}
@@ -110,7 +114,7 @@ jobs:
           CURRENT_VERSION=$(python3 -c 'import json; print(json.load(open(".aegis/project.json", encoding="utf-8"))["schema_version"])')
           git fetch origin "$PREVIOUS_SHA" --depth=1
           PREVIOUS_VERSION=$(git show "$PREVIOUS_SHA:.aegis/project.json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["schema_version"])')
-          if [ "$CURRENT_VERSION" = "0.5" ] && [ "$PREVIOUS_VERSION" = "0.5" ]; then
+          if [ "$CURRENT_VERSION" = "$PREVIOUS_VERSION" ] && { [ "$CURRENT_VERSION" = "0.5" ] || [ "$CURRENT_VERSION" = "0.6" ]; }; then
             rm -rf /tmp/aegis-previous
             mkdir -p /tmp/aegis-previous
             git archive "$PREVIOUS_SHA" .aegis | tar -x -C /tmp/aegis-previous
@@ -118,7 +122,7 @@ jobs:
           else
             echo "TRANSITION_CHECK_SKIPPED: previous=$PREVIOUS_VERSION current=$CURRENT_VERSION"
           fi
-      - name: Enforce v0.5 Gate transition history on pushes
+      - name: Enforce v0.5/v0.6 Gate transition history on pushes
         if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
         env:
           PREVIOUS_SHA: ${{ github.event.before }}
@@ -126,7 +130,7 @@ jobs:
           CURRENT_VERSION=$(python3 -c 'import json; print(json.load(open(".aegis/project.json", encoding="utf-8"))["schema_version"])')
           git fetch origin "$PREVIOUS_SHA" --depth=1
           PREVIOUS_VERSION=$(git show "$PREVIOUS_SHA:.aegis/project.json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["schema_version"])')
-          if [ "$CURRENT_VERSION" = "0.5" ] && [ "$PREVIOUS_VERSION" = "0.5" ]; then
+          if [ "$CURRENT_VERSION" = "$PREVIOUS_VERSION" ] && { [ "$CURRENT_VERSION" = "0.5" ] || [ "$CURRENT_VERSION" = "0.6" ]; }; then
             rm -rf /tmp/aegis-previous
             mkdir -p /tmp/aegis-previous
             git archive "$PREVIOUS_SHA" .aegis | tar -x -C /tmp/aegis-previous
