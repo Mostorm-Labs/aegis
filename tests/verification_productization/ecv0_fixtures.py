@@ -4,10 +4,13 @@ import copy
 import hashlib
 import importlib
 import importlib.util
+import io
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 from typing import Any, Mapping
 
@@ -17,9 +20,15 @@ from tools.aegis_proof.package import EvidenceContractPreflight, PackageBindingP
 from tools.aegis_proof.ports import ImmutableArtifactLocator, ObservationBatch, ObservationRecord
 from tools.aegis_proof.review import IndependentCompletenessChecker, ReviewBundleAdapter, ReviewContractDiffer, ReviewDelta
 from tools.aegis_proof.spec import VerificationSpecValidator
+from tools.aegis_skillset.package import render_release_manifest
 
 SCENARIO_IDS = tuple(f"EC-S{i:02d}" for i in range(1, 18))
 MUTANT_IDS = tuple(f"EC-M{i:02d}" for i in range(1, 18))
+APPLICABILITY_IDS = ("EC-AP01", "EC-AP02")
+ROOT = Path(__file__).resolve().parents[2]
+HISTORICAL_VERSION = "0.2.0-beta.1"
+HISTORICAL_TAG = f"v{HISTORICAL_VERSION}"
+HISTORICAL_SOURCE = "3253abced7a17d66d8754fa84d7953408aae49d4"
 
 
 def load_required_module(name: str):
@@ -597,3 +606,159 @@ MUTANTS = {
 
 def run_mutant(mutant_id: str) -> bool:
     return bool(MUTANTS[mutant_id]())
+
+
+def _git_commit_for_ref(repository_root: Path, ref: str) -> str | None:
+    proc = subprocess.run(
+        ["git", "-C", str(repository_root), "rev-parse", f"{ref}^{{commit}}"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return None
+    return proc.stdout.strip()
+
+
+def _materialize_git_revision(repository_root: Path, revision: str, destination: Path) -> bool:
+    archive = subprocess.run(
+        ["git", "-C", str(repository_root), "archive", "--format=tar", revision],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if archive.returncode != 0:
+        return False
+    extract = subprocess.run(
+        ["tar", "-x", "-C", str(destination)],
+        input=archive.stdout,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    return extract.returncode == 0
+
+
+def historical_release_source_is_coherent(
+    repository_root: Path,
+    *,
+    tag: str,
+    expected_source: str,
+    version: str,
+) -> bool:
+    repository_root = Path(repository_root)
+    if _git_commit_for_ref(repository_root, f"refs/tags/{tag}") != expected_source:
+        return False
+    if _git_commit_for_ref(repository_root, expected_source) != expected_source:
+        return False
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            historical_root = Path(tmp) / "historical"
+            historical_root.mkdir()
+            if not _materialize_git_revision(repository_root, expected_source, historical_root):
+                return False
+            manifest_path = historical_root / f"skillset/releases/aegis-{version}.json"
+            if not manifest_path.is_file():
+                return False
+            committed = json.loads(manifest_path.read_text(encoding="utf-8"))
+            return committed == render_release_manifest(historical_root, version)
+    except (OSError, ValueError, json.JSONDecodeError, KeyError):
+        return False
+
+
+def _first_skill_payload_file(root: Path, manifest: dict[str, Any]) -> Path | None:
+    for entry in manifest.get("plugin", {}).get("skills", []):
+        skill_root = root / "skills" / entry.get("name", "")
+        for path in sorted(skill_root.rglob("*")):
+            if path.is_file():
+                return path
+    return None
+
+
+def _applicability_01() -> bool:
+    if not historical_release_source_is_coherent(
+        ROOT,
+        tag=HISTORICAL_TAG,
+        expected_source=HISTORICAL_SOURCE,
+        version=HISTORICAL_VERSION,
+    ):
+        return False
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            historical_root = base / "historical"
+            historical_root.mkdir()
+            if not _materialize_git_revision(ROOT, HISTORICAL_SOURCE, historical_root):
+                return False
+            manifest_path = historical_root / f"skillset/releases/aegis-{HISTORICAL_VERSION}.json"
+            historical_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+            candidate_root = base / "later-non-release-candidate"
+            (candidate_root / "skillset").mkdir(parents=True)
+            shutil.copy2(
+                historical_root / "skillset/distribution.json",
+                candidate_root / "skillset/distribution.json",
+            )
+            shutil.copytree(historical_root / "skills", candidate_root / "skills")
+            payload = _first_skill_payload_file(candidate_root, historical_manifest)
+            if payload is None:
+                return False
+            payload.write_bytes(payload.read_bytes() + b"\nEC_AP01_LATER_NON_RELEASE_DRIFT\n")
+
+            candidate_manifest = render_release_manifest(candidate_root, HISTORICAL_VERSION)
+            return candidate_manifest != historical_manifest and historical_release_source_is_coherent(
+                ROOT,
+                tag=HISTORICAL_TAG,
+                expected_source=HISTORICAL_SOURCE,
+                version=HISTORICAL_VERSION,
+            )
+    except (OSError, ValueError, json.JSONDecodeError, KeyError):
+        return False
+
+
+def _applicability_02() -> bool:
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            candidate_root = Path(tmp) / "release-applicable-candidate"
+            candidate_root.mkdir()
+            if not _materialize_git_revision(ROOT, HISTORICAL_SOURCE, candidate_root):
+                return False
+            manifest_path = candidate_root / f"skillset/releases/aegis-{HISTORICAL_VERSION}.json"
+            if not manifest_path.is_file():
+                return False
+            committed = json.loads(manifest_path.read_text(encoding="utf-8"))
+            payload = _first_skill_payload_file(candidate_root, committed)
+            if payload is None:
+                return False
+            payload.write_bytes(payload.read_bytes() + b"\nEC_AP02_RELEASE_MISMATCH\n")
+            if render_release_manifest(candidate_root, HISTORICAL_VERSION) == committed:
+                return False
+
+            check = subprocess.run(
+                [
+                    sys.executable,
+                    "scripts/build_aegis_distributions.py",
+                    "--version",
+                    HISTORICAL_VERSION,
+                    "--check",
+                ],
+                cwd=candidate_root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            return check.returncode != 0
+    except (OSError, ValueError, json.JSONDecodeError, KeyError):
+        return False
+
+
+APPLICABILITY = {
+    "EC-AP01": _applicability_01,
+    "EC-AP02": _applicability_02,
+}
+
+
+def run_applicability(applicability_id: str) -> bool:
+    return bool(APPLICABILITY[applicability_id]())
