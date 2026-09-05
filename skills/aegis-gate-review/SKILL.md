@@ -15,7 +15,7 @@ Own `P34` Gate Review, `P35` Defect Classification, and `P36` Fix / Reverificati
 - At `P36`, repair at the owning layer and rerun the failed evidence plus relevant regression evidence.
 - Before P36 returns to `CONTROL_REVIEW`, materialize the exact repair/reverification result and return its `materialized_ref`; if that cannot be independently resolved, classify the remaining gap as `EVIDENCE_GAP` instead of claiming closure.
 
-For Verification-bound results, P34 must independently resolve the exact package, result, EvidenceInputRefs, ProofEvaluation, provider run applicability/completion, and independent obligation completeness. When a new Gate-critical requirement appears, apply `ReviewContractDiffer`; `UNDECLARED` or `STRUCTURALLY_UNSATISFIABLE` requirements route to their owning earlier layer instead of becoming retroactive P32 repair work. ProofEvaluation, green CI, workflow summaries, handoff prose, and executor claims cannot issue or imply official Gate PASS.
+For Verification-bound results, P34 must independently resolve the exact package, result, EvidenceInputRefs, ProofEvaluation, provider run applicability/completion, and independent obligation completeness. When a new Gate-critical requirement appears, apply `ReviewContractDiffer`; `UNDECLARED` or `STRUCTURALLY_UNSATISFIABLE` requirements route to their owning earlier layer instead of becoming retroactive implementation repair work. ProofEvaluation, green CI, workflow summaries, handoff prose, and executor claims cannot issue or imply official Gate PASS.
 
 **Earlier untrusted layer:** if review discovers a spec or Authority defect upstream of implementation, stop downstream repair and hand back to `aegis`; do not silently rewrite Authority inside Gate review.
 
