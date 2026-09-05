@@ -59,9 +59,32 @@ def resolved_evidence(*, obligation_id="o1", pass_condition="pass", passed=True,
         "ref": "artifact://ev-1",
         "digest": digest_override or digest,
         "producer_class": "DETERMINISTIC_COLLECTOR",
+        "provider": "memory",
+        "native_id": "1",
         "reviewer_resolvable": reviewer_resolvable,
         "resolved_artifact": artifact,
     }
+
+
+class MemoryExactResolver:
+    def __init__(self, evidence_ref, artifact, *, reviewer_resolvable=True, resolved_digest=None):
+        self._response = {
+            "ref": evidence_ref["ref"],
+            "digest": resolved_digest or evidence_ref["digest"],
+            "provider": evidence_ref["provider"],
+            "native_id": evidence_ref["native_id"],
+            "reviewer_resolvable": reviewer_resolvable,
+            "content": artifact,
+        }
+
+    def resolve(self, ref):
+        return dict(self._response)
+
+
+def resolver_binding(**kwargs):
+    evidence_ref = dict(resolved_evidence(**kwargs))
+    artifact = evidence_ref.pop("resolved_artifact")
+    return evidence_ref, MemoryExactResolver(evidence_ref, artifact)
 
 
 class EvaluationReviewTests(unittest.TestCase):
@@ -103,30 +126,44 @@ class EvaluationReviewTests(unittest.TestCase):
         )
         self.assertEqual(result.proof_evaluation["results"][0]["status"], "UNSATISFIED")
 
-    def test_P34_B1_exact_resolved_evidence_applies_frozen_pass_condition(self):
+    def test_P34_B1_inline_resolved_artifact_without_exact_resolver_cannot_satisfy(self):
         result = ProofEvaluator().evaluate(
             verification_spec=verification_spec(),
             obligation_set={"obligations": [deterministic_obligation()]},
             evidence_input_refs=[resolved_evidence()],
             evaluator_version="0.1",
         )
+        self.assertEqual(result.proof_evaluation["results"][0]["status"], "UNSATISFIED")
+
+    def test_P34_B1_exact_resolver_applies_frozen_pass_condition(self):
+        evidence_ref, resolver = resolver_binding()
+        evaluator = ProofEvaluator(resolver=resolver)
+        result = evaluator.evaluate(
+            verification_spec=verification_spec(),
+            obligation_set={"obligations": [deterministic_obligation()]},
+            evidence_input_refs=[evidence_ref],
+            evaluator_version="0.1",
+        )
         self.assertEqual(result.proof_evaluation["results"][0]["status"], "SATISFIED")
 
     def test_P34_B1_digest_mismatch_fails_closed(self):
-        result = ProofEvaluator().evaluate(
+        evidence_ref, resolver = resolver_binding(digest_override="sha256:" + "f" * 64)
+        evaluator = ProofEvaluator(resolver=resolver)
+        result = evaluator.evaluate(
             verification_spec=verification_spec(),
             obligation_set={"obligations": [deterministic_obligation()]},
-            evidence_input_refs=[resolved_evidence(digest_override="sha256:" + "f" * 64)],
+            evidence_input_refs=[evidence_ref],
             evaluator_version="0.1",
         )
         self.assertEqual(result.proof_evaluation["results"][0]["status"], "UNSATISFIED")
 
     def test_P34_B1_unresolved_or_nonreviewable_evidence_fails_closed(self):
-        unresolved = resolved_evidence(reviewer_resolvable=False)
-        result = ProofEvaluator().evaluate(
+        evidence_ref, resolver = resolver_binding(reviewer_resolvable=False)
+        evaluator = ProofEvaluator(resolver=resolver)
+        result = evaluator.evaluate(
             verification_spec=verification_spec(),
             obligation_set={"obligations": [deterministic_obligation()]},
-            evidence_input_refs=[unresolved],
+            evidence_input_refs=[evidence_ref],
             evaluator_version="0.1",
         )
         self.assertEqual(result.proof_evaluation["results"][0]["status"], "UNSATISFIED")
@@ -157,11 +194,11 @@ class EvaluationReviewTests(unittest.TestCase):
             self._assert_undeclared_oracle(P32RepairMutant())
         self._assert_undeclared_oracle(ReviewContractDiffer())
 
-    def _assert_no_gate_output(self, evaluator):
+    def _assert_no_gate_output(self, evaluator, evidence_ref):
         result = evaluator.evaluate(
             verification_spec=verification_spec(),
             obligation_set={"obligations": [deterministic_obligation()]},
-            evidence_input_refs=[resolved_evidence()],
+            evidence_input_refs=[evidence_ref],
             evaluator_version="0.1",
         )
         serialized = repr(result.proof_evaluation) + repr(result.verification_summary)
@@ -177,9 +214,10 @@ class EvaluationReviewTests(unittest.TestCase):
                 mutated["gate_verdict"] = "PASS"
                 return EvaluationResult(mutated, result.verification_summary)
 
+        evidence_ref, resolver = resolver_binding()
         with self.assertRaises(AssertionError):
-            self._assert_no_gate_output(GatePassMutant())
-        self._assert_no_gate_output(ProofEvaluator())
+            self._assert_no_gate_output(GatePassMutant(resolver=resolver), evidence_ref)
+        self._assert_no_gate_output(ProofEvaluator(resolver=resolver), evidence_ref)
 
     def test_EC_M15_completeness_does_not_call_generator(self):
         import tools.aegis_proof.obligations as obligations
