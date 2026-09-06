@@ -1,0 +1,76 @@
+{
+  "distribution_contract_ref": "skillset/distribution.json",
+  "plugin": {
+    "id": "aegis",
+    "skills": [
+      {
+        "name": "aegis",
+        "tree_sha256": "deb74d1570bfffd500e958bcd647b8767e0f6e6b2a46aec0ac1459d3a14b5fee",
+        "zip_filename": "aegis.zip",
+        "zip_sha256": "741bb6d9a4446840917dd00be993ff3ff92f6e233cb8d5933240e4b1ae625373"
+      },
+      {
+        "name": "aegis-project-state",
+        "tree_sha256": "ce58a9a856f90efeb45008fcb2a56e4c0986b0bbbad0e347b5d4673e1aa6fdbd",
+        "zip_filename": "aegis-project-state.zip",
+        "zip_sha256": "bb96a72677c003b356d0c2527c617e635adc6b340c7772b2bb87ef1cf33da9b8"
+      },
+      {
+        "name": "aegis-discovery",
+        "tree_sha256": "3fab29f91e6e79cc94add94774e422f106a6407cde24af79bf1f090c6de1b92c",
+        "zip_filename": "aegis-discovery.zip",
+        "zip_sha256": "fe88dc6973c91cc12707e55e24bdbb266f61dcdc8675b3e16a2b6b01b406570c"
+      },
+      {
+        "name": "aegis-modeling",
+        "tree_sha256": "29462a3a3fca71977220e31e793844ab17d8615fab1e4ab886be1783b4a6a2a2",
+        "zip_filename": "aegis-modeling.zip",
+        "zip_sha256": "c8b3eae87e1973f4559d0194be9711e58dd056bffc329890cfc96b8a49e81ff8"
+      },
+      {
+        "name": "aegis-architecture",
+        "tree_sha256": "700455ab6aea62c8a9617cf62713b5ef9ccf61a1afc55d51221df8615bb13c47",
+        "zip_filename": "aegis-architecture.zip",
+        "zip_sha256": "63f43b33067234fd8199e7a342af5d8d7be02f9c5e1bd3f9aa77298041899aac"
+      },
+      {
+        "name": "aegis-verification",
+        "tree_sha256": "73f0cbf6410b20c8fe97373c346fdd671cf5069c664dba4b27d2933b6e3b9c32",
+        "zip_filename": "aegis-verification.zip",
+        "zip_sha256": "a707cf66e75cdf307be4f6bb706fc1e29d514e2bec46e631dd8021dac717744a"
+      },
+      {
+        "name": "aegis-governance",
+        "tree_sha256": "4683925b6fb92ed1adea0359aced089e6469fb15ec91f867d5a8ba2c31446275",
+        "zip_filename": "aegis-governance.zip",
+        "zip_sha256": "7ecc0f090f9579e53f55b08a15cd67189e822d574f9f0fe768a6eba2605bac54"
+      },
+      {
+        "name": "aegis-implementation",
+        "tree_sha256": "b41ec2e3c6e445eacfcaa7a694060baf37053a31891fc5c7e7e5cddeb3603685",
+        "zip_filename": "aegis-implementation.zip",
+        "zip_sha256": "d256eb0dcb100c15ef5cff79491d90e9387512c6fa08c166b250209a05905348"
+      },
+      {
+        "name": "aegis-gate-review",
+        "tree_sha256": "2c53ad41eda0d2ae8d540f62804c1bff127718b5530dd771a591c1d86cfec172",
+        "zip_filename": "aegis-gate-review.zip",
+        "zip_sha256": "1c007cc49187f3b2158d86d83ade47a76eae711855596ca764574d6686ebac84"
+      }
+    ]
+  },
+  "product_id": "aegis",
+  "release_version": "0.2.0-beta.2",
+  "schema_version": "0.1",
+  "standalone": {
+    "id": "aegis-standalone",
+    "skills": [
+      {
+        "name": "aegis",
+        "tree_sha256": "deb74d1570bfffd500e958bcd647b8767e0f6e6b2a46aec0ac1459d3a14b5fee",
+        "zip_filename": "aegis.zip",
+        "zip_sha256": "741bb6d9a4446840917dd00be993ff3ff92f6e233cb8d5933240e4b1ae625373"
+      }
+    ]
+  }
+}

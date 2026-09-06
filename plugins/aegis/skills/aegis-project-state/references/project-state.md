@@ -1,6 +1,59 @@
-# Project State Manifest v0.4
+# Project State Manifest v0.6
 
-Use this reference when a project contains `.aegis/` or when the user asks to persist, inspect, validate, supersede, resume, or integrate machine-readable project state. Project State tooling is version-aware: apply v0.4 semantics only to v0.4 manifests and preserve v0.3 semantics for v0.3 projects.
+v0.6 uses occurrence-time immutable `gate_decision_binding` (`bound` or
+`absent`). Missing, failed, and unresolved evidence are unknown and never
+imply `Absent`; later PASS decisions do not rewrite historical bindings. O1-O6
+are semantic vocabulary, not runtime APIs.
+
+Use this reference when a project contains `.aegis/` or when the user asks to persist, inspect, validate, supersede, resume, or integrate machine-readable project state. Project State tooling is version-aware: v0.3, v0.4, v0.5, and v0.6 are distinct compatibility contracts. Apply each version's semantics to that version only; do not reinterpret v0.3/v0.4/v0.5 history as v0.6.
+
+## Current operational contract — v0.6
+
+The current model keeps Gate Contract, Gate Decision, Current Gate Decision,
+and Integration Gate Decision Binding distinct. Integration status and binding
+are constrained as follows: `awaiting_integration` requires `Bound` to a current
+PASS/PASS_WITH_FINDINGS decision; `integrated` permits `Bound(PASS)`,
+`Bound(BLOCKED_*)`, or `Absent`; `closed_unmerged` requires `Bound`.
+
+Conformance is projected independently: `Bound(PASS)` is conforming,
+`Bound(BLOCKED_*)` and `Absent` are nonconforming. `Absent` requires an exact
+occurrence identity, an occurrence basis, an accepted absence basis, and no
+contradictory applicable Gate evidence. Missing, failed, unresolved, stale,
+or read-failure data never authorizes Absent.
+
+After integration, `id`, `kind`, `ref`, `target_ref`, `integrated_revision`,
+and `gate_decision_binding` are immutable. `evidence_ids` is append-only for
+legal O6 corroboration. Later PASS decisions never rewrite historical
+`Bound(BLOCKED)` or `Absent`. v0.5 `gate_decision_id` migrates deterministically
+to v0.6 `Bound` with zero inferred Absent. O1–O6 are semantic vocabulary, not
+runtime APIs.
+
+## Compatibility and v0.6 vocabulary
+
+v0.5 Gate Contract and Gate Decision lineage remain immutable in v0.6. A
+v0.5→v0.6 migration changes the schema version and adds occurrence-time
+binding; it does not infer historical `Absent`. A v0.6→v0.6 transition keeps
+Gate Contract, Gate Decision, Integration occurrence identity, and
+`gate_decision_binding` immutable while allowing only append-only history.
+
+`Bound` and `Absent` are projection vocabulary, not runtime APIs (O1–O6 are
+also semantic vocabulary, never runtime APIs). `Bound(PASS)`,
+`Bound(BLOCKED)`, and `Absent` remain distinct projections. Missing, failed,
+unresolved, stale, unavailable, empty, or lookup-error evidence is not
+`Absent`; only an explicit accepted absence basis may produce `Absent`.
+
+Binding is recorded at occurrence time. A later PASS may append a new Gate
+Decision but cannot rewrite a historical `Bound(BLOCKED)` or `Absent` binding.
+All integrated identity fields and corroborating occurrence evidence remain
+immutable; deterministic replay and conflicting historical identity must fail
+closed. Read failure is an unknown/error state, never an absence claim.
+
+## v0.5 compatibility — Gate Decision lineage
+
+v0.5 separates immutable Gate Contracts from append-only Gate Decisions. Each
+Integration records occurrence-time `gate_decision_id`; later decisions alter
+current actionability only and never rewrite historical binding. v0.6 preserves
+this lineage through its immutable `bound` binding variant.
 
 ## Canonical layout
 
@@ -33,7 +86,7 @@ Read authored manifests
 
 If `tools.aegis_state` exists, prefer its deterministic `validate`, `recompute`, and `check` commands over conversational reimplementation.
 
-## Core v0.4 semantic split
+## Core semantic split (v0.3 / v0.4 / v0.5 / v0.6)
 
 Keep these dimensions independent:
 
@@ -96,7 +149,7 @@ Current PASS/PASS_WITH_FINDINGS must cite available Gate evidence. Every `integr
 
 Do not reuse repository integration evidence as Gate acceptance evidence unless the Gate contract explicitly defines it as such.
 
-## Repository Integration lifecycle
+## v0.4 compatibility — Repository Integration lifecycle
 
 Authored statuses remain:
 
@@ -141,7 +194,7 @@ Gate blocker            = preserved
 
 This records a completed candidate that did not enter the target baseline. It is historical for Integration applicability and has no integration-occurrence conformance classification.
 
-## Derived Gate conformance
+## v0.4 compatibility — Derived Gate conformance
 
 For v0.4 `integrated` occurrences:
 
@@ -173,12 +226,15 @@ A nonconforming integration can be `current` when the merged revision is in the 
 
 Rules for mixed/historical/stale Authority and Gate validity remain the same as v0.3.
 
-## Generated state v0.4
+## Generated state and compatibility projections
 
 `state.json` adds:
 
 - `integration_conformance[]`;
 - `nonconforming_integrations[]`.
+
+v0.5/v0.6 additionally expose current and blocking Gate Decisions while
+preserving per-occurrence binding distinctions; v0.3 retains its legacy shape.
 
 It continues to include manifest digest, active stage, earliest untrusted layer, findings, Authority/Gate validity projections, blocking Gates, awaiting Integrations, Integration applicability, recommended stage, and handoff.
 
@@ -207,5 +263,25 @@ When all authored manifests declare `schema_version = "0.3"`, preserve v0.3 sema
 Reject mixed schema versions within one Project State manifest set.
 
 ## Safety boundary
+
+## P20 reviewer evidence map (V1–V14)
+
+The executable evidence for the v0.6 contract is maintained in
+`tests/project_state/test_v06_binding.py` and deterministic CLI fixtures.
+V1–V14 cover binding/matrix legality, non-Absent lookup failures, Bound(PASS)
+and Bound(BLOCKED) projections, immutable identity with append-only O6
+evidence, later-PASS non-retroactivity, deterministic migration, O1–O6
+semantic vocabulary, forbidden runtime surfaces, external-result
+non-authorization, PR #82 positive/negative variants, replay/conflict
+fail-closed behavior, stale/read/uncertain-write safety, and exact-ref versus
+full-rehydration equivalence. Each category resolves to executable or durable
+review evidence; none is a runtime API.
+
+## Version-specific contract boundary
+
+v0.3 direct Gate references, v0.4 immutable occurrence/conformance, v0.5
+`gate_decision_id` lineage, and v0.6 immutable occurrence-time
+`gate_decision_binding` (`bound` or accepted `absent`) are distinct contracts.
+The v0.5→v0.6 migration is deterministic and infers zero Absent bindings.
 
 The manifest tells Aegis where to look and what project-control state is recorded; it never outranks contradictory Current Authority or repository evidence. If GitHub/repository evidence proves an occurrence that the authored state cannot represent, route to Authority review rather than falsifying repository truth.

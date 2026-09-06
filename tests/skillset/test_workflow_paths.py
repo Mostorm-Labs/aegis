@@ -75,6 +75,7 @@ class SkillsetWorkflowPathTests(unittest.TestCase):
                 self.assertIn(needle, workflow)
         self.assertNotIn('name: aegis-candidate-plugin-parity-${{ github.sha }}', workflow)
         self.assertNotIn('aegis-skill-installation-kit-0.1.0-beta.3-candidate', workflow)
+        self.assertIn('0.2.0-beta.2', workflow)
 
 
 if __name__ == '__main__':
