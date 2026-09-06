@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mostorm-labs.github.io/aegis/schemas/project-state/v0.6/state.schema.json",
+  "title": "Aegis Generated Project State v0.6",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "generator_version", "manifest_digest", "active_stage", "earliest_untrusted_layer", "blocking_findings", "stale_authorities", "needs_review_authorities", "stale_gates", "needs_review_gates", "historical_gates", "blocking_gates", "current_gate_decisions", "blocking_gate_decisions", "awaiting_integrations", "integration_applicability", "integration_conformance", "nonconforming_integrations", "recommended_next_stage", "recommended_handoff"],
+  "properties": {
+    "schema_version": {"const": "0.6"},
+    "generator_version": {"const": "0.6"},
+    "manifest_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "active_stage": {"type": ["string", "null"]},
+    "earliest_untrusted_layer": {"type": ["string", "null"]},
+    "blocking_findings": {"type": "array", "items": {"type": "string"}},
+    "stale_authorities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "needs_review_authorities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "stale_gates": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "needs_review_gates": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "historical_gates": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "blocking_gates": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "current_gate_decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["gate_id", "decision_id", "verdict"],
+        "properties": {
+          "gate_id": {"type": "string", "minLength": 1},
+          "decision_id": {"type": "string", "minLength": 1},
+          "verdict": {"enum": ["PASS", "PASS_WITH_FINDINGS", "BLOCKED_IMPLEMENTATION", "BLOCKED_AUTHORITY", "BLOCKED_EVIDENCE", "BLOCKED_ENVIRONMENT"]}
+        }
+      }
+    },
+    "blocking_gate_decisions": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "awaiting_integrations": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "integration_applicability": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["integration_id", "applicability"],
+        "properties": {
+          "integration_id": {"type": "string", "minLength": 1},
+          "applicability": {"enum": ["current", "needs_review", "stale", "historical"]}
+        }
+      }
+    },
+    "integration_conformance": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["integration_id", "gate_decision_id", "conformance"],
+        "properties": {
+          "integration_id": {"type": "string", "minLength": 1},
+          "gate_decision_id": {"type": "string", "minLength": 1},
+          "conformance": {"enum": ["conforming", "nonconforming"]}
+        }
+      }
+    },
+    "nonconforming_integrations": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "recommended_next_stage": {"type": ["string", "null"]},
+    "recommended_handoff": {"type": ["string", "null"]}
+  }
+}

@@ -1,0 +1,264 @@
+{
+  "integrations": [
+    {
+      "evidence_ids": [
+        "ev-pr1-merged"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-eval-framework-pr1::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr1",
+      "integrated_revision": "9cb251ab8f245a57b51c5e0161f86c97dfde306d",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/1",
+      "status": "integrated",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr2-merged"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-eval-tooling-pr2::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr2",
+      "integrated_revision": "0d810e20d268199a31fd70514efc5a3316c71785",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/2",
+      "status": "integrated",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr3-merged"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-openai-provider-tooling-pr3::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr3",
+      "integrated_revision": "d55686123bd22254c196f8232c8b115f469bde1e",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/3",
+      "status": "integrated",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr4-merged"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-project-state-pr4::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr4",
+      "integrated_revision": "555bac21d485fc4530680c61719fc36831021b0d",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/4",
+      "status": "integrated",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr6-closed"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-project-state-v02-pr7::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr6",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/6",
+      "status": "closed_unmerged",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr7-merged"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-project-state-v02-pr7::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr7",
+      "integrated_revision": "8ca7b49d40a17e8cb7ffba86632da3aeae5e911c",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/7",
+      "status": "integrated",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr8-merged"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-project-state-v03-pr8::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr8",
+      "integrated_revision": "be385b3549900ba5bc34170dbfa8b4e583631a1d",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/8",
+      "status": "integrated",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr9-merged"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-skill-decomposition-v02-pr9::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr9",
+      "integrated_revision": "a0c6b0103b119f517c7adf9ec4a90b5963e5e1e3",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/9",
+      "status": "integrated",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr11-merged"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-project-state-v04-pr11::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr11",
+      "integrated_revision": "5fde161ccf71f283e727a238c914506edf79e258",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/11",
+      "status": "integrated",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr10-merged"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-execution-surface-v01-pr10::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr10",
+      "integrated_revision": "3d309d129aa285371e7438c294c2b01e0686752a",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/10",
+      "status": "integrated",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr14-merged"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-project-state-v05-pr14::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr14",
+      "integrated_revision": "78356daa0eff73233ce9da648473f83b3e32a822",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/14",
+      "status": "integrated",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr16-merged"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-execution-surface-v02-pr16::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr16",
+      "integrated_revision": "0d9092736503822207163d20a8ea3af86940f09e",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/16",
+      "status": "integrated",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr13-merged"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-plugin-distribution-v01-pr13::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr13",
+      "integrated_revision": "7d171d454dc3d2dbebc611e657a21a5343169227",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/13",
+      "status": "integrated",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr51-merged"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-control-plane-v02-pr51::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr51",
+      "integrated_revision": "700d600faf2e1dce98d9f2c24e2cf8b4c534d8c0",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/51",
+      "status": "integrated",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr62-merged",
+        "ev-pr62-post-merge-project-state-ci-33853101270",
+        "ev-pr62-post-merge-skillset-ci-33853101249"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-repository-identity-pr62::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr62",
+      "integrated_revision": "7e9771b5914b40654b9e0015001d1dd21cdabb53",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/62",
+      "status": "integrated",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr66-merged",
+        "ev-pr66-post-merge-skillset-ci-33863011545"
+      ],
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-control-plane-v02-release-pr66::decision::0001",
+        "kind": "bound"
+      },
+      "id": "int-pr66",
+      "integrated_revision": "3253abced7a17d66d8754fa84d7953408aae49d4",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/66",
+      "status": "integrated",
+      "target_ref": "main"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr82-occurrence-basis",
+        "ev-pr82-non-authorization-basis",
+        "ev-pr82-accepted-absence-basis"
+      ],
+      "gate_decision_binding": {
+        "kind": "absent",
+        "reason": "no_applicable_integration_gate_decision"
+      },
+      "id": "int-pr82",
+      "integrated_revision": "3a2607220cd875dc66857b334dcfbd2c763e7c7d",
+      "kind": "pull_request",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/82",
+      "status": "integrated",
+      "target_ref": "main"
+    }
+  ],
+  "schema_version": "0.6"
+}

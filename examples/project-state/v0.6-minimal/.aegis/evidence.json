@@ -1,0 +1,755 @@
+{
+  "evidence": [
+    {
+      "id": "ev-pr82-occurrence-basis",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/82",
+      "status": "available",
+      "subject_ids": ["int-pr82"],
+      "type": "occurrence_basis"
+    },
+    {
+      "id": "ev-pr82-non-authorization-basis",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/82#pullrequestreview-5122113780",
+      "status": "available",
+      "subject_ids": ["int-pr82"],
+      "type": "non_authorization_basis"
+    },
+    {
+      "id": "ev-pr82-accepted-absence-basis",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/82#issuecomment-5553423707",
+      "status": "available",
+      "subject_ids": ["int-pr82"],
+      "type": "accepted_absence_basis"
+    },
+    {
+      "id": "ev-pr1-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/1",
+      "status": "available",
+      "subject_ids": [
+        "gate-eval-framework-pr1"
+      ],
+      "type": "repository_integration"
+    },
+    {
+      "id": "ev-pr1-ci",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/1",
+      "status": "available",
+      "subject_ids": [
+        "gate-eval-framework-pr1"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr2-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/2",
+      "status": "available",
+      "subject_ids": [
+        "gate-eval-tooling-pr2"
+      ],
+      "type": "repository_integration"
+    },
+    {
+      "id": "ev-pr2-ci",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/2",
+      "status": "available",
+      "subject_ids": [
+        "gate-eval-tooling-pr2"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr3-ci",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/3",
+      "status": "available",
+      "subject_ids": [
+        "gate-openai-provider-tooling-pr3"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr3-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/3",
+      "status": "available",
+      "subject_ids": [
+        "gate-openai-provider-tooling-pr3"
+      ],
+      "type": "repository_integration"
+    },
+    {
+      "id": "ev-openai-env-block",
+      "ref": "06-02://2026-08-26/missing-OPENAI_API_KEY",
+      "status": "available",
+      "subject_ids": [
+        "gate-openai-real-baseline"
+      ],
+      "type": "environment_probe"
+    },
+    {
+      "id": "ev-pr4-ci",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/32982765747",
+      "status": "available",
+      "subject_ids": [
+        "gate-project-state-pr4"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr4-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/4",
+      "status": "available",
+      "subject_ids": [
+        "gate-project-state-pr4"
+      ],
+      "type": "repository_integration"
+    },
+    {
+      "id": "ev-pr6-closed",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/6",
+      "status": "available",
+      "subject_ids": [
+        "gate-project-state-v02-pr7"
+      ],
+      "type": "integration_state"
+    },
+    {
+      "id": "ev-pr7-p34",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/7",
+      "status": "available",
+      "subject_ids": [
+        "gate-project-state-v02-pr7"
+      ],
+      "type": "gate_review"
+    },
+    {
+      "id": "ev-pr7-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/7",
+      "status": "available",
+      "subject_ids": [
+        "gate-project-state-v02-pr7"
+      ],
+      "type": "repository_integration"
+    },
+    {
+      "id": "ev-pr8-p34",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/8",
+      "status": "available",
+      "subject_ids": [
+        "gate-project-state-v03-pr8"
+      ],
+      "type": "gate_review"
+    },
+    {
+      "id": "ev-pr8-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/8",
+      "status": "available",
+      "subject_ids": [
+        "gate-project-state-v03-pr8"
+      ],
+      "type": "repository_integration"
+    },
+    {
+      "id": "ev-pr9-task6-preflight",
+      "ref": "skillset/dogfood/evidence/task6-platform-preflight-v0.2.json",
+      "status": "available",
+      "subject_ids": [
+        "gate-skill-decomposition-v02-pr9::decision::0001"
+      ],
+      "type": "environment_probe"
+    },
+    {
+      "id": "ev-pr9-task6-rerun-state",
+      "ref": "skillset/dogfood/installed-platform-rerun-v0.2.json",
+      "status": "available",
+      "subject_ids": [
+        "gate-skill-decomposition-v02-pr9::decision::0001"
+      ],
+      "type": "behavioral_gate_state"
+    },
+    {
+      "id": "ev-pr9-f09-05",
+      "ref": "skillset/dogfood/evidence/f09-05-project-state-persistence-v0.2.json",
+      "status": "available",
+      "subject_ids": [
+        "gate-skill-decomposition-v02-pr9::decision::0001"
+      ],
+      "type": "defect_classification"
+    },
+    {
+      "id": "ev-pr9-task6-ci-33053118456",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33053118456",
+      "status": "available",
+      "subject_ids": [
+        "gate-skill-decomposition-v02-pr9::decision::0001"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr9-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/commit/a0c6b0103b119f517c7adf9ec4a90b5963e5e1e3",
+      "status": "available",
+      "subject_ids": [
+        "int-pr9"
+      ],
+      "type": "repository_integration"
+    },
+    {
+      "id": "ev-f09-06-authority",
+      "ref": "docs/project-state-manifest-v0.4.md",
+      "status": "available",
+      "subject_ids": [
+        "gate-project-state-v04-pr11::decision::0001"
+      ],
+      "type": "authority_review"
+    },
+    {
+      "id": "ev-pr11-red-ci-33162821606",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33162821606",
+      "status": "available",
+      "subject_ids": [
+        "gate-project-state-v04-pr11::decision::0001"
+      ],
+      "type": "automated_test_red"
+    },
+    {
+      "id": "ev-pr11-project-state-ci-33163536074",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33163536074",
+      "status": "available",
+      "subject_ids": [
+        "gate-project-state-v04-pr11::decision::0001"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr11-skillset-ci-33163536133",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33163536133",
+      "status": "available",
+      "subject_ids": [
+        "gate-project-state-v04-pr11::decision::0001"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr11-p34",
+      "ref": "docs/project-state-manifest-v0.4.md#p34-evidence--pass",
+      "status": "available",
+      "subject_ids": [
+        "gate-project-state-v04-pr11::decision::0001"
+      ],
+      "type": "gate_review"
+    },
+    {
+      "id": "ev-pr11-post-p34-project-state-ci-33163765563",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33163765563",
+      "status": "available",
+      "subject_ids": [
+        "aegis-project-state-v0.4"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr11-post-p34-skillset-ci-33163765578",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33163765578",
+      "status": "available",
+      "subject_ids": [
+        "aegis-project-state-v0.4"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr11-p23",
+      "ref": "docs/project-state-manifest-v0.4.md#p23-supersession",
+      "status": "available",
+      "subject_ids": [
+        "aegis-project-state-v0.4"
+      ],
+      "type": "authority_supersession"
+    },
+    {
+      "id": "ev-pr11-awaiting-integration",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/11",
+      "status": "available",
+      "subject_ids": [
+        "int-pr11"
+      ],
+      "type": "integration_state"
+    },
+    {
+      "id": "ev-pr11-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/commit/5fde161ccf71f283e727a238c914506edf79e258",
+      "status": "available",
+      "subject_ids": [
+        "int-pr11"
+      ],
+      "type": "repository_integration"
+    },
+    {
+      "id": "ev-pr10-es-bd-001",
+      "ref": "skillset/dogfood/execution-surface-behavioral-v0.1.json",
+      "status": "available",
+      "subject_ids": [
+        "gate-execution-surface-v01-pr10::decision::0001"
+      ],
+      "type": "behavioral_gate_state"
+    },
+    {
+      "id": "ev-pr10-project-state-ci-33184095219",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33184095219",
+      "status": "available",
+      "subject_ids": [
+        "gate-execution-surface-v01-pr10::decision::0001"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr10-skillset-ci-33184095315",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33184095315",
+      "status": "available",
+      "subject_ids": [
+        "gate-execution-surface-v01-pr10::decision::0001"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr10-p34",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/10#issuecomment-5454287256",
+      "status": "available",
+      "subject_ids": [
+        "gate-execution-surface-v01-pr10::decision::0001"
+      ],
+      "type": "gate_review"
+    },
+    {
+      "id": "ev-pr10-awaiting-integration",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/10",
+      "status": "available",
+      "subject_ids": [
+        "int-pr10"
+      ],
+      "type": "integration_state"
+    },
+    {
+      "id": "ev-pr10-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/commit/3d309d129aa285371e7438c294c2b01e0686752a",
+      "status": "available",
+      "subject_ids": [
+        "int-pr10"
+      ],
+      "type": "repository_integration"
+    },
+    {
+      "id": "ev-f09-07-authority",
+      "ref": "docs/project-state-gate-decision-lineage-v0.5.md",
+      "status": "available",
+      "subject_ids": [
+        "gate-project-state-v05-pr14::decision::0001"
+      ],
+      "type": "authority_review"
+    },
+    {
+      "id": "ev-pr14-project-state-ci-33236194931",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33236194931",
+      "status": "available",
+      "subject_ids": [
+        "gate-project-state-v05-pr14::decision::0001"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr14-p34",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/14#issuecomment-5460576081",
+      "status": "available",
+      "subject_ids": [
+        "gate-project-state-v05-pr14::decision::0001"
+      ],
+      "type": "gate_review"
+    },
+    {
+      "id": "ev-pr9-task6-p34-accepted",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/9#issuecomment-5459909250",
+      "status": "available",
+      "subject_ids": [
+        "gate-skill-decomposition-v02-pr9::decision::0002"
+      ],
+      "type": "gate_review"
+    },
+    {
+      "id": "ev-pr14-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/commit/78356daa0eff73233ce9da648473f83b3e32a822",
+      "status": "available",
+      "subject_ids": [
+        "int-pr14"
+      ],
+      "type": "repository_integration"
+    },
+    {
+      "id": "ev-pr16-execution-position-dogfood",
+      "ref": "skillset/dogfood/execution-anchor-resume-cursor-v0.2.json",
+      "status": "available",
+      "subject_ids": [
+        "gate-execution-surface-v02-pr16::decision::0001"
+      ],
+      "type": "behavioral_gate_state"
+    },
+    {
+      "id": "ev-pr16-project-state-ci-33248782773",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33248782773",
+      "status": "available",
+      "subject_ids": [
+        "gate-execution-surface-v02-pr16::decision::0001"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr16-skillset-ci-33248782758",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33248782758",
+      "status": "available",
+      "subject_ids": [
+        "gate-execution-surface-v02-pr16::decision::0001"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr16-p34",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/16#pullrequestreview-5057809872",
+      "status": "available",
+      "subject_ids": [
+        "gate-execution-surface-v02-pr16::decision::0001"
+      ],
+      "type": "gate_review"
+    },
+    {
+      "id": "ev-pr16-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/commit/0d9092736503822207163d20a8ea3af86940f09e",
+      "status": "available",
+      "subject_ids": [
+        "int-pr16"
+      ],
+      "type": "repository_integration"
+    },
+    {
+      "id": "ev-pr13-p34",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/13#pullrequestreview-5059882131",
+      "status": "available",
+      "subject_ids": [
+        "gate-plugin-distribution-v01-pr13::decision::0001"
+      ],
+      "type": "gate_review"
+    },
+    {
+      "id": "ev-pr13-post-merge-project-state-ci-33291923091",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33291923091",
+      "status": "available",
+      "subject_ids": [
+        "gate-plugin-distribution-v01-pr13::decision::0001"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr13-post-merge-skillset-ci-33291923094",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33291923094",
+      "status": "available",
+      "subject_ids": [
+        "gate-plugin-distribution-v01-pr13::decision::0001"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr13-p24-release-ci-33291740828",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33291740828",
+      "status": "available",
+      "subject_ids": [
+        "aegis-plugin-distribution-v0.1"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr13-p24-beta2",
+      "ref": "https://github.com/Mostorm-Labs/aegis/releases/tag/v0.1.0-beta.2",
+      "status": "available",
+      "subject_ids": [
+        "aegis-plugin-distribution-v0.1"
+      ],
+      "type": "release_publication"
+    },
+    {
+      "id": "ev-pr13-p23",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/13#issuecomment-5466649746",
+      "status": "available",
+      "subject_ids": [
+        "aegis-plugin-distribution-v0.1"
+      ],
+      "type": "authority_promotion"
+    },
+    {
+      "id": "ev-pr13-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/commit/7d171d454dc3d2dbebc611e657a21a5343169227",
+      "status": "available",
+      "subject_ids": [
+        "int-pr13"
+      ],
+      "type": "repository_integration"
+    },
+    {
+      "id": "ev-cp-v02-product-p23",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/47#pullrequestreview-5097214759",
+      "status": "available",
+      "subject_ids": [
+        "aegis-control-plane-product-v0.2"
+      ],
+      "type": "authority_supersession"
+    },
+    {
+      "id": "ev-cp-v02-verification-p23",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/53#pullrequestreview-5108468635",
+      "status": "available",
+      "subject_ids": [
+        "aegis-control-plane-verification-v0.2"
+      ],
+      "type": "authority_supersession"
+    },
+    {
+      "id": "ev-pr51-qualification-33740273612",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33740273612",
+      "status": "available",
+      "subject_ids": [
+        "gate-control-plane-v02-pr51::decision::0001"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr51-platform-final",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/51#issuecomment-5529332620",
+      "status": "available",
+      "subject_ids": [
+        "gate-control-plane-v02-pr51::decision::0001"
+      ],
+      "type": "behavioral_gate_state"
+    },
+    {
+      "id": "ev-pr51-p34",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/51#pullrequestreview-5108520468",
+      "status": "available",
+      "subject_ids": [
+        "gate-control-plane-v02-pr51::decision::0001"
+      ],
+      "type": "gate_review"
+    },
+    {
+      "id": "ev-pr51-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/commit/700d600faf2e1dce98d9f2c24e2cf8b4c534d8c0",
+      "status": "available",
+      "subject_ids": [
+        "int-pr51"
+      ],
+      "type": "repository_integration"
+    },
+    {
+      "id": "ev-pr53-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/commit/6b9119981e2af5f74fd1e7443e2cf17e5ab865ea",
+      "status": "available",
+      "subject_ids": [
+        "aegis-control-plane-product-v0.2",
+        "aegis-control-plane-verification-v0.2"
+      ],
+      "type": "authority_integration"
+    },
+    {
+      "id": "ev-cp-v02-final-main",
+      "ref": "https://github.com/Mostorm-Labs/aegis/commit/6b9119981e2af5f74fd1e7443e2cf17e5ab865ea",
+      "status": "available",
+      "subject_ids": [
+        "aegis-control-plane-product-v0.2",
+        "aegis-control-plane-verification-v0.2",
+        "int-pr51"
+      ],
+      "type": "repository_baseline"
+    },
+    {
+      "id": "ev-ri-core-p23",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/58#pullrequestreview-5109528560",
+      "status": "available",
+      "subject_ids": [
+        "aegis-repository-identity-platform-v0.2",
+        "aegis-repository-identity-verification-v0.2"
+      ],
+      "type": "authority_supersession"
+    },
+    {
+      "id": "ev-ri-materialization-p23",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/59#pullrequestreview-5109657871",
+      "status": "available",
+      "subject_ids": [
+        "aegis-repository-identity-materialization-v0.2"
+      ],
+      "type": "authority_supersession"
+    },
+    {
+      "id": "ev-pr62-exact-head-ci-33848037699",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33848037699",
+      "status": "available",
+      "subject_ids": [
+        "gate-repository-identity-pr62::decision::0001"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr62-platform-final",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/62#issuecomment-5537624918",
+      "status": "available",
+      "subject_ids": [
+        "gate-repository-identity-pr62::decision::0001"
+      ],
+      "type": "behavioral_gate_state"
+    },
+    {
+      "id": "ev-pr62-p34",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/62#pullrequestreview-5110723189",
+      "status": "available",
+      "subject_ids": [
+        "gate-repository-identity-pr62::decision::0001"
+      ],
+      "type": "gate_review"
+    },
+    {
+      "id": "ev-pr62-post-merge-project-state-ci-33853101270",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33853101270",
+      "status": "available",
+      "subject_ids": [
+        "int-pr62"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr62-post-merge-skillset-ci-33853101249",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33853101249",
+      "status": "available",
+      "subject_ids": [
+        "int-pr62"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr62-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/commit/7e9771b5914b40654b9e0015001d1dd21cdabb53",
+      "status": "available",
+      "subject_ids": [
+        "int-pr62"
+      ],
+      "type": "repository_integration"
+    },
+    {
+      "id": "ev-ri-authority-integration",
+      "ref": "https://github.com/Mostorm-Labs/aegis/commit/7e9771b5914b40654b9e0015001d1dd21cdabb53",
+      "status": "available",
+      "subject_ids": [
+        "aegis-repository-identity-platform-v0.2",
+        "aegis-repository-identity-verification-v0.2",
+        "aegis-repository-identity-materialization-v0.2"
+      ],
+      "type": "authority_integration"
+    },
+    {
+      "id": "ev-ri-final-main",
+      "ref": "https://github.com/Mostorm-Labs/aegis/commit/7e9771b5914b40654b9e0015001d1dd21cdabb53",
+      "status": "available",
+      "subject_ids": [
+        "aegis-repository-identity-platform-v0.2",
+        "aegis-repository-identity-verification-v0.2",
+        "aegis-repository-identity-materialization-v0.2",
+        "int-pr62"
+      ],
+      "type": "repository_baseline"
+    },
+    {
+      "id": "ev-pr66-p33-closure",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/66#issuecomment-5539075977",
+      "status": "available",
+      "subject_ids": [
+        "gate-control-plane-v02-release-pr66::decision::0001"
+      ],
+      "type": "implementation_result"
+    },
+    {
+      "id": "ev-pr66-p24-review",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/66#pullrequestreview-5111809517",
+      "status": "available",
+      "subject_ids": [
+        "gate-control-plane-v02-release-pr66::decision::0001"
+      ],
+      "type": "gate_review"
+    },
+    {
+      "id": "ev-pr66-final-skillset-ci-33862634749",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33862634749",
+      "status": "available",
+      "subject_ids": [
+        "gate-control-plane-v02-release-pr66::decision::0001"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr66-final-control-plane-ci-33862634762",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33862634762",
+      "status": "available",
+      "subject_ids": [
+        "gate-control-plane-v02-release-pr66::decision::0001"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-pr66-merged",
+      "ref": "https://github.com/Mostorm-Labs/aegis/commit/3253abced7a17d66d8754fa84d7953408aae49d4",
+      "status": "available",
+      "subject_ids": [
+        "int-pr66"
+      ],
+      "type": "repository_integration"
+    },
+    {
+      "id": "ev-pr66-post-merge-skillset-ci-33863011545",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33863011545",
+      "status": "available",
+      "subject_ids": [
+        "int-pr66"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-beta1-release-workflow-33863424762",
+      "ref": "https://github.com/Mostorm-Labs/aegis/actions/runs/33863424762",
+      "status": "available",
+      "subject_ids": [
+        "aegis-control-plane-product-v0.2",
+        "aegis-control-plane-verification-v0.2",
+        "aegis-plugin-distribution-v0.1",
+        "int-pr66"
+      ],
+      "type": "automated_test"
+    },
+    {
+      "id": "ev-beta1-release-publication",
+      "ref": "https://github.com/Mostorm-Labs/aegis/releases/tag/v0.2.0-beta.1",
+      "status": "available",
+      "subject_ids": [
+        "aegis-control-plane-product-v0.2",
+        "aegis-control-plane-verification-v0.2",
+        "aegis-plugin-distribution-v0.1",
+        "int-pr66"
+      ],
+      "type": "release_publication"
+    },
+    {
+      "id": "ev-beta1-final-main",
+      "ref": "https://github.com/Mostorm-Labs/aegis/commit/3253abced7a17d66d8754fa84d7953408aae49d4",
+      "status": "available",
+      "subject_ids": [
+        "aegis-control-plane-product-v0.2",
+        "aegis-control-plane-verification-v0.2",
+        "aegis-plugin-distribution-v0.1",
+        "int-pr66"
+      ],
+      "type": "repository_baseline"
+    }
+  ],
+  "schema_version": "0.6"
+}

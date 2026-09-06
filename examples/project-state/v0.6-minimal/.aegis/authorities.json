@@ -1,0 +1,362 @@
+{
+  "authorities": [
+    {
+      "depends_on": [],
+      "id": "aegis-method-v0.1",
+      "kind": "methodology",
+      "ref": "docs/methodology.md",
+      "scope": "aegis/method",
+      "status": "Current",
+      "version": "v0.1"
+    },
+    {
+      "depends_on": [
+        "aegis-method-v0.1"
+      ],
+      "id": "aegis-skill-v0.1",
+      "kind": "skill_contract",
+      "ref": "skills/aegis/SKILL.md",
+      "scope": "aegis/skill",
+      "status": "Current",
+      "version": "v0.1"
+    },
+    {
+      "depends_on": [
+        "aegis-method-v0.1",
+        "aegis-skill-v0.1"
+      ],
+      "id": "aegis-evaluation-framework-v0.1",
+      "kind": "verification_design",
+      "ref": "docs/evaluation-and-dogfooding-v0.1.md",
+      "scope": "aegis/evaluation/framework",
+      "status": "Current",
+      "version": "v0.1"
+    },
+    {
+      "depends_on": [
+        "aegis-evaluation-framework-v0.1"
+      ],
+      "id": "aegis-evaluation-tooling-v0.1",
+      "kind": "engineering",
+      "ref": "docs/model-execution-and-scoring-v0.1.md",
+      "scope": "aegis/evaluation/tooling",
+      "status": "Current",
+      "version": "v0.1"
+    },
+    {
+      "depends_on": [
+        "aegis-evaluation-tooling-v0.1",
+        "aegis-skill-v0.1"
+      ],
+      "id": "aegis-openai-baseline-v0.1",
+      "kind": "verification",
+      "ref": "docs/openai-hosted-skill-baseline-v0.1.md",
+      "scope": "aegis/evaluation/openai-baseline",
+      "status": "Current",
+      "version": "v0.1"
+    },
+    {
+      "depends_on": [
+        "aegis-method-v0.1",
+        "aegis-skill-v0.1"
+      ],
+      "id": "aegis-project-state-v0.1",
+      "kind": "system_architecture",
+      "ref": "docs/project-state-manifest-v0.1.md",
+      "scope": "aegis/project-state",
+      "status": "Superseded",
+      "version": "v0.1"
+    },
+    {
+      "change_class": "semantic",
+      "depends_on": [
+        "aegis-method-v0.1",
+        "aegis-skill-v0.1"
+      ],
+      "id": "aegis-project-state-v0.2",
+      "kind": "system_architecture",
+      "ref": "docs/project-state-manifest-v0.2.md",
+      "scope": "aegis/project-state",
+      "status": "Superseded",
+      "supersedes": "aegis-project-state-v0.1",
+      "version": "v0.2"
+    },
+    {
+      "change_class": "semantic",
+      "depends_on": [
+        "aegis-method-v0.1",
+        "aegis-skill-v0.1"
+      ],
+      "id": "aegis-project-state-v0.3",
+      "kind": "system_architecture",
+      "ref": "docs/project-state-manifest-v0.3.md",
+      "scope": "aegis/project-state",
+      "status": "Superseded",
+      "supersedes": "aegis-project-state-v0.2",
+      "version": "v0.3"
+    },
+    {
+      "change_class": "semantic",
+      "depends_on": [
+        "aegis-method-v0.1",
+        "aegis-skill-v0.1"
+      ],
+      "id": "aegis-project-state-v0.4",
+      "kind": "system_architecture",
+      "ref": "docs/project-state-manifest-v0.4.md",
+      "scope": "aegis/project-state",
+      "status": "Superseded",
+      "supersedes": "aegis-project-state-v0.3",
+      "version": "v0.4"
+    },
+    {
+      "change_class": "semantic",
+      "depends_on": [
+        "aegis-method-v0.1",
+        "aegis-skill-v0.1"
+      ],
+      "id": "aegis-project-state-v0.5",
+      "kind": "system_architecture",
+      "ref": "docs/project-state-gate-decision-lineage-v0.5.md",
+      "scope": "aegis/project-state",
+      "status": "Current",
+      "supersedes": "aegis-project-state-v0.4",
+      "version": "v0.5"
+    },
+    {
+      "depends_on": [
+        "aegis-project-state-v0.3",
+        "aegis-evaluation-framework-v0.1"
+      ],
+      "id": "aegis-self-hosting-v0.1",
+      "kind": "verification",
+      "ref": "docs/self-hosting-manifest-adoption-v0.1.md",
+      "scope": "aegis/self-hosting",
+      "status": "Current",
+      "version": "v0.1"
+    },
+    {
+      "depends_on": [
+        "aegis-method-v0.1",
+        "aegis-skill-v0.1",
+        "aegis-project-state-v0.3"
+      ],
+      "id": "aegis-skill-decomposition-v0.1",
+      "kind": "skill_contract",
+      "ref": "docs/skill-decomposition-v0.1.md",
+      "scope": "aegis/skill/decomposition",
+      "status": "Superseded",
+      "version": "v0.1"
+    },
+    {
+      "change_class": "semantic",
+      "depends_on": [
+        "aegis-method-v0.1",
+        "aegis-skill-v0.1",
+        "aegis-project-state-v0.3"
+      ],
+      "id": "aegis-skill-decomposition-v0.2",
+      "kind": "skill_contract",
+      "ref": "docs/skill-decomposition-v0.2.md",
+      "scope": "aegis/skill/decomposition",
+      "status": "Current",
+      "supersedes": "aegis-skill-decomposition-v0.1",
+      "version": "v0.2"
+    },
+    {
+      "depends_on": [
+        "aegis-method-v0.1",
+        "aegis-skill-v0.1",
+        "aegis-skill-decomposition-v0.2"
+      ],
+      "id": "aegis-execution-surface-v0.1",
+      "kind": "skill_contract",
+      "ref": "docs/execution-surface-contract-v0.1.md",
+      "scope": "aegis/execution-surface",
+      "status": "Superseded",
+      "version": "v0.1"
+    },
+    {
+      "change_class": "semantic",
+      "depends_on": [
+        "aegis-method-v0.1",
+        "aegis-skill-v0.1",
+        "aegis-skill-decomposition-v0.2"
+      ],
+      "id": "aegis-execution-surface-v0.2",
+      "kind": "skill_contract",
+      "ref": "docs/execution-surface-contract-v0.2.md",
+      "scope": "aegis/execution-surface",
+      "status": "Current",
+      "supersedes": "aegis-execution-surface-v0.1",
+      "version": "v0.2"
+    },
+    {
+      "depends_on": [
+        "aegis-skill-decomposition-v0.2"
+      ],
+      "id": "aegis-plugin-distribution-v0.1",
+      "kind": "skill_contract",
+      "ref": "docs/plugin-distribution-contract-v0.1.md",
+      "scope": "aegis/plugin-distribution",
+      "status": "Current",
+      "version": "v0.1"
+    },
+    {
+      "depends_on": [
+        "aegis-method-v0.1",
+        "aegis-skill-v0.1"
+      ],
+      "id": "aegis-control-plane-product-v0.2-base",
+      "kind": "product_requirement",
+      "ref": "docs/control-plane-productization-v0.2-p02-p03-repair.md",
+      "scope": "aegis/control-plane-productization",
+      "status": "Superseded",
+      "version": "v0.2-base"
+    },
+    {
+      "change_class": "semantic",
+      "depends_on": [
+        "aegis-method-v0.1",
+        "aegis-skill-v0.1"
+      ],
+      "id": "aegis-control-plane-product-v0.2",
+      "kind": "product_requirement",
+      "ref": "docs/control-plane-productization-v0.2-p02-p03-product-boundary-supersession.md",
+      "scope": "aegis/control-plane-productization",
+      "status": "Current",
+      "supersedes": "aegis-control-plane-product-v0.2-base",
+      "version": "v0.2"
+    },
+    {
+      "depends_on": [
+        "aegis-control-plane-product-v0.2",
+        "aegis-project-state-v0.5",
+        "aegis-skill-decomposition-v0.2",
+        "aegis-execution-surface-v0.2",
+        "aegis-plugin-distribution-v0.1"
+      ],
+      "id": "aegis-control-plane-verification-v0.2-plugin-profile",
+      "kind": "verification_design",
+      "ref": "docs/control-plane-productization-verification-v0.2-plugin-profile-p21-b1-repair.md",
+      "scope": "aegis/control-plane-productization/verification",
+      "status": "Superseded",
+      "version": "v0.2-plugin-profile"
+    },
+    {
+      "change_class": "semantic",
+      "depends_on": [
+        "aegis-control-plane-product-v0.2",
+        "aegis-project-state-v0.5",
+        "aegis-skill-decomposition-v0.2",
+        "aegis-execution-surface-v0.2",
+        "aegis-plugin-distribution-v0.1"
+      ],
+      "id": "aegis-control-plane-verification-v0.2",
+      "kind": "verification_design",
+      "ref": "docs/control-plane-productization-verification-v0.2-plugin-profile-rightsize.md",
+      "scope": "aegis/control-plane-productization/verification",
+      "status": "Current",
+      "supersedes": "aegis-control-plane-verification-v0.2-plugin-profile",
+      "version": "v0.2"
+    },
+    {
+      "depends_on": [
+        "aegis-execution-surface-v0.2"
+      ],
+      "id": "aegis-repository-identity-platform-v0.2",
+      "kind": "platform_contract",
+      "ref": "docs/execution-surface-contract-v0.2-repository-identity-repair.md",
+      "scope": "aegis/execution-surface/repository-identity",
+      "status": "Current",
+      "version": "v0.2"
+    },
+    {
+      "depends_on": [
+        "aegis-repository-identity-platform-v0.2",
+        "aegis-control-plane-verification-v0.2"
+      ],
+      "id": "aegis-repository-identity-verification-v0.2",
+      "kind": "verification_design",
+      "ref": "docs/execution-surface-verification-v0.2-repository-identity.md",
+      "scope": "aegis/execution-surface/repository-identity/verification",
+      "status": "Current",
+      "version": "v0.2"
+    },
+    {
+      "depends_on": [
+        "aegis-repository-identity-verification-v0.2",
+        "aegis-plugin-distribution-v0.1"
+      ],
+      "id": "aegis-repository-identity-materialization-v0.2",
+      "kind": "verification_design",
+      "ref": "docs/execution-surface-verification-v0.2-repository-identity-materialization-repair.md",
+      "scope": "aegis/execution-surface/repository-identity/verification/materialization",
+      "status": "Current",
+      "version": "v0.2"
+    }
+  ],
+  "impact_reviews": [
+    {
+      "dependent_authority": "aegis-self-hosting-v0.1",
+      "evidence_ids": [
+        "ev-pr11-post-p34-project-state-ci-33163765563",
+        "ev-pr11-p23"
+      ],
+      "id": "impact-v04-self-hosting-v01",
+      "outcome": "unaffected",
+      "source_authority": "aegis-project-state-v0.4"
+    },
+    {
+      "dependent_authority": "aegis-skill-decomposition-v0.1",
+      "evidence_ids": [
+        "ev-pr11-post-p34-skillset-ci-33163765578",
+        "ev-pr11-p23"
+      ],
+      "id": "impact-v04-skill-decomposition-v01",
+      "outcome": "unaffected",
+      "source_authority": "aegis-project-state-v0.4"
+    },
+    {
+      "dependent_authority": "aegis-skill-decomposition-v0.2",
+      "evidence_ids": [
+        "ev-pr11-post-p34-skillset-ci-33163765578",
+        "ev-pr11-p23"
+      ],
+      "id": "impact-v04-skill-decomposition-v02",
+      "outcome": "unaffected",
+      "source_authority": "aegis-project-state-v0.4"
+    },
+    {
+      "dependent_authority": "aegis-self-hosting-v0.1",
+      "evidence_ids": [
+        "ev-pr14-project-state-ci-33236194931",
+        "ev-pr14-p34"
+      ],
+      "id": "impact-v05-self-hosting-v01",
+      "outcome": "unaffected",
+      "source_authority": "aegis-project-state-v0.5"
+    },
+    {
+      "dependent_authority": "aegis-skill-decomposition-v0.1",
+      "evidence_ids": [
+        "ev-pr14-project-state-ci-33236194931",
+        "ev-pr14-p34"
+      ],
+      "id": "impact-v05-skill-decomposition-v01",
+      "outcome": "unaffected",
+      "source_authority": "aegis-project-state-v0.5"
+    },
+    {
+      "dependent_authority": "aegis-skill-decomposition-v0.2",
+      "evidence_ids": [
+        "ev-pr14-project-state-ci-33236194931",
+        "ev-pr14-p34"
+      ],
+      "id": "impact-v05-skill-decomposition-v02",
+      "outcome": "unaffected",
+      "source_authority": "aegis-project-state-v0.5"
+    }
+  ],
+  "schema_version": "0.6"
+}

@@ -7,8 +7,10 @@ from pathlib import Path
 
 from .compute import compute_state
 from .migrate_v05 import migrate_v04_to_v05
+from .migrate_v06 import migrate_v05_to_v06
 from .model import ManifestError, load_manifests, validate_manifests
 from .transition_v05 import validate_v05_transition
+from .transition_v06 import validate_v06_transition
 
 
 def _render(state: dict) -> str:
@@ -97,7 +99,7 @@ def cmd_transition_check(previous_root: str, current_root: str) -> int:
     if previous is None or current is None:
         return 2
 
-    transition_errors = validate_v05_transition(previous, current)
+    transition_errors = validate_v06_transition(previous, current) if previous.schema_version == "0.6" or current.schema_version == "0.6" else validate_v05_transition(previous, current)
     if transition_errors:
         for error in transition_errors:
             print(f"BLOCKED_AUTHORITY: P21: {error}")
@@ -148,6 +150,20 @@ def cmd_migrate_v05(source_root: str, destination_root: str) -> int:
     print(f"MIGRATED_V05: {manifest_root}")
     return 0
 
+def cmd_migrate_v06(source_root: str, destination_root: str) -> int:
+    source = _load(source_root)
+    if source is None: return 2
+    try: migrated = migrate_v05_to_v06(source)
+    except ValueError as exc:
+        print(f"MIGRATION_ERROR: {exc}"); return 2
+    destination = Path(destination_root); manifest_root = destination / ".aegis"
+    if manifest_root.exists(): print(f"MIGRATION_ERROR: destination already contains .aegis: {manifest_root}"); return 2
+    manifest_root.mkdir(parents=True)
+    docs = {"project.json": migrated.project, "authorities.json": migrated.authorities, "gates.json": migrated.gates, "evidence.json": migrated.evidence, "integrations.json": migrated.integrations}
+    for name, document in docs.items(): (manifest_root / name).write_text(json.dumps(document, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    (manifest_root / "state.json").write_text(_render(compute_state(migrated)), encoding="utf-8")
+    print(f"MIGRATED_V06: {manifest_root}"); return 0
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Aegis project state manifest tooling")
@@ -165,6 +181,9 @@ def build_parser() -> argparse.ArgumentParser:
     migrate = sub.add_parser("migrate-v05")
     migrate.add_argument("source_root")
     migrate.add_argument("destination_root")
+    migrate06 = sub.add_parser("migrate-v06")
+    migrate06.add_argument("source_root")
+    migrate06.add_argument("destination_root")
     return parser
 
 
@@ -180,6 +199,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_transition_check(args.previous_root, args.current_root)
     if args.command == "migrate-v05":
         return cmd_migrate_v05(args.source_root, args.destination_root)
+    if args.command == "migrate-v06":
+        return cmd_migrate_v06(args.source_root, args.destination_root)
     return 2
 
 
