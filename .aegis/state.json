@@ -329,7 +329,7 @@
       "integration_id": "int-pr9"
     }
   ],
-  "manifest_digest": "c76eee6860feda90babf30dd9e8fca5d764fecca9de3e6f2173f0330647c630f",
+  "manifest_digest": "7fb777ef42f120265964a82ecd9198cc47adba00c66a092693acd5ab6b998d24",
   "needs_review_authorities": [],
   "needs_review_gates": [],
   "nonconforming_integrations": [
