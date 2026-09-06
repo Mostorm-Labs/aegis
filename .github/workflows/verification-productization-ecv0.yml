@@ -3,6 +3,7 @@ name: Aegis Verification Productization ECV0
 on:
   pull_request:
     paths:
+      - ".aegis/**"
       - "tools/aegis_proof/adapters/**"
       - "tools/aegis_proof/cli.py"
       - "tools/aegis_proof/__main__.py"
@@ -16,6 +17,7 @@ on:
       - ".github/workflows/verification-productization-ecv0.yml"
   push:
     paths:
+      - ".aegis/**"
       - "tools/aegis_proof/adapters/**"
       - "tools/aegis_proof/cli.py"
       - "tools/aegis_proof/__main__.py"
