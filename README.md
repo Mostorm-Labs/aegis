@@ -89,31 +89,31 @@ Use the repository root marketplace manifest (`.agents/plugins/marketplace.json`
 Current release-candidate identity:
 
 ```text
-v0.2.0-beta.1
+v0.2.0-beta.2
 ```
 
 After publication, the intended Release asset is:
 
 ```text
-https://github.com/Mostorm-Labs/aegis/releases/download/v0.2.0-beta.1/aegis-skill-installation-kit-v0.2.0-beta.1.zip
+https://github.com/Mostorm-Labs/aegis/releases/download/v0.2.0-beta.2/aegis-skill-installation-kit-v0.2.0-beta.2.zip
 ```
 
 Extract the outer archive once, then upload the nine nested Skill ZIPs without unpacking them.
 
 See [`docs/installation-and-usage-v0.2.md`](docs/installation-and-usage-v0.2.md) for installation, verification, usage, update, repository-backed execution, rollback, and troubleshooting guidance.
 
-Until `v0.2.0-beta.1` is actually published, immutable `v0.1.0-beta.3` remains the previous published rollback/reproducibility boundary.
+Until `v0.2.0-beta.2` is actually published, immutable `v0.2.0-beta.1` and `v0.1.0-beta.3` remain historical rollback/reproducibility boundaries.
 
 ## Status
 
-**v0.2 — Control Plane candidate `v0.2.0-beta.1`, delivered as one Plugin + exact nine Skills, pending final P24 release-readiness review and publication.**
+**v0.2 — Control Plane candidate `v0.2.0-beta.2`, delivered as one Plugin + exact nine Skills, pending final P24 release-readiness review and publication.**
 
 This candidate does not claim `SERVICE_PROFILE`, R0/S0/W7D service-scale qualification, rollout expansion, or zero-user-turn cross-Primary substantive chaining.
 
 ## Documentation
 
 - [`docs/installation-and-usage-v0.2.md`](docs/installation-and-usage-v0.2.md)
-- [`docs/releases/v0.2.0-beta.1.md`](docs/releases/v0.2.0-beta.1.md)
+- [`docs/releases/v0.2.0-beta.2.md`](docs/releases/v0.2.0-beta.2.md)
 - [`docs/installation-and-usage-v0.1.md`](docs/installation-and-usage-v0.1.md)
 - [`docs/plugin-distribution-contract-v0.1.md`](docs/plugin-distribution-contract-v0.1.md)
 - [`docs/methodology.md`](docs/methodology.md)

@@ -2,7 +2,7 @@
 
 Aegis v0.2 is an evidence-driven software development Control Plane delivered primarily as one native **Aegis Plugin** exposing the exact nine canonical Skills. A portable **9-Skill Installation Kit** remains the fallback path.
 
-Current candidate identity: `v0.2.0-beta.1`.
+Current candidate identity: `v0.2.0-beta.2`.
 
 This guide describes the candidate distribution and use model. Publication is not complete until final P24 release readiness and the release workflow succeed.
 
@@ -27,10 +27,10 @@ https://github.com/Mostorm-Labs/aegis
 
 Use the repository-root `.agents/plugins/marketplace.json`. Do not append `/tree/...`, a branch name, or a manifest filename to the source URL.
 
-After `v0.2.0-beta.1` is published, reproducible installations may pin the immutable tag:
+After `v0.2.0-beta.2` is published, reproducible installations may pin the immutable tag:
 
 ```text
-v0.2.0-beta.1
+v0.2.0-beta.2
 ```
 
 Until publication, do not treat that tag as existing.
@@ -65,10 +65,10 @@ UI ordering is not significant; catalog identity is set-based and coherent as on
 The intended prerelease asset is:
 
 ```text
-aegis-skill-installation-kit-v0.2.0-beta.1.zip
+aegis-skill-installation-kit-v0.2.0-beta.2.zip
 ```
 
-After publication, verify the outer archive against the Release-provided `SHA256SUMS` or `aegis-release-v0.2.0-beta.1.json`, extract the outer archive once, and upload the nine nested Skill ZIPs without unpacking them.
+After publication, verify the outer archive against the Release-provided `SHA256SUMS` or `aegis-release-v0.2.0-beta.2.json`, extract the outer archive once, and upload the nine nested Skill ZIPs without unpacking them.
 
 Expected nested archives:
 
@@ -180,10 +180,10 @@ Aegis v0.2 does not claim:
 - **Installation Kit was unpacked too far:** upload the nine nested ZIP files, not their unpacked directories.
 - **Repository-backed handoff resolves the wrong repository:** stop; repository identity must be resolved before package/anchor/cursor reasoning.
 - **Declared repository is unavailable:** return `BLOCKED_REPOSITORY_IDENTITY`; do not substitute another checkout.
-- **Need a reproducible historical environment:** use immutable `v0.1.0-beta.3` until `v0.2.0-beta.1` is actually published.
+- **Need a reproducible historical environment:** use immutable `v0.1.0-beta.3` or the published beta.1 history until beta.2 is actually published.
 
 ## References
 
 - distribution semantics: [`plugin-distribution-contract-v0.1.md`](plugin-distribution-contract-v0.1.md)
 - prior v0.1 guide: [`installation-and-usage-v0.1.md`](installation-and-usage-v0.1.md)
-- candidate release notes: [`releases/v0.2.0-beta.1.md`](releases/v0.2.0-beta.1.md)
+- candidate release notes: [`releases/v0.2.0-beta.2.md`](releases/v0.2.0-beta.2.md)

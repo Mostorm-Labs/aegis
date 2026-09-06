@@ -9,7 +9,7 @@ from tools.aegis_skillset.package import render_release_manifest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = "0.2.0-beta.1"
+VERSION = "0.2.0-beta.2"
 TAG = f"v{VERSION}"
 
 
