@@ -29,6 +29,13 @@ Gate Decision lineage. v0.6 distinguishes `Bound(PASS)`, `Bound(BLOCKED)`, and
 lookup, stale, missing, failed, and unresolved states remain unknown/error.
 Later PASS decisions append history and never rewrite historical bindings.
 
+The contract is version-aware: v0.3 uses direct Gate references; v0.4 separates
+immutable repository occurrence from conformance; v0.5 introduces immutable
+Gate Decision lineage via `gate_decision_id`; v0.6 uses the `bound|absent`
+binding sum type, status legality matrix, O6 append-only corroboration, and
+deterministic v0.5→v0.6 migration with zero inferred absence. O1–O6 are semantic
+state vocabulary only, never runtime APIs.
+
 ## Composition boundary
 
 **Direct Project State task:** when the user's task is Project State inspection, validation, recomputation, persistence, or diagnosis itself, `aegis-project-state` is the final-answer owner.

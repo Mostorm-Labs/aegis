@@ -236,29 +236,21 @@ Reject mixed schema versions within one Project State manifest set.
 ## P20 reviewer evidence map (V1–V14)
 
 The executable evidence for the v0.6 contract is maintained in
-`tests/project_state/test_v06_binding.py` and the deterministic CLI fixtures.
-The mandatory review groups map as follows: V1 binding representations;
-V2 status/binding legality matrix; V3 lookup/read failures are never Absent;
-V4 Bound(PASS), Bound(BLOCKED), and Absent projections; V5 immutable identity
-and append-only O6 evidence; V6 later PASS non-retroactivity; V7 deterministic
-v0.5→v0.6 migration; V8 O1–O6 semantic transitions; V9 forbidden runtime
-surface absence; V10 external platform results cannot author Authority/Gate
-truth; V11 PR #82 occurrence/non-authorization/absence bases and negative
-variants; V12 replay/idempotency and conflicting identity fail closed; V13
-stale, uncertain-write, and read-failure safety; V14 exact-ref optimization
-equivalence and full rehydration fallback. These are evidence categories,
-not runtime APIs, and every claim must resolve to a fixture, test, or durable
-review reference.
+`tests/project_state/test_v06_binding.py` and deterministic CLI fixtures.
+V1–V14 cover binding/matrix legality, non-Absent lookup failures, Bound(PASS)
+and Bound(BLOCKED) projections, immutable identity with append-only O6
+evidence, later-PASS non-retroactivity, deterministic migration, O1–O6
+semantic vocabulary, forbidden runtime surfaces, external-result
+non-authorization, PR #82 positive/negative variants, replay/conflict
+fail-closed behavior, stale/read/uncertain-write safety, and exact-ref versus
+full-rehydration equivalence. Each category resolves to executable or durable
+review evidence; none is a runtime API.
 
 ## Version-specific contract boundary
 
-v0.3 records Gate references directly and retains its historical validation
-rules. v0.4 adds immutable Integration occurrence and derived conformance.
-v0.5 introduces Gate Decision lineage (`gate_decision_id`) while preserving
-v0.4 history. v0.6 replaces occurrence-time authorization with immutable
-`gate_decision_binding`: `bound` names the decision identity and `absent`
-requires an accepted absence basis. Migration is deterministic, lossless, and
-infers zero Absent bindings. The two materialized Skill trees must remain
-byte-for-byte semantically aligned.
+v0.3 direct Gate references, v0.4 immutable occurrence/conformance, v0.5
+`gate_decision_id` lineage, and v0.6 immutable occurrence-time
+`gate_decision_binding` (`bound` or accepted `absent`) are distinct contracts.
+The v0.5→v0.6 migration is deterministic and infers zero Absent bindings.
 
 The manifest tells Aegis where to look and what project-control state is recorded; it never outranks contradictory Current Authority or repository evidence. If GitHub/repository evidence proves an occurrence that the authored state cannot represent, route to Authority review rather than falsifying repository truth.
