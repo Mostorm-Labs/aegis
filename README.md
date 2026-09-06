@@ -86,13 +86,13 @@ Use the repository root marketplace manifest (`.agents/plugins/marketplace.json`
 
 ### Alternative: 9-Skill Installation Kit
 
-Current release-candidate identity:
+Current published prerelease:
 
 ```text
 v0.2.0-beta.2
 ```
 
-After publication, the intended Release asset is:
+The published Release asset is:
 
 ```text
 https://github.com/Mostorm-Labs/aegis/releases/download/v0.2.0-beta.2/aegis-skill-installation-kit-v0.2.0-beta.2.zip
@@ -102,13 +102,13 @@ Extract the outer archive once, then upload the nine nested Skill ZIPs without u
 
 See [`docs/installation-and-usage-v0.2.md`](docs/installation-and-usage-v0.2.md) for installation, verification, usage, update, repository-backed execution, rollback, and troubleshooting guidance.
 
-Until `v0.2.0-beta.2` is actually published, immutable `v0.2.0-beta.1` and `v0.1.0-beta.3` remain historical rollback/reproducibility boundaries.
+Immutable `v0.2.0-beta.1` and `v0.1.0-beta.3` remain historical rollback/reproducibility boundaries.
 
 ## Status
 
-**v0.2 — Control Plane candidate `v0.2.0-beta.2`, delivered as one Plugin + exact nine Skills, pending final P24 release-readiness review and publication.**
+**v0.2 — Control Plane prerelease `v0.2.0-beta.2`, published from `main@cfb69ee10dee03e34b363820cd66136a127658cc` as one Plugin + exact nine Skills.**
 
-This candidate does not claim `SERVICE_PROFILE`, R0/S0/W7D service-scale qualification, rollout expansion, or zero-user-turn cross-Primary substantive chaining.
+This prerelease does not claim `SERVICE_PROFILE`, R0/S0/W7D service-scale qualification, rollout expansion, or zero-user-turn cross-Primary substantive chaining.
 
 ## Documentation
 
