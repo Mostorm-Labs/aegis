@@ -184,6 +184,14 @@
       "gate_id": "gate-verification-productization-v02-pr81",
       "id": "gate-verification-productization-v02-pr81::decision::0001",
       "verdict": "PASS"
+    },
+    {
+      "evidence_ids": [
+        "ev-pr87-p24"
+      ],
+      "gate_id": "gate-project-state-v06-pr87",
+      "id": "gate-project-state-v06-pr87::decision::0001",
+      "verdict": "PASS"
     }
   ],
   "gates": [
@@ -319,6 +327,13 @@
         "aegis-verification-productization-verification-v0.2"
       ],
       "id": "gate-verification-productization-v02-pr81",
+      "stage": "P24"
+    },
+    {
+      "authority_ids": [
+        "aegis-project-state-v0.6"
+      ],
+      "id": "gate-project-state-v06-pr87",
       "stage": "P24"
     }
   ],

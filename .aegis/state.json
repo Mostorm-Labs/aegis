@@ -83,6 +83,11 @@
       "verdict": "PASS"
     },
     {
+      "decision_id": "gate-project-state-v06-pr87::decision::0001",
+      "gate_id": "gate-project-state-v06-pr87",
+      "verdict": "PASS"
+    },
+    {
       "decision_id": "gate-repository-identity-pr62::decision::0001",
       "gate_id": "gate-repository-identity-pr62",
       "verdict": "PASS"
@@ -177,6 +182,10 @@
     {
       "applicability": "current",
       "integration_id": "int-pr81"
+    },
+    {
+      "applicability": "current",
+      "integration_id": "int-pr87"
     },
     {
       "applicability": "current",
@@ -320,6 +329,15 @@
       "integration_id": "int-pr81"
     },
     {
+      "conformance": "conforming",
+      "gate_decision_binding": {
+        "gate_decision_id": "gate-project-state-v06-pr87::decision::0001",
+        "kind": "bound"
+      },
+      "gate_decision_id": "gate-project-state-v06-pr87::decision::0001",
+      "integration_id": "int-pr87"
+    },
+    {
       "conformance": "nonconforming",
       "gate_decision_binding": {
         "gate_decision_id": "gate-skill-decomposition-v02-pr9::decision::0001",
@@ -329,7 +347,7 @@
       "integration_id": "int-pr9"
     }
   ],
-  "manifest_digest": "7fb777ef42f120265964a82ecd9198cc47adba00c66a092693acd5ab6b998d24",
+  "manifest_digest": "d5e08a68b41d0f2e59466c3c4944d5517f10e9f46e69f03f39d46c3e6399b0b9",
   "needs_review_authorities": [],
   "needs_review_gates": [],
   "nonconforming_integrations": [
