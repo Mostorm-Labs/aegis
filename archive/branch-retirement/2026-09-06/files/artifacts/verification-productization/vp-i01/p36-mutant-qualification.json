@@ -1,0 +1,37 @@
+{
+  "artifact_kind": "P36_RAW_MUTANT_QUALIFICATION_EXECUTION",
+  "command": [
+    "/opt/pyvenv/bin/python3",
+    "-m",
+    "unittest",
+    "tests.verification_productization.test_package_preflight.PackagePreflightTests.test_ec_s02_floating_dependency_is_rejected_before_p32",
+    "tests.verification_productization.test_package_preflight.PackagePreflightTests.test_ec_m02_floating_dependency_mutant_is_killed",
+    "tests.verification_productization.test_package_preflight.PackagePreflightTests.test_ec_s03_future_self_materialization_cycle_is_structurally_unsatisfiable",
+    "tests.verification_productization.test_package_preflight.PackagePreflightTests.test_ec_m03_future_self_mutant_is_killed",
+    "-v"
+  ],
+  "derived": {
+    "EC_M02_detected": true,
+    "EC_M03_detected": true,
+    "EC_S02_pass": true,
+    "EC_S03_pass": true,
+    "mutant_false_acceptance": 0
+  },
+  "execution_note": "Mutation-specific harness executes the exact package.py and exact repaired test blob; unchanged canonical dependencies are represented by the narrow test harness because their ordinary S02/S03 behavior is already covered by immutable predecessor focused evidence.",
+  "exit_code": 0,
+  "not_gate_verdict": true,
+  "not_proof_evaluation": true,
+  "p35_review": "5121320276",
+  "package_ref": "b979f1fc59178c16285449a92f02dd5964e523d0",
+  "platform": "Linux-6.18.35-x86_64-with-glibc2.41",
+  "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "raw_output": "test_ec_s02_floating_dependency_is_rejected_before_p32 (tests.verification_productization.test_package_preflight.PackagePreflightTests.test_ec_s02_floating_dependency_is_rejected_before_p32) ... ok\ntest_ec_m02_floating_dependency_mutant_is_killed (tests.verification_productization.test_package_preflight.PackagePreflightTests.test_ec_m02_floating_dependency_mutant_is_killed) ... ok\ntest_ec_s03_future_self_materialization_cycle_is_structurally_unsatisfiable (tests.verification_productization.test_package_preflight.PackagePreflightTests.test_ec_s03_future_self_materialization_cycle_is_structurally_unsatisfiable) ... ok\ntest_ec_m03_future_self_mutant_is_killed (tests.verification_productization.test_package_preflight.PackagePreflightTests.test_ec_m03_future_self_mutant_is_killed) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.005s\n\nOK\n",
+  "raw_output_sha256": "sha256:8cc63741e49b4535adaccda6391419273ea17a0c723f170b0820d1f6aa850230",
+  "repository": "Mostorm-Labs/aegis",
+  "schema_version": "0.1",
+  "source_blobs": {
+    "tests/verification_productization/test_package_preflight.py": "212923b831fcab3d23df580ce38fea8084952662",
+    "tools/aegis_proof/package.py": "5b74f4d9ea3e0c8f387564928ec15a3ef854ce7f"
+  },
+  "subject_result_revision": "ef995501c3dcd1f7f608083028f43bb4bde66103"
+}
