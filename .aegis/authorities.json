@@ -323,7 +323,7 @@
       "depends_on": [],
       "id": "aegis-verification-productization-verification-v0.2",
       "kind": "verification_design",
-      "ref": "docs/verification-productization-verification-v0.2.md",
+       "ref": "docs/verification-productization-v0.2.md",
       "scope": "aegis/verification-productization/verification",
       "status": "Current",
       "supersedes": "aegis-verification-productization-verification-v0.1",
@@ -390,6 +390,17 @@
       "id": "impact-v05-skill-decomposition-v02",
       "outcome": "unaffected",
       "source_authority": "aegis-project-state-v0.5"
+    },
+    {
+      "dependent_authority": "aegis-control-plane-verification-v0.2",
+      "evidence_ids": [
+        "ev-cp-v02-verification-p23",
+        "ev-pr66-final-control-plane-ci-33862634762",
+        "ev-pr66-final-skillset-ci-33862634749"
+      ],
+      "id": "impact-v06-control-plane-verification-v02",
+      "outcome": "unaffected",
+      "source_authority": "aegis-project-state-v0.6"
     }
   ],
   "schema_version": "0.6"
