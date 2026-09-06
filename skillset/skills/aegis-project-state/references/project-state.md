@@ -233,4 +233,24 @@ Reject mixed schema versions within one Project State manifest set.
 
 ## Safety boundary
 
+## P20 reviewer evidence map (V1–V14)
+
+The executable evidence for the v0.6 contract is maintained in
+`tests/project_state/test_v06_binding.py` and deterministic CLI fixtures.
+V1–V14 cover binding/matrix legality, non-Absent lookup failures, Bound(PASS)
+and Bound(BLOCKED) projections, immutable identity with append-only O6
+evidence, later-PASS non-retroactivity, deterministic migration, O1–O6
+semantic vocabulary, forbidden runtime surfaces, external-result
+non-authorization, PR #82 positive/negative variants, replay/conflict
+fail-closed behavior, stale/read/uncertain-write safety, and exact-ref versus
+full-rehydration equivalence. Each category resolves to executable or durable
+review evidence; none is a runtime API.
+
+## Version-specific contract boundary
+
+v0.3 direct Gate references, v0.4 immutable occurrence/conformance, v0.5
+`gate_decision_id` lineage, and v0.6 immutable occurrence-time
+`gate_decision_binding` (`bound` or accepted `absent`) are distinct contracts.
+The v0.5→v0.6 migration is deterministic and infers zero Absent bindings.
+
 The manifest tells Aegis where to look and what project-control state is recorded; it never outranks contradictory Current Authority or repository evidence. If GitHub/repository evidence proves an occurrence that the authored state cannot represent, route to Authority review rather than falsifying repository truth.
