@@ -2,9 +2,9 @@
 
 Aegis v0.2 is an evidence-driven software development Control Plane delivered primarily as one native **Aegis Plugin** exposing the exact nine canonical Skills. A portable **9-Skill Installation Kit** remains the fallback path.
 
-Current candidate identity: `v0.2.0-beta.2`.
+Current published prerelease identity: `v0.2.0-beta.2`.
 
-This guide describes the candidate distribution and use model. Publication is not complete until final P24 release readiness and the release workflow succeed.
+This guide describes the published beta.2 distribution and use model.
 
 ## Choose an installation path
 
@@ -13,7 +13,7 @@ This guide describes the candidate distribution and use model. Publication is no
 | ChatGPT workspace with Plugin marketplace access | GitHub Plugin |
 | Team/developer environment that should update as one product | GitHub Plugin |
 | No Plugin marketplace access | 9-Skill Installation Kit |
-| Reproducible/offline archive | immutable Release kit after publication |
+| Reproducible/offline archive | immutable published Release kit |
 
 For normal product use, prefer the Plugin. The Plugin owns distribution/install coherence; it is not an additional lifecycle owner.
 
@@ -27,13 +27,11 @@ https://github.com/Mostorm-Labs/aegis
 
 Use the repository-root `.agents/plugins/marketplace.json`. Do not append `/tree/...`, a branch name, or a manifest filename to the source URL.
 
-After `v0.2.0-beta.2` is published, reproducible installations may pin the immutable tag:
+For a reproducible beta.2 installation, pin the immutable published tag:
 
 ```text
 v0.2.0-beta.2
 ```
-
-Until publication, do not treat that tag as existing.
 
 ## Verify the exact-nine catalog
 
@@ -62,13 +60,13 @@ UI ordering is not significant; catalog identity is set-based and coherent as on
 
 ## Alternative: 9-Skill Installation Kit
 
-The intended prerelease asset is:
+The published prerelease asset is:
 
 ```text
 aegis-skill-installation-kit-v0.2.0-beta.2.zip
 ```
 
-After publication, verify the outer archive against the Release-provided `SHA256SUMS` or `aegis-release-v0.2.0-beta.2.json`, extract the outer archive once, and upload the nine nested Skill ZIPs without unpacking them.
+Verify the outer archive against the Release-provided `SHA256SUMS` or `aegis-release-v0.2.0-beta.2.json`, extract the outer archive once, and upload the nine nested Skill ZIPs without unpacking them.
 
 Expected nested archives:
 
@@ -155,13 +153,20 @@ Do not accept a partial or mixed Aegis catalog. For reproducibility, pin an immu
 
 ## Rollback boundary
 
-The previous immutable published release remains:
+The current prerelease is:
 
 ```text
+v0.2.0-beta.2
+```
+
+Earlier immutable published boundaries remain available for rollback and historical reproduction:
+
+```text
+v0.2.0-beta.1
 v0.1.0-beta.3
 ```
 
-Its published Installation Kit SHA-256 is part of historical release evidence. The v0.2 candidate does not rewrite beta.3 manifests, notes, tag, Release, or published assets.
+Their published manifests, notes, tags, Releases, and assets remain historical and unchanged.
 
 ## Deliberate product boundaries
 
@@ -180,10 +185,10 @@ Aegis v0.2 does not claim:
 - **Installation Kit was unpacked too far:** upload the nine nested ZIP files, not their unpacked directories.
 - **Repository-backed handoff resolves the wrong repository:** stop; repository identity must be resolved before package/anchor/cursor reasoning.
 - **Declared repository is unavailable:** return `BLOCKED_REPOSITORY_IDENTITY`; do not substitute another checkout.
-- **Need a reproducible historical environment:** use immutable `v0.1.0-beta.3` or the published beta.1 history until beta.2 is actually published.
+- **Need a reproducible historical environment:** use an immutable published tag and its Release assets, including `v0.2.0-beta.1` or `v0.1.0-beta.3` when reproducing earlier behavior.
 
 ## References
 
 - distribution semantics: [`plugin-distribution-contract-v0.1.md`](plugin-distribution-contract-v0.1.md)
 - prior v0.1 guide: [`installation-and-usage-v0.1.md`](installation-and-usage-v0.1.md)
-- candidate release notes: [`releases/v0.2.0-beta.2.md`](releases/v0.2.0-beta.2.md)
+- published beta.2 release notes: [`releases/v0.2.0-beta.2.md`](releases/v0.2.0-beta.2.md)
