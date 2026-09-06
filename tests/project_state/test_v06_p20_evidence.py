@@ -57,7 +57,7 @@ class P20EvidenceMapTests(unittest.TestCase):
         self.assertEqual(cur.integrations["integrations"][-1]["gate_decision_binding"]["kind"], "absent")
 
     def test_v7_migration_zero_inferred_absent(self):
-        base = load_manifests(ROOT); migrated = migrate_v05_to_v06(base)
+        base = load_manifests(ROOT / "examples/project-state/v0.5-minimal"); migrated = migrate_v05_to_v06(base)
         self.assertEqual(sum(x["gate_decision_binding"]["kind"] == "absent" for x in migrated.integration_items), 0)
 
     def test_v11_v12_pr82_and_replay_conflict(self):

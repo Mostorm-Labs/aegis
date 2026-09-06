@@ -23,7 +23,7 @@ class V06BindingTests(unittest.TestCase):
             self.assertIn(binding["kind"], {"bound", "absent"})
 
     def test_v05_migration_is_lossless_bound_and_never_infers_absent(self):
-        source = load_manifests(ROOT)
+        source = load_manifests(ROOT / "examples/project-state/v0.5-minimal")
         migrated = migrate_v05_to_v06(source)
         self.assertEqual(migrated.schema_version, "0.6")
         self.assertTrue(all(x["gate_decision_binding"]["kind"] == "bound" for x in migrated.integration_items))

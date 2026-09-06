@@ -3,6 +3,7 @@ name: Aegis Skillset Integrity
 on:
   push:
     paths:
+      - ".aegis/**"
       - "skillset/**"
       - "skills/**"
       - ".agents/plugins/**"
@@ -29,6 +30,7 @@ on:
       - ".github/workflows/skillset.yml"
   pull_request:
     paths:
+      - ".aegis/**"
       - "skillset/**"
       - "skills/**"
       - ".agents/plugins/**"

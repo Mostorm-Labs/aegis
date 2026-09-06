@@ -1,10 +1,13 @@
 {
-  "schema_version": "0.5",
   "project": {
     "id": "mostorm-labs-aegis",
+    "lifecycle_hint": "verification",
     "name": "Aegis",
     "profile": "standard",
-    "required_layers": ["authority", "verification"],
-    "lifecycle_hint": "verification"
-  }
+    "required_layers": [
+      "authority",
+      "verification"
+    ]
+  },
+  "schema_version": "0.6"
 }
