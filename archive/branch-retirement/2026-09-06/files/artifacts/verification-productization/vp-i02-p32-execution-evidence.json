@@ -1,0 +1,193 @@
+{
+  "P34_claimed_by_P32": false,
+  "actual_starting_revision": "9a724830992d27681b223c8b424891e46623aeed",
+  "authority_deviation": "none",
+  "commands": [
+    {
+      "command": "python3 -m unittest tests.verification_productization.test_evidence_compiler tests.verification_productization.test_evidence_repair tests.verification_productization.test_evaluation_review -v",
+      "exit_code": 0,
+      "name": "focused_vp_i02",
+      "raw_output": "test_EC_M01_manual_override_mutant_is_detected (tests.verification_productization.test_evidence_compiler.EvidenceCompilerTests.test_EC_M01_manual_override_mutant_is_detected) ... ok\ntest_EC_M14_handoff_override_mutant_is_detected (tests.verification_productization.test_evidence_compiler.EvidenceCompilerTests.test_EC_M14_handoff_override_mutant_is_detected) ... ok\ntest_EC_M17_incomplete_producer_is_not_zero_failures (tests.verification_productization.test_evidence_compiler.EvidenceCompilerTests.test_EC_M17_incomplete_producer_is_not_zero_failures) ... ok\ntest_EC_S01_authoritative_structured_source_wins (tests.verification_productization.test_evidence_compiler.EvidenceCompilerTests.test_EC_S01_authoritative_structured_source_wins) ... ok\ntest_EC_S14_handoff_totals_are_non_authoritative (tests.verification_productization.test_evidence_compiler.EvidenceCompilerTests.test_EC_S14_handoff_totals_are_non_authoritative) ... ok\ntest_EC_M05_same_result_false_claim_after_mutation_is_detected (tests.verification_productization.test_evidence_repair.EvidenceRepairTests.test_EC_M05_same_result_false_claim_after_mutation_is_detected) ... ok\ntest_EC_S05_evidence_only_repair_keeps_result_identity (tests.verification_productization.test_evidence_repair.EvidenceRepairTests.test_EC_S05_evidence_only_repair_keeps_result_identity) ... ok\ntest_EC_S06_result_bytes_change_requires_new_result_sha (tests.verification_productization.test_evidence_repair.EvidenceRepairTests.test_EC_S06_result_bytes_change_requires_new_result_sha) ... ok\ntest_EC_M04_undeclared_requirement_cannot_be_p32_repair (tests.verification_productization.test_evaluation_review.EvaluationReviewTests.test_EC_M04_undeclared_requirement_cannot_be_p32_repair) ... ok\ntest_EC_M13_evaluator_cannot_emit_gate_pass (tests.verification_productization.test_evaluation_review.EvaluationReviewTests.test_EC_M13_evaluator_cannot_emit_gate_pass) ... ok\ntest_EC_M15_completeness_does_not_call_generator (tests.verification_productization.test_evaluation_review.EvaluationReviewTests.test_EC_M15_completeness_does_not_call_generator) ... ok\ntest_EC_S04_undeclared_gate_field_routes_upstream (tests.verification_productization.test_evaluation_review.EvaluationReviewTests.test_EC_S04_undeclared_gate_field_routes_upstream) ... ok\ntest_EC_S15_independent_completeness_detects_omission (tests.verification_productization.test_evaluation_review.EvaluationReviewTests.test_EC_S15_independent_completeness_detects_omission) ... ok\ntest_EC_S16_unresolved_result_is_not_review_ready (tests.verification_productization.test_evaluation_review.EvaluationReviewTests.test_EC_S16_unresolved_result_is_not_review_ready) ... ok\n\n----------------------------------------------------------------------\nRan 14 tests in 0.003s\n\nOK\n",
+      "raw_output_digest": "sha256:698203d154e23e51dc21243071733b383367872e295f44ea71d4013ae4d0d5e1",
+      "tests_run": 14
+    },
+    {
+      "command": "python3 -m unittest discover -s tests/verification_productization -v",
+      "exit_code": 0,
+      "name": "verification_productization_accumulated",
+      "raw_output": "test_evidence_input_identity_is_exact_and_producer_bound (test_domain_spec.ProofDomainSpecTests.test_evidence_input_identity_is_exact_and_producer_bound) ... ok\ntest_exact_set_does_not_generate_coverage_completeness_obligation (test_domain_spec.ProofDomainSpecTests.test_exact_set_does_not_generate_coverage_completeness_obligation) ... ok\ntest_obligation_identity_is_deterministic_for_same_semantic_key (test_domain_spec.ProofDomainSpecTests.test_obligation_identity_is_deterministic_for_same_semantic_key) ... ok\ntest_proof_codec_reuses_control_plane_canonicalization (test_domain_spec.ProofDomainSpecTests.test_proof_codec_reuses_control_plane_canonicalization) ... ok\ntest_review_declared_generates_exactly_one_coverage_completeness_obligation (test_domain_spec.ProofDomainSpecTests.test_review_declared_generates_exactly_one_coverage_completeness_obligation) ... ok\ntest_validator_rejects_claim_reference_outside_coverage_basis (test_domain_spec.ProofDomainSpecTests.test_validator_rejects_claim_reference_outside_coverage_basis) ... ok\ntest_EC_M04_undeclared_requirement_cannot_be_p32_repair (test_evaluation_review.EvaluationReviewTests.test_EC_M04_undeclared_requirement_cannot_be_p32_repair) ... ok\ntest_EC_M13_evaluator_cannot_emit_gate_pass (test_evaluation_review.EvaluationReviewTests.test_EC_M13_evaluator_cannot_emit_gate_pass) ... ok\ntest_EC_M15_completeness_does_not_call_generator (test_evaluation_review.EvaluationReviewTests.test_EC_M15_completeness_does_not_call_generator) ... ok\ntest_EC_S04_undeclared_gate_field_routes_upstream (test_evaluation_review.EvaluationReviewTests.test_EC_S04_undeclared_gate_field_routes_upstream) ... ok\ntest_EC_S15_independent_completeness_detects_omission (test_evaluation_review.EvaluationReviewTests.test_EC_S15_independent_completeness_detects_omission) ... ok\ntest_EC_S16_unresolved_result_is_not_review_ready (test_evaluation_review.EvaluationReviewTests.test_EC_S16_unresolved_result_is_not_review_ready) ... ok\ntest_EC_M01_manual_override_mutant_is_detected (test_evidence_compiler.EvidenceCompilerTests.test_EC_M01_manual_override_mutant_is_detected) ... ok\ntest_EC_M14_handoff_override_mutant_is_detected (test_evidence_compiler.EvidenceCompilerTests.test_EC_M14_handoff_override_mutant_is_detected) ... ok\ntest_EC_M17_incomplete_producer_is_not_zero_failures (test_evidence_compiler.EvidenceCompilerTests.test_EC_M17_incomplete_producer_is_not_zero_failures) ... ok\ntest_EC_S01_authoritative_structured_source_wins (test_evidence_compiler.EvidenceCompilerTests.test_EC_S01_authoritative_structured_source_wins) ... ok\ntest_EC_S14_handoff_totals_are_non_authoritative (test_evidence_compiler.EvidenceCompilerTests.test_EC_S14_handoff_totals_are_non_authoritative) ... ok\ntest_EC_M05_same_result_false_claim_after_mutation_is_detected (test_evidence_repair.EvidenceRepairTests.test_EC_M05_same_result_false_claim_after_mutation_is_detected) ... ok\ntest_EC_S05_evidence_only_repair_keeps_result_identity (test_evidence_repair.EvidenceRepairTests.test_EC_S05_evidence_only_repair_keeps_result_identity) ... ok\ntest_EC_S06_result_bytes_change_requires_new_result_sha (test_evidence_repair.EvidenceRepairTests.test_EC_S06_result_bytes_change_requires_new_result_sha) ... ok\ntest_canonical_package_accepts_valid_nested_contract (test_package_preflight.PackagePreflightTests.test_canonical_package_accepts_valid_nested_contract) ... ok\ntest_canonical_package_rejects_empty_trusted_basis (test_package_preflight.PackagePreflightTests.test_canonical_package_rejects_empty_trusted_basis) ... ok\ntest_canonical_package_rejects_wrong_package_digest (test_package_preflight.PackagePreflightTests.test_canonical_package_rejects_wrong_package_digest) ... ok\ntest_canonical_package_rejects_wrong_verification_ref_type (test_package_preflight.PackagePreflightTests.test_canonical_package_rejects_wrong_verification_ref_type) ... ok\ntest_ec_m02_floating_dependency_mutant_is_killed (test_package_preflight.PackagePreflightTests.test_ec_m02_floating_dependency_mutant_is_killed) ... ok\ntest_ec_m03_future_self_mutant_is_killed (test_package_preflight.PackagePreflightTests.test_ec_m03_future_self_mutant_is_killed) ... ok\ntest_ec_s02_floating_dependency_is_rejected_before_p32 (test_package_preflight.PackagePreflightTests.test_ec_s02_floating_dependency_is_rejected_before_p32) ... ok\ntest_ec_s03_future_self_materialization_cycle_is_structurally_unsatisfiable (test_package_preflight.PackagePreflightTests.test_ec_s03_future_self_materialization_cycle_is_structurally_unsatisfiable) ... ok\ntest_p34_judgment_cannot_be_required_as_p32_deterministic_input (test_package_preflight.PackagePreflightTests.test_p34_judgment_cannot_be_required_as_p32_deterministic_input) ... ok\n\n----------------------------------------------------------------------\nRan 29 tests in 0.014s\n\nOK\n",
+      "raw_output_digest": "sha256:1f1aeab03148f1ee4401e29720bdfc71cfdeffda328a4550429dc88e8c4e739c",
+      "tests_run": 29
+    }
+  ],
+  "derived_facts": {
+    "authoritative_fact_override": 0,
+    "incomplete_obligation_set_false_complete": 0,
+    "mutant_false_acceptance": 0,
+    "mutants_detected": {
+      "EC-M01": true,
+      "EC-M04": true,
+      "EC-M05": true,
+      "EC-M13": true,
+      "EC-M14": true,
+      "EC-M15": true,
+      "EC-M17": true
+    },
+    "non_p34_gate_pass_emission": 0,
+    "post_hoc_requirement_misrouted_to_p32": 0,
+    "same_result_false_claim_after_result_mutation": 0,
+    "scenarios": {
+      "EC-S01": "PASS",
+      "EC-S04": "PASS",
+      "EC-S05": "PASS",
+      "EC-S06": "PASS",
+      "EC-S14": "PASS",
+      "EC-S15": "PASS",
+      "EC-S16": "PASS"
+    }
+  },
+  "hosted_inherited_regressions": {
+    "control_plane": {
+      "command": "python3 -m unittest discover -s tests/control_plane -v",
+      "exit_code": 0,
+      "tests_run": 230
+    },
+    "job_id": 101315357909,
+    "merge_ref_revision": "96b095c0f6f02e0e8598b6f4d89f8447ecccfb5b",
+    "merge_ref_tree": "ae768e3ae2f1a2f4401ab4183a952b359f5441fa",
+    "project_state": {
+      "command": "python3 -m unittest discover -s tests/project_state -v",
+      "exit_code": 0,
+      "tests_run": 82
+    },
+    "run_id": 33969492413,
+    "runner_python": "3.12.14",
+    "skillset": {
+      "command": "python3 -m unittest discover -s tests/skillset -v",
+      "exit_code": 0,
+      "tests_run": 133
+    }
+  },
+  "interpreter": "Python 3.13.5",
+  "kind": "VP_I02_P32_EXECUTION_EVIDENCE",
+  "not_gate_verdict": true,
+  "not_proof_evaluation": true,
+  "package_id": "VP-I02-P31-01",
+  "package_ref": "9a724830992d27681b223c8b424891e46623aeed",
+  "provider_runs": [
+    {
+      "artifact_digest": "sha256:e0d1a5a4b8b480e93765bad2fc093cfbf8ddc7e363fffb80352d13b58c354e85",
+      "artifact_id": 9970485893,
+      "conclusion": "success",
+      "job_ids": [101315357706, 101315357950, 101315357953, 101315358066, 101315402039],
+      "name": "Aegis Control Plane CP-I09 Plugin Profile",
+      "run_attempt": 1,
+      "run_id": 33969492434
+    },
+    {
+      "artifact_digest": "sha256:61c45eb1b322721ca1a1fbe290d8c51ca9d6736abe34e4d2093e797777067235",
+      "artifact_id": 9970482971,
+      "conclusion": "success",
+      "job_ids": [101315357770],
+      "name": "Aegis Control Plane CP-I04 Historical Trust",
+      "run_attempt": 1,
+      "run_id": 33969492442
+    },
+    {
+      "artifact_digest": "sha256:8a4818374f67416ed038b78f1235801b881fb6ff8155c1d1395556ae2d40a841",
+      "artifact_id": 9970483062,
+      "conclusion": "success",
+      "job_ids": [101315357602],
+      "name": "Aegis Control Plane CP-I06 Repair Recovery",
+      "run_attempt": 1,
+      "run_id": 33969492428
+    },
+    {
+      "artifact_digest": "sha256:950e786a0726c9feb1cfa0d5a56fa977496a4b3e72db36a5e7134b702c2921c8",
+      "artifact_id": 9970482909,
+      "conclusion": "success",
+      "job_ids": [101315357894],
+      "name": "Aegis Control Plane CP-I08 Integrated D0",
+      "run_attempt": 1,
+      "run_id": 33969492465
+    },
+    {
+      "artifact_digest": "sha256:06c119a0d45fca49ed7a21381be7b2f603fdfcb1f457cae02e573e55407476c3",
+      "artifact_id": 9970482245,
+      "conclusion": "success",
+      "job_ids": [101315357848],
+      "name": "Aegis Control Plane CP-I05 Dispatch Reconciliation",
+      "run_attempt": 1,
+      "run_id": 33969492417
+    },
+    {
+      "artifact_digest": "sha256:606ea7b67ffd0031c48729210aa419aa2f8597ac99b2984565e51e8cdca67e81",
+      "artifact_id": 9970482014,
+      "conclusion": "success",
+      "job_ids": [101315357909],
+      "name": "Aegis Control Plane CP-I01 Foundation",
+      "run_attempt": 1,
+      "run_id": 33969492413
+    },
+    {
+      "artifact_digest": "sha256:525ed6dff9ff5b197a600c465684a53d7b82d37f277c762045854548d94afac7",
+      "artifact_id": 9970483937,
+      "conclusion": "success",
+      "job_ids": [101315357927],
+      "name": "Aegis Control Plane CP-I02 Mutation",
+      "run_attempt": 1,
+      "run_id": 33969492444
+    },
+    {
+      "artifact_digest": "sha256:efd63875dfd52a1e2cab783c83837ea2fc542618ae19828576e71bf1ba66812f",
+      "artifact_id": 9970486112,
+      "conclusion": "success",
+      "job_ids": [101315357781],
+      "name": "Aegis Control Plane CP-I07 Platform Boundary",
+      "run_attempt": 1,
+      "run_id": 33969492420
+    }
+  ],
+  "qualification_merge_ref": {
+    "candidate_equivalent_tree": true,
+    "revision": "96b095c0f6f02e0e8598b6f4d89f8447ecccfb5b",
+    "tree": "ae768e3ae2f1a2f4401ab4183a952b359f5441fa"
+  },
+  "qualification_pr": "https://github.com/Mostorm-Labs/aegis/pull/75",
+  "repository": {
+    "full_name": "Mostorm-Labs/aegis",
+    "provider": "github"
+  },
+  "schema_version": "0.1",
+  "scope_deviation": "none",
+  "source_reconstruction": {
+    "exact_blob_match": true,
+    "method": "GitHub exact blob retrieval plus local git hash-object verification",
+    "source_blobs": {
+      "tests/verification_productization/__init__.py": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "tests/verification_productization/test_domain_spec.py": "4591233b76a797e677c3b68021128b2bc2f48e83",
+      "tests/verification_productization/test_evaluation_review.py": "a08907e8b6c06c939a78cc8b62ba5a593d5adf9d",
+      "tests/verification_productization/test_evidence_compiler.py": "61330b5482f60edfbc918ac24c60d15b6d2ac6ab",
+      "tests/verification_productization/test_evidence_repair.py": "2e70b37555053abf27bb5075bceb8bfb54130416",
+      "tests/verification_productization/test_package_preflight.py": "212923b831fcab3d23df580ce38fea8084952662",
+      "tools/aegis_control/canonical.py": "cb878bfedd2d7ad9f0d1fd93469e5ce063ab01b0",
+      "tools/aegis_proof/__init__.py": "1db0443d2602ccb5020ab75b098ef00a5f639fbb",
+      "tools/aegis_proof/domain.py": "7d12f774d81884e1ac8ab071663c20511aafd9bd",
+      "tools/aegis_proof/evaluation.py": "fc348442169ab154bc6506d1f46ea1f9da2c1dfa",
+      "tools/aegis_proof/evidence.py": "64f605cfd546ab7bd0925f83250402092a617db8",
+      "tools/aegis_proof/obligations.py": "7c020ee0984e17a327f750a20a815e470c2e14ef",
+      "tools/aegis_proof/package.py": "5b74f4d9ea3e0c8f387564928ec15a3ef854ce7f",
+      "tools/aegis_proof/ports.py": "77b77b1952ce90c39170e2ce083d3c00f7e0be9b",
+      "tools/aegis_proof/review.py": "c3e1b2bbf82f21337a808721e0bb0c78fe19e830",
+      "tools/aegis_proof/spec.py": "6183553c71a6ea608c03f9efcc2f78150ff629af"
+    }
+  },
+  "subject_materialized_ref": "https://github.com/Mostorm-Labs/aegis/pull/74",
+  "subject_result_revision": "37d65b549ea9be8150a08b911dff2892535810d3",
+  "subject_result_tree": "ae768e3ae2f1a2f4401ab4183a952b359f5441fa",
+  "task_anchor": {
+    "relation": "ancestor",
+    "revision": "674e01737621621b8131e35f83313fb0154a9f6d"
+  },
+  "unresolved_required_refs": 0
+}
