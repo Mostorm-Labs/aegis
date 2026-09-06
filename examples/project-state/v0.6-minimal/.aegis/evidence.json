@@ -9,7 +9,7 @@
     },
     {
       "id": "ev-pr82-non-authorization-basis",
-      "ref": "https://github.com/Mostorm-Labs/aegis/pull/82#issuecomment-5122113780",
+      "ref": "https://github.com/Mostorm-Labs/aegis/pull/82#pullrequestreview-5122113780",
       "status": "available",
       "subject_ids": ["int-pr82"],
       "type": "non_authorization_basis"

@@ -81,6 +81,16 @@ class V06BindingTests(unittest.TestCase):
         self.assertEqual(current.integrations["integrations"][-1]["gate_decision_binding"]["kind"], "absent")
         self.assertEqual(validate_v06_transition(previous, current), [])
 
+    def test_integrated_evidence_is_append_only(self):
+        previous = load_manifests(ROOT / "examples/project-state/v0.6-minimal")
+        current = copy.deepcopy(previous)
+        item = current.integrations["integrations"][0]
+        original = list(item["evidence_ids"])
+        item["evidence_ids"] = original + ["ev-pr82-non-authorization-basis"]
+        self.assertEqual(validate_v06_transition(previous, current), [])
+        item["evidence_ids"] = ["ev-pr82-non-authorization-basis"]
+        self.assertTrue(any("append-only" in e for e in validate_v06_transition(previous, current)))
+
 
 if __name__ == "__main__":
     unittest.main()

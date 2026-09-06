@@ -37,4 +37,10 @@ def validate_v06_transition(previous: ManifestSet, current: ManifestSet) -> list
                 if item.get(key) != new[iid].get(key): errors.append(f"integrated occurrence {iid} immutable field {key} changed")
             if _binding(item, previous.schema_version) != _binding(new[iid], current.schema_version):
                 errors.append(f"integrated occurrence {iid} immutable field gate_decision_binding changed")
+            old_evidence = item.get("evidence_ids", [])
+            new_evidence = new[iid].get("evidence_ids", [])
+            if not (isinstance(old_evidence, list) and isinstance(new_evidence, list)):
+                errors.append(f"integrated occurrence {iid} evidence_ids must remain list-valued")
+            elif new_evidence[:len(old_evidence)] != old_evidence:
+                errors.append(f"integrated occurrence {iid} evidence_ids must be append-only")
     return errors
