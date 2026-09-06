@@ -91,6 +91,40 @@ class V06BindingTests(unittest.TestCase):
         item["evidence_ids"] = ["ev-pr82-non-authorization-basis"]
         self.assertTrue(any("append-only" in e for e in validate_v06_transition(previous, current)))
 
+    def test_v06_awaiting_bound_rejects_noncurrent_gate_identity(self):
+        manifests = load_manifests(ROOT / "examples/project-state/v0.6-minimal")
+        current = copy.deepcopy(manifests)
+        item = current.integrations["integrations"][0]
+        item["status"] = "awaiting_integration"
+        item.pop("integrated_revision", None)
+        decision_id = item["gate_decision_binding"]["gate_decision_id"]
+        gate_id = next(d["gate_id"] for d in current.gates["decisions"] if d["id"] == decision_id)
+        gate = next(g for g in current.gates["gates"] if g["id"] == gate_id)
+        authority_id = gate["authority_ids"][0]
+        authority = next(a for a in current.authorities["authorities"] if a["id"] == authority_id)
+        authority["status"] = "Superseded"
+        errors = validate_manifests(current, strict_gate_validity=True)
+        self.assertTrue(any("non-current authority" in e or "requires current-valid gate" in e for e in errors), errors)
+
+    def test_integrated_immutable_fields_are_all_protected(self):
+        previous = load_manifests(ROOT / "examples/project-state/v0.6-minimal")
+        fields = (("id", "int-mutated"), ("kind", "commit"), ("ref", "https://example/other"), ("target_ref", "release"), ("integrated_revision", "deadbeef"), ("gate_decision_binding", {"kind": "absent", "reason": "no_applicable_integration_gate_decision"}))
+        for key, value in fields:
+            current = copy.deepcopy(previous)
+            current.integrations["integrations"][0][key] = value
+            errors = validate_v06_transition(previous, current)
+            self.assertTrue(any(f"immutable field {key}" in e for e in errors) or (key == "id" and any("removed immutable integration" in e for e in errors)), (key, errors))
+
+    def test_bound_pass_blocked_and_absent_projection_are_distinct(self):
+        base = load_manifests(ROOT / "examples/project-state/v0.6-minimal")
+        cases = (("gate-eval-framework-pr1::decision::0001", "conforming"), ("gate-openai-real-baseline::decision::0001", "nonconforming"), (None, "nonconforming"))
+        for decision_id, expected in cases:
+            current = copy.deepcopy(base)
+            item = current.integrations["integrations"][0]
+            item["gate_decision_binding"] = ({"kind": "bound", "gate_decision_id": decision_id} if decision_id else {"kind": "absent", "reason": "no_applicable_integration_gate_decision"})
+            projection = next(x for x in compute_state(current)["integration_conformance"] if x["integration_id"] == item["id"])
+            self.assertEqual(expected, projection["conformance"], decision_id)
+
 
 if __name__ == "__main__":
     unittest.main()

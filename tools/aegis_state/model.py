@@ -498,9 +498,13 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
         gate_id = None
         if schema_version == "0.6":
             binding = integration.get("gate_decision_binding")
+            if "gate_decision_id" in integration:
+                errors.append(f"integration {iid}: legacy gate_decision_id is forbidden in v0.6")
             if not isinstance(binding, dict) or binding.get("kind") not in {"bound", "absent"}:
                 errors.append(f"integration {iid}: gate_decision_binding must be bound or absent")
             elif binding.get("kind") == "bound":
+                if "reason" in binding:
+                    errors.append(f"integration {iid}: bound binding must not contain absent reason")
                 gate_decision_id = binding.get("gate_decision_id")
                 decision_item = decision_by_id.get(gate_decision_id)
                 if not isinstance(gate_decision_id, str) or gate_decision_id not in decision_by_id:
@@ -510,6 +514,8 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
                     gate = gate_by_id.get(gate_id)
             elif binding.get("reason") != "no_applicable_integration_gate_decision":
                 errors.append(f"integration {iid}: absent binding requires canonical reason")
+            elif "gate_decision_id" in binding:
+                errors.append(f"integration {iid}: absent binding must not contain gate_decision_id")
         elif schema_version == "0.5":
             gate_decision_id = integration.get("gate_decision_id")
             decision_item = decision_by_id.get(gate_decision_id)
@@ -578,11 +584,7 @@ def validate_manifests(manifests: ManifestSet, *, strict_gate_validity: bool = T
         for integration in integrations:
             if integration.get("status") != "awaiting_integration":
                 continue
-            if schema_version == "0.5":
-                decision_item = decision_by_id.get(integration.get("gate_decision_id"))
-                gate_id = decision_item.get("gate_id") if decision_item else None
-            else:
-                gate_id = integration.get("gate_id")
+            gate_id = integration_gate_id(integration)
             if gate_id in noncurrent_gate_ids:
                 errors.append(f"integration {integration.get('id')}: requires current-valid gate {gate_id}")
 

@@ -7,6 +7,27 @@ are semantic vocabulary, not runtime APIs.
 
 Use this reference when a project contains `.aegis/` or when the user asks to persist, inspect, validate, supersede, resume, or integrate machine-readable project state. Project State tooling is version-aware: v0.3, v0.4, v0.5, and v0.6 are distinct compatibility contracts. Apply each version's semantics to that version only; do not reinterpret v0.3/v0.4/v0.5 history as v0.6.
 
+## Current operational contract — v0.6
+
+The current model keeps Gate Contract, Gate Decision, Current Gate Decision,
+and Integration Gate Decision Binding distinct. Integration status and binding
+are constrained as follows: `awaiting_integration` requires `Bound` to a current
+PASS/PASS_WITH_FINDINGS decision; `integrated` permits `Bound(PASS)`,
+`Bound(BLOCKED_*)`, or `Absent`; `closed_unmerged` requires `Bound`.
+
+Conformance is projected independently: `Bound(PASS)` is conforming,
+`Bound(BLOCKED_*)` and `Absent` are nonconforming. `Absent` requires an exact
+occurrence identity, an occurrence basis, an accepted absence basis, and no
+contradictory applicable Gate evidence. Missing, failed, unresolved, stale,
+or read-failure data never authorizes Absent.
+
+After integration, `id`, `kind`, `ref`, `target_ref`, `integrated_revision`,
+and `gate_decision_binding` are immutable. `evidence_ids` is append-only for
+legal O6 corroboration. Later PASS decisions never rewrite historical
+`Bound(BLOCKED)` or `Absent`. v0.5 `gate_decision_id` migrates deterministically
+to v0.6 `Bound` with zero inferred Absent. O1–O6 are semantic vocabulary, not
+runtime APIs.
+
 ## Compatibility and v0.6 vocabulary
 
 v0.5 Gate Contract and Gate Decision lineage remain immutable in v0.6. A
@@ -26,6 +47,13 @@ Decision but cannot rewrite a historical `Bound(BLOCKED)` or `Absent` binding.
 All integrated identity fields and corroborating occurrence evidence remain
 immutable; deterministic replay and conflicting historical identity must fail
 closed. Read failure is an unknown/error state, never an absence claim.
+
+## v0.5 compatibility — Gate Decision lineage
+
+v0.5 separates immutable Gate Contracts from append-only Gate Decisions. Each
+Integration records occurrence-time `gate_decision_id`; later decisions alter
+current actionability only and never rewrite historical binding. v0.6 preserves
+this lineage through its immutable `bound` binding variant.
 
 ## Canonical layout
 
@@ -121,7 +149,7 @@ Current PASS/PASS_WITH_FINDINGS must cite available Gate evidence. Every `integr
 
 Do not reuse repository integration evidence as Gate acceptance evidence unless the Gate contract explicitly defines it as such.
 
-## Repository Integration lifecycle
+## v0.4 compatibility — Repository Integration lifecycle
 
 Authored statuses remain:
 
@@ -166,7 +194,7 @@ Gate blocker            = preserved
 
 This records a completed candidate that did not enter the target baseline. It is historical for Integration applicability and has no integration-occurrence conformance classification.
 
-## Derived Gate conformance
+## v0.4 compatibility — Derived Gate conformance
 
 For v0.4 `integrated` occurrences:
 
@@ -198,12 +226,15 @@ A nonconforming integration can be `current` when the merged revision is in the 
 
 Rules for mixed/historical/stale Authority and Gate validity remain the same as v0.3.
 
-## Generated state v0.4
+## Generated state and compatibility projections
 
 `state.json` adds:
 
 - `integration_conformance[]`;
 - `nonconforming_integrations[]`.
+
+v0.5/v0.6 additionally expose current and blocking Gate Decisions while
+preserving per-occurrence binding distinctions; v0.3 retains its legacy shape.
 
 It continues to include manifest digest, active stage, earliest untrusted layer, findings, Authority/Gate validity projections, blocking Gates, awaiting Integrations, Integration applicability, recommended stage, and handoff.
 
