@@ -2,9 +2,9 @@
 
 Aegis v0.2 is an evidence-driven software development Control Plane delivered primarily as one native **Aegis Plugin** exposing the exact nine canonical Skills. A portable **9-Skill Installation Kit** remains the fallback path.
 
-Current published prerelease identity: `v0.2.0-beta.2`.
+Current published prerelease identity: `v0.2.0-beta.3`.
 
-This guide describes the published beta.2 distribution and use model.
+This guide describes the beta.3 distribution and use model.
 
 ## Choose an installation path
 
@@ -27,10 +27,10 @@ https://github.com/Mostorm-Labs/aegis
 
 Use the repository-root `.agents/plugins/marketplace.json`. Do not append `/tree/...`, a branch name, or a manifest filename to the source URL.
 
-For a reproducible beta.2 installation, pin the immutable published tag:
+For a reproducible beta.3 installation, pin the immutable published tag:
 
 ```text
-v0.2.0-beta.2
+v0.2.0-beta.3
 ```
 
 ## Verify the exact-nine catalog
@@ -63,10 +63,10 @@ UI ordering is not significant; catalog identity is set-based and coherent as on
 The published prerelease asset is:
 
 ```text
-aegis-skill-installation-kit-v0.2.0-beta.2.zip
+aegis-skill-installation-kit-v0.2.0-beta.3.zip
 ```
 
-Verify the outer archive against the Release-provided `SHA256SUMS` or `aegis-release-v0.2.0-beta.2.json`, extract the outer archive once, and upload the nine nested Skill ZIPs without unpacking them.
+Verify the outer archive against the Release-provided `SHA256SUMS` or `aegis-release-v0.2.0-beta.3.json`, extract the outer archive once, and upload the nine nested Skill ZIPs without unpacking them.
 
 Expected nested archives:
 
@@ -84,10 +84,12 @@ aegis-gate-review.zip
 
 ## What v0.2 adds
 
-The distribution model remains Plugin + exact nine Skills, while the product semantics now include the formal Control Plane behavior accepted for v0.2:
+The distribution model remains Plugin + exact nine Skills, while the product semantics include the formal Control Plane behavior accepted for v0.2:
 
 - Current Authority and durable Project State as explicit control inputs;
 - evidence-bound implementation packages;
+- failure-mode-first blocking evidence qualification;
+- `Missing Evidence != Automatically Gate Blocked` while preserving `Code Complete != Gate Complete`;
 - `Task Anchor != Execution Cursor` and controlled interrupted-work resume;
 - independent Gate ownership;
 - durable result materialization before review;
@@ -96,6 +98,12 @@ The distribution model remains Plugin + exact nine Skills, while the product sem
 - fail-closed handling for unavailable, ambiguous, or mismatched repository identity.
 
 A bare revision is not a repository locator.
+
+### Blocking evidence in beta.3
+
+Aegis starts from the high-impact failure mode, checks existing credible independent detection coverage, and asks what residual proof gap remains. An Evidence Artifact is allowed to become a blocking Gate requirement only when its absence leaves such a failure mode without credible independent detection coverage.
+
+Independence is assessed at the detection-mechanism and oracle level. Re-running the same test locally and in CI does not create independent coverage, and multiple tests sharing the same faulty oracle do not protect against that oracle failure. Redundant confidence, diagnostic, audit, and observability evidence remains useful but non-blocking.
 
 ## How to use Aegis
 
@@ -156,12 +164,13 @@ Do not accept a partial or mixed Aegis catalog. For reproducibility, pin an immu
 The current prerelease is:
 
 ```text
-v0.2.0-beta.2
+v0.2.0-beta.3
 ```
 
 Earlier immutable published boundaries remain available for rollback and historical reproduction:
 
 ```text
+v0.2.0-beta.2
 v0.2.0-beta.1
 v0.1.0-beta.3
 ```
@@ -185,10 +194,11 @@ Aegis v0.2 does not claim:
 - **Installation Kit was unpacked too far:** upload the nine nested ZIP files, not their unpacked directories.
 - **Repository-backed handoff resolves the wrong repository:** stop; repository identity must be resolved before package/anchor/cursor reasoning.
 - **Declared repository is unavailable:** return `BLOCKED_REPOSITORY_IDENTITY`; do not substitute another checkout.
-- **Need a reproducible historical environment:** use an immutable published tag and its Release assets, including `v0.2.0-beta.1` or `v0.1.0-beta.3` when reproducing earlier behavior.
+- **Need a reproducible historical environment:** use an immutable published tag and its Release assets, including `v0.2.0-beta.2`, `v0.2.0-beta.1`, or `v0.1.0-beta.3` when reproducing earlier behavior.
 
 ## References
 
 - distribution semantics: [`plugin-distribution-contract-v0.1.md`](plugin-distribution-contract-v0.1.md)
 - prior v0.1 guide: [`installation-and-usage-v0.1.md`](installation-and-usage-v0.1.md)
-- published beta.2 release notes: [`releases/v0.2.0-beta.2.md`](releases/v0.2.0-beta.2.md)
+- beta.3 release notes: [`releases/v0.2.0-beta.3.md`](releases/v0.2.0-beta.3.md)
+- previous beta.2 release notes: [`releases/v0.2.0-beta.2.md`](releases/v0.2.0-beta.2.md)
