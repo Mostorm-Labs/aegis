@@ -168,3 +168,40 @@ jobs:
         run: python3 evals/scripts/validate_corpus.py
       - name: Run Aegis evaluation regressions
         run: python3 -m unittest discover -s evals/tests -v
+
+  diagnose-module:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - test_build
+          - test_candidate_plugin_parity
+          - test_composite
+          - test_control_plane_plugin_profile
+          - test_control_plane_v02_release_candidate
+          - test_distribution_contract
+          - test_distribution_validation
+          - test_installed_platform_distribution_gate
+          - test_installed_platform_gate
+          - test_metadata
+          - test_openai_plugin_materialization
+          - test_pd_p34_02_plugin_install
+          - test_pd_p34_03_plugin_behavioral_parity
+          - test_pd_p34_04_plugin_valid_upgrade
+          - test_pd_p34_05_plugin_invalid_upgrade
+          - test_plugin_package
+          - test_repository_identity_handoff
+          - test_routing
+          - test_routing_history
+          - test_trigger_boundaries
+          - test_workflow_paths
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run module
+        run: python3 -m unittest "tests.skillset.${{ matrix.module }}" -v
