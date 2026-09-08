@@ -43,7 +43,9 @@ Aegis finds the **Earliest Untrusted Layer** instead of blindly starting from co
 
 `Code Complete != Gate Complete`
 
-A result becomes a stable dependency only when its required evidence passes the relevant gate.
+`Missing Evidence != Automatically Gate Blocked`
+
+A result becomes a stable dependency only when the evidence necessary to cover its high-impact failure modes passes the relevant Gate. Redundant evidence remains useful for confidence, diagnostics, auditability, or observability, but does not block lifecycle progression solely for duplicate proof.
 
 Aegis v0.2 also formalizes repository-backed execution safety: repository identity is resolved before package, task-anchor, or execution-cursor reasoning. A revision is not a repository locator, and unresolved or mismatched repository identity fails closed.
 
@@ -89,30 +91,31 @@ Use the repository root marketplace manifest (`.agents/plugins/marketplace.json`
 Current published prerelease:
 
 ```text
-v0.2.0-beta.2
+v0.2.0-beta.3
 ```
 
 The published Release asset is:
 
 ```text
-https://github.com/Mostorm-Labs/aegis/releases/download/v0.2.0-beta.2/aegis-skill-installation-kit-v0.2.0-beta.2.zip
+https://github.com/Mostorm-Labs/aegis/releases/download/v0.2.0-beta.3/aegis-skill-installation-kit-v0.2.0-beta.3.zip
 ```
 
 Extract the outer archive once, then upload the nine nested Skill ZIPs without unpacking them.
 
 See [`docs/installation-and-usage-v0.2.md`](docs/installation-and-usage-v0.2.md) for installation, verification, usage, update, repository-backed execution, rollback, and troubleshooting guidance.
 
-Immutable `v0.2.0-beta.1` and `v0.1.0-beta.3` remain historical rollback/reproducibility boundaries.
+Immutable `v0.2.0-beta.2`, `v0.2.0-beta.1`, and `v0.1.0-beta.3` remain historical rollback/reproducibility boundaries.
 
 ## Status
 
-**v0.2 — Control Plane prerelease `v0.2.0-beta.2`, published from `main@cfb69ee10dee03e34b363820cd66136a127658cc` as one Plugin + exact nine Skills.**
+**v0.2 — Control Plane prerelease `v0.2.0-beta.3`, delivered as one Plugin + exact nine Skills with failure-mode-first blocking-evidence qualification.**
 
 This prerelease does not claim `SERVICE_PROFILE`, R0/S0/W7D service-scale qualification, rollout expansion, or zero-user-turn cross-Primary substantive chaining.
 
 ## Documentation
 
 - [`docs/installation-and-usage-v0.2.md`](docs/installation-and-usage-v0.2.md)
+- [`docs/releases/v0.2.0-beta.3.md`](docs/releases/v0.2.0-beta.3.md)
 - [`docs/releases/v0.2.0-beta.2.md`](docs/releases/v0.2.0-beta.2.md)
 - [`docs/installation-and-usage-v0.1.md`](docs/installation-and-usage-v0.1.md)
 - [`docs/plugin-distribution-contract-v0.1.md`](docs/plugin-distribution-contract-v0.1.md)
