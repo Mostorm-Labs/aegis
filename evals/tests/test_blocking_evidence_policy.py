@@ -34,10 +34,20 @@ class BlockingEvidencePolicyTests(unittest.TestCase):
         self.assertIn("does not by itself establish `EVIDENCE_GAP`", text)
         self.assertIn("alternate credible evidence", text)
 
+    def test_skill_entrypoints_apply_policy_to_default_decisions(self):
+        verification = self._read("skills/aegis-verification/SKILL.md")
+        gate_review = self._read("skills/aegis-gate-review/SKILL.md")
+        self.assertIn("Start from failure modes, not artifact lists", verification)
+        self.assertIn("Residual Proof Gap", verification)
+        self.assertIn("A missing named artifact is not automatically an `EVIDENCE_GAP`", gate_review)
+        self.assertIn("residual proof gap", gate_review)
+
     def test_plugin_materialization_matches_canonical_policy_files(self):
         mirrored_paths = [
+            "aegis-verification/SKILL.md",
             "aegis-verification/references/shared/core-invariants.md",
             "aegis-verification/references/verification.md",
+            "aegis-gate-review/SKILL.md",
             "aegis-gate-review/references/gate-review.md",
         ]
         for relative_path in mirrored_paths:
