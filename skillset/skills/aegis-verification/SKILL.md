@@ -9,7 +9,9 @@ Own `P20` Verification Design. Define credible proof before implementation.
 
 ## Verification design
 
-Map each important requirement through: `Requirement -> Invariant -> Oracle/Reference -> Fixture/Corpus -> Test/Probe -> Metric -> Threshold -> Evidence Artifact -> Gate`. Choose the cheapest evidence strength that credibly proves the contract.
+Start from failure modes, not artifact lists. An Evidence Artifact may become a blocking Gate requirement only when its absence leaves at least one high-impact failure mode without credible independent detection coverage. If alternate independent coverage already closes that proof gap, keep additional evidence non-blocking. Judge independence at the detection-mechanism and oracle level, not by artifact name or duplicate execution location.
+
+Map each important requirement through: `Requirement -> Failure Mode -> Existing Independent Coverage -> Residual Proof Gap -> Invariant -> Oracle/Reference -> Fixture/Corpus -> Test/Probe -> Metric -> Threshold -> Evidence Artifact -> Gate`. Choose the lowest-cost evidence strength that credibly closes the residual proof gap.
 
 **Earlier untrusted layer:** if the requirement, semantic contract, or architecture to verify is missing or contradictory, stop and hand back to `aegis`; verification must not freeze an undefined upstream truth.
 
