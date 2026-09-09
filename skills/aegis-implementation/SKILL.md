@@ -15,7 +15,7 @@ Once P31 authorizes implementation, the blocking completion target is stable. P3
 
 Use Superpowers when available for coding mechanics such as brainstorming, writing plans, TDD, systematic debugging, worktree isolation, plan execution, and verification-before-completion. Do not duplicate those mechanics here.
 
-**Earlier untrusted layer:** if implementation discovers missing or contradictory Authority, an ambiguous closure contract, a P20 Verification omission, or a P31 package omission, classify the root cause and return to the earliest owning layer. Do not redesign upstream truth or continuously extend P33 inside a coding task.
+**Earlier untrusted layer:** if implementation discovers missing or contradictory Authority, an ambiguous closure contract, a Verification Design omission, or a P31 package omission, classify the root cause and return to the earliest owning layer. Do not redesign upstream truth or continuously extend P33 inside a coding task.
 
 Read [references/implementation-control.md](references/implementation-control.md) and shared handoff/Authority contracts.
 
@@ -56,7 +56,7 @@ Before resuming interrupted repository work, classify the observed execution pos
 - `ANCHOR_DESCENDANT_WITHOUT_CURSOR`: no accepted cursor exists but the task anchor is an ancestor of observed HEAD; reconcile completed versus pending work, establish a cursor, then resume at the first incomplete verified step.
 - `DIVERGED`: accepted cursor/anchor ancestry cannot be established, history is incompatibly rewritten, or observed state contradicts Authority/scope; fail closed with `BLOCKED_EXECUTION_DIVERGENCE` or a more specific existing blocker.
 
-Apply `P33_REPETITION_GUARD`: new work caused by a P31 omission routes to P31 as `TASK_PACKAGE_DEFECT`; new work caused by a P20 omission routes to P20 as `VERIFICATION_DESIGN_DEFECT`. Root cause, not retry count, decides. The cursor remains navigation metadata; it neither expands the authorized task package nor becomes Gate evidence.
+Apply `P33_REPETITION_GUARD`: new work caused by a P31 omission routes to P31 as `TASK_PACKAGE_DEFECT`; new work caused by a Verification Design omission routes to the Verification owner as `VERIFICATION_DESIGN_DEFECT`. Root cause, not retry count, decides. The cursor remains navigation metadata; it neither expands the authorized task package nor becomes Gate evidence.
 
 A surface handoff changes where work executes; it does not transfer Primary Owner semantics. This Skill remains the P30-P33 owner while the authorized repository-heavy work executes on the code surface.
 
