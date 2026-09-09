@@ -5,7 +5,7 @@ description: Design Aegis verification evidence before implementation. Use when 
 
 # Aegis Verification
 
-Own `P20` Verification Design. Define credible proof before implementation so P31 can freeze a stable completion target.
+Own `P20` Verification Design. Define credible proof before implementation so the later implementation package can freeze a stable completion target.
 
 ## Verification design
 
@@ -17,7 +17,7 @@ Map each important requirement through:
 
 For each proposed blocking artifact record `failure_mode`, `impact`, `existing_independent_coverage`, `new_evidence_unique_detection_value`, and `blocking_justification`. Choose the lowest-cost evidence strength that credibly closes the residual proof gap.
 
-P20 is responsible for Verification closure before implementation. Do not leave a list of "tests we would like to have" for P34 to turn into new blocking requirements later. If a useful evidence idea does not uniquely detect a material uncovered failure mode, keep it corroborative or successor hardening.
+This stage is responsible for Verification closure before implementation. Do not leave a list of "tests we would like to have" for later Gate review to turn into new blocking requirements. If a useful evidence idea does not uniquely detect a material uncovered failure mode, keep it corroborative or successor hardening.
 
 Apply the Anti-Proof-Recursion Rule: evidence about another evidence mechanism becomes blocking only when that mechanism is itself a material undetected-failure source, lacks independent validation, and could materially change the Gate decision.
 

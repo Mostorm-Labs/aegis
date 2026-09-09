@@ -9,7 +9,7 @@ Own `P34` Gate Review, `P35` Defect Classification, and `P36` Fix / Reverificati
 
 ## Gate loop
 
-- At `P34`, audit the frozen completion target through `Frozen Requirement Audit`, `Frozen Evidence Audit`, and `Repository Reality Audit`. P34 verifies frozen obligations; it does not normally redesign Verification after implementation starts.
+- At `P34`, audit the frozen completion target through `Frozen Requirement Audit`, `Frozen Evidence Audit`, and `Repository Reality Audit`. P34 verifies frozen obligations; it does not normally redesign Verification after implementation starts. Agent claims are not evidence.
 - Classify a blocker as `FROZEN_REQUIREMENT_FAILURE` or `NEWLY_DISCOVERED_FINDING`. A late finding may newly block only when it exposes a high-impact correctness, safety, security, compatibility, data-integrity, or release-critical failure mode not reasonably covered by frozen evidence.
 - Every new blocking finding must state its failure mode, impact, existing independent coverage, unique detection value, why frozen evidence missed it, and why severity is sufficient to override closure stability. Otherwise classify it `NON_BLOCKING_FINDING` and optionally create successor work.
 - A missing named artifact is not automatically an `EVIDENCE_GAP`. Before blocking, identify the high-impact failure mode it was meant to detect, check alternate credible coverage and mechanism/oracle independence, and state the residual proof gap. Redundant supporting, confidence, diagnostic, audit, observability, or hardening evidence is non-blocking.
