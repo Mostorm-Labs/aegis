@@ -9,16 +9,18 @@ Own `P34` Gate Review, `P35` Defect Classification, and `P36` Fix / Reverificati
 
 ## Gate loop
 
-- At `P34`, audit Authority conformance, semantics/contracts, scope, automated tests, oracle/golden/differential evidence, performance/platform evidence when required, and downstream safety. Agent claims are not evidence. Resolve the returned `materialized_ref` at a reviewer-accessible durable evidence boundary before relying on executor claims; a local-only result is `BLOCKED_EVIDENCE`.
-- A missing named artifact is not automatically an `EVIDENCE_GAP`. Before blocking, identify the high-impact failure mode it was meant to detect, check alternate credible coverage and mechanism/oracle independence, and state the residual proof gap. Block only when the gap remains; redundant supporting, confidence, diagnostic, audit, or observability evidence is non-blocking.
-- Before resolving any repository-backed P34/P36 evidence, establish the declared `repository.provider/full_name` and same-repository `package_materialization_ref`; only then resolve package, anchor, or repair state. Missing, mismatched, ambiguous, or unavailable identity is `BLOCKED_REPOSITORY_IDENTITY` with `continue_execution: false`.
-- At `P35`, classify the owning defect layer before proposing a fix.
-- At `P36`, repair at the owning layer and rerun the failed evidence plus relevant regression evidence.
-- Before P36 returns to `CONTROL_REVIEW`, materialize the exact repair/reverification result and return its `materialized_ref`; if that cannot be independently resolved, classify the remaining proof-capability gap as `EVIDENCE_GAP` instead of claiming closure.
+- At `P34`, audit the frozen P31 completion target through `Frozen Requirement Audit`, `Frozen Evidence Audit`, and `Repository Reality Audit`. P34 verifies frozen obligations; it does not normally redesign Verification after implementation starts.
+- Classify a blocker as `FROZEN_REQUIREMENT_FAILURE` or `NEWLY_DISCOVERED_FINDING`. A late finding may newly block only when it exposes a high-impact correctness, safety, security, compatibility, data-integrity, or release-critical failure mode not reasonably covered by frozen evidence.
+- Every new blocking finding must state its failure mode, impact, existing independent coverage, unique detection value, why frozen evidence missed it, and why severity is sufficient to override closure stability. Otherwise classify it `NON_BLOCKING_FINDING` and optionally create successor work.
+- A missing named artifact is not automatically an `EVIDENCE_GAP`. Before blocking, identify the high-impact failure mode it was meant to detect, check alternate credible coverage and mechanism/oracle independence, and state the residual proof gap. Redundant supporting, confidence, diagnostic, audit, observability, or hardening evidence is non-blocking.
+- Apply the Anti-Proof-Recursion Rule. Do not create a blocking proof-of-proof chain unless the evidence mechanism itself is a material undetected-failure source, lacks independent validation, and can materially change the Gate decision.
+- Before resolving repository-backed P34/P36 evidence, establish the declared repository identity and resolve the exact result/evidence boundary required by the frozen package/profile. Missing, mismatched, ambiguous, or unavailable repository identity is `BLOCKED_REPOSITORY_IDENTITY`.
+- At `P35`, classify the owning defect layer before proposing a fix. Late findings must distinguish implementation defects from `VERIFICATION_DESIGN_DEFECT`, `TASK_PACKAGE_DEFECT`, and `NON_BLOCKING_HARDENING`; do not disguise an earlier-layer omission as implementation incomplete.
+- At `P36`, repair only implementation-owned work here and rerun the frozen failed evidence plus relevant regressions. Earlier-layer defects route back before a new/current execution package is issued.
 
-For Verification-bound results, P34 must independently resolve the exact package, result, blocking EvidenceInputRefs, ProofEvaluation, provider run applicability/completion, and independent obligation completeness. When a new Gate-critical requirement appears, apply `ReviewContractDiffer` and justify why it closes a residual high-impact failure-mode gap; `UNDECLARED` or `STRUCTURALLY_UNSATISFIABLE` requirements route to their owning earlier layer instead of becoming retroactive implementation repair work. ProofEvaluation, green CI, workflow summaries, handoff prose, and executor claims cannot issue or imply official Gate PASS.
+For Verification-bound results, P34 independently resolves the exact package, result, frozen blocking EvidenceInputRefs, ProofEvaluation/provider identities when required, and independent obligation completeness. `UNDECLARED` or `STRUCTURALLY_UNSATISFIABLE` late requirements route to the owning earlier layer instead of becoming retroactive implementation repair work. ProofEvaluation, green CI, workflow summaries, handoff prose, and executor claims cannot issue or imply official Gate PASS.
 
-**Earlier untrusted layer:** if review discovers a spec or Authority defect upstream of implementation, stop downstream repair and hand back to `aegis`; do not silently rewrite Authority inside Gate review.
+**Earlier untrusted layer:** if review discovers a spec, Authority, Verification Design, or Task Package defect upstream of implementation, stop downstream repair and hand back to `aegis`; do not silently rewrite Authority or expand the old closure contract inside Gate review.
 
 Read [references/gate-review.md](references/gate-review.md) and the shared status/Authority contracts.
 
@@ -27,7 +29,7 @@ Read [references/gate-review.md](references/gate-review.md) and the shared statu
 - `P34` Gate Review and `P35` Defect Classification default to `CONTROL_REVIEW`.
 - `P36` repository repair and reverification may execute on `CODE_REVERIFY` only after P35 classification has identified an implementation-owned repair and the repair scope/evidence obligations are explicit.
 - A `CONTROL_REVIEW -> CODE_REVERIFY` surface handoff changes execution location only; it does not transfer this Skill's P34-P36 Primary Owner semantics.
-- If classification identifies an upstream Authority/spec defect, do not hand repair to the code surface; route the owning upstream layer instead.
+- If classification identifies an upstream Authority/spec/Verification/package defect, do not hand repair to the code surface; route the owning upstream layer instead.
 
 Default OpenAI profile: `CONTROL_REVIEW -> ChatGPT`, `CODE_REVERIFY -> Codex`.
 
