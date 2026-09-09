@@ -35,9 +35,9 @@
       },
       {
         "name": "aegis-verification",
-        "tree_sha256": "0e5a1efd1efe3e0eaaec8e860b1e4fe1b2526df975fdc64ee94f1ebf5c144a57",
+        "tree_sha256": "3a5f4420a1c9967cc4823d9497e74ba1b24f8c1265c4771ca7fb9695d84e7e8c",
         "zip_filename": "aegis-verification.zip",
-        "zip_sha256": "458b1fee9d765aa320ed0395260e888f97f0c02245d3e60b8726a3e4071e421d"
+        "zip_sha256": "1e4dd349d2d0eb3b0ba14afe935ec8ad9b08a2ad05bf31cc16e3dbff31563234"
       },
       {
         "name": "aegis-governance",
@@ -53,9 +53,9 @@
       },
       {
         "name": "aegis-gate-review",
-        "tree_sha256": "ef30be832d1f13345c49d2c2aa334522d4de9e2b785fc5e6ef1b07a6272973eb",
+        "tree_sha256": "e95d2a858970e3d30fc646e7de6ff0813b6543e33924c8a902be9089e3f24c37",
         "zip_filename": "aegis-gate-review.zip",
-        "zip_sha256": "4c2a9687633244969b9748b6dc5696c435d99fc106dd0a88ba2c10e4ad624447"
+        "zip_sha256": "d119b48925b1111019a7cebfa7c3a8f011919f7a115a87da8cabb8e417d228d1"
       }
     ]
   },
