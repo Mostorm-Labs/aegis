@@ -47,9 +47,9 @@
       },
       {
         "name": "aegis-implementation",
-        "tree_sha256": "6177522c0c31f8e04d39a716b4a380b3f0312f48a206eb117986bef533fd4f6a",
+        "tree_sha256": "c3120f780e75301fd873cc9de3df9c6c9ee4a87987ad7c006bd4a6c47f1b2cdf",
         "zip_filename": "aegis-implementation.zip",
-        "zip_sha256": "46e49b7f1b41ad5411293f90677525b4a476845d8d2002178fd90045d15a853a"
+        "zip_sha256": "ec30b060dca4f018a066572fa17ab8201b91391601fb21fe01a7c0e2f072cf5c"
       },
       {
         "name": "aegis-gate-review",
