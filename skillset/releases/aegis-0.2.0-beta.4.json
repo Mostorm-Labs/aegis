@@ -47,15 +47,15 @@
       },
       {
         "name": "aegis-implementation",
-        "tree_sha256": "441b2ae0693684ac5b69ae6806211ef8f9df23abe1dc4071e56d6e9fcac33c73",
+        "tree_sha256": "6177522c0c31f8e04d39a716b4a380b3f0312f48a206eb117986bef533fd4f6a",
         "zip_filename": "aegis-implementation.zip",
-        "zip_sha256": "bc8d1c8c0a51bd6cdbb13df461b07b85b0dbd1876f099f478ac1435c8a898d6c"
+        "zip_sha256": "46e49b7f1b41ad5411293f90677525b4a476845d8d2002178fd90045d15a853a"
       },
       {
         "name": "aegis-gate-review",
-        "tree_sha256": "8aa1296fc548280d5c23bac114a3b75413d94641d131c7686b6a989c2886b062",
+        "tree_sha256": "ef30be832d1f13345c49d2c2aa334522d4de9e2b785fc5e6ef1b07a6272973eb",
         "zip_filename": "aegis-gate-review.zip",
-        "zip_sha256": "42f9e0b399daa36a9cf10ca606f94efa6da8b48a2ce096d009ff37f1384b59fc"
+        "zip_sha256": "4c2a9687633244969b9748b6dc5696c435d99fc106dd0a88ba2c10e4ad624447"
       }
     ]
   },
