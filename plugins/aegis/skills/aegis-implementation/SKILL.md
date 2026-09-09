@@ -36,8 +36,8 @@ Read [references/implementation-control.md](references/implementation-control.md
 - `resume_cursor` is nullable at the schema level. When P33 has an accepted continuation point, the handoff MUST carry a non-null `resume_cursor` with the execution ref, accepted revision, verified `completed_through`, and `next_action`. If no accepted continuation point exists yet, `resume_cursor: null` is valid.
 - A resumable task must not use historical HEAD equality as its only starting-state predicate. A valid descendant of the anchor/cursor is reconciled rather than rejected solely because HEAD advanced.
 - The coding surface may resolve ordinary uncertainty from repository/Authority/package/tests, but must return a blocker rather than invent missing Authority or semantic decisions.
-- Before returning P32/P33 results to `CONTROL_REVIEW`, satisfy the durable result/evidence boundary frozen by P31 and the selected profile. A local-only result is insufficient when independent reviewability was frozen as blocking.
-- Under Standard, do not force an evidence-only descendant when an exact PR head/result revision and applicable hosted CI already satisfy the frozen identity/evidence contract. Under Full, stricter materialization/provenance may remain blocking when justified.
+- Before returning P32/P33 results to `CONTROL_REVIEW`, satisfy the **reviewer-accessible** durable result/evidence boundary frozen by P31 and the selected profile. A local-only result is insufficient when independent reviewability was frozen as blocking.
+- Return the exact `materialized_ref` whenever the frozen contract requires durable reviewer-accessible materialization. Under Standard, do not force an evidence-only descendant when an exact PR head/result revision and applicable hosted CI already satisfy the frozen identity/evidence contract. Under Full, stricter materialization/provenance may remain blocking when justified.
 
 ## Verification-bound repository execution
 
@@ -45,7 +45,7 @@ For a repository-backed P32/P33 task governed by a Verification-bound package, d
 
 Repository identity preflight still occurs first. Never pass floating labels such as `accepted A4`, `latest Gate`, `latest run`, or ambient branch truth to the executor as trust identities.
 
-Execution returns carry exact identities required by the frozen contract, such as `result_revision`, reviewer-resolvable `materialized_ref` when required, `evidence_input_refs`, and provider run/attempt/job/artifact refs. Do not manually type proof totals already owned by EvidenceArtifact / ProofEvaluation, and do not emit or imply official Gate PASS.
+Execution returns carry exact identities required by the frozen contract, such as `result_revision`, reviewer-accessible `materialized_ref` when required, `evidence_input_refs`, and provider run/attempt/job/artifact refs. Do not manually type proof totals already owned by EvidenceArtifact / ProofEvaluation, and do not emit or imply official Gate PASS.
 
 ## P33 resume reconciliation
 
