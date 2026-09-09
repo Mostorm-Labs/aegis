@@ -27,20 +27,20 @@
 
 | ID | Stage | Required output | Exit criterion |
 | --- | --- | --- | --- |
-| P20 | Verification Design | invariant, oracle/reference, corpus/fixture, metric, threshold, evidence artifact, gate mapping | important requirements have credible proof methods |
+| P20 | Verification Design | requirement/invariant/failure-mode mapping, independent coverage, oracle/reference, fixture/corpus, exact execution, blocking vs corroborative evidence, Gate criterion | important requirements have credible proof; blocking evidence has unique high-impact detection justification |
 | P21 | Authority Review | source-of-truth map, conflicts, missing contracts, unresolved decisions | READY or explicitly BLOCKED; no silent conflicts |
 | P22 | Five-Axis Drift Review | product, semantic, architecture, implementation, verification drift findings | each drift is classified and owned |
 | P23 | Authority Supersession | old/new relation, reason, change summary, downstream impact | one Current Authority per scope; old version clearly superseded |
-| P24 | Release Readiness | RC evidence, migration/recovery/rollback/observability status as applicable | release gate passes or exact blockers are named |
+| P24 | Release Readiness | RC evidence proportionate to active profile, migration/recovery/rollback/observability status as applicable | release gate passes or exact risk-relevant blockers are named |
 
 ## Implementation
 
 | ID | Stage | Required output | Exit criterion |
 | --- | --- | --- | --- |
 | P30 | Implementation Planning | dependency graph, vertical slices, gate order | each slice has independent evidence and exit criteria |
-| P31 | Task Packaging | authority refs, scope, non-goals, modules/files, tests/oracles, evidence, dependencies | coding agent need not redesign the system to execute |
-| P32 | Implementation | code/change, tests, evidence, blocker classification | task evidence is complete enough for gate review |
-| P33 | Resume | current state/diff, completed work, pending work, safe continuation | valid work is preserved and authority context restored |
-| P34 | Gate Review | authority/contract/evidence conformance verdict | PASS/PASS_WITH_FINDINGS or precise blocker |
-| P35 | Defect Classification | defect type, layer, owner, affected authority/gate | fix is routed to the correct layer |
-| P36 | Fix / Reverification | fix plus rerun evidence and regression closure | original defect and introduced regressions are closed |
+| P31 | Task Packaging | authority refs, scope/non-goals, required/forbidden changes, tests/oracles, blocking/corroborative evidence, terminal success/blockers in `EXECUTION_CLOSURE_CONTRACT` | blocking completion target is frozen; coding agent need not redesign system or infer finish criteria |
+| P32 | Implementation | code/change, frozen required tests/evidence, durable result identities, terminal blocker if any | complete frozen closure contract reaches terminal success or explicit terminal blocker |
+| P33 | Resume | current state/diff, completed work, pending work, safe continuation plus root-cause check for any newly introduced work | valid work is preserved; resume does not expand package; P20/P31 omissions route earlier |
+| P34 | Gate Review | Frozen Requirement Audit, Frozen Evidence Audit, Repository Reality Audit, classified late findings | PASS/PASS_WITH_FINDINGS or blocker justified by frozen failure or real newly discovered uncovered high-impact defect |
+| P35 | Defect Classification | defect type/layer/owner, late-finding source, affected authority/gate | implementation vs spec vs Verification Design vs Task Package vs non-blocking hardening is distinguished |
+| P36 | Fix / Reverification | implementation-owned fix plus rerun frozen evidence and regression closure | original implementation defect and introduced regressions are closed; upstream defects have regenerated authority/package |

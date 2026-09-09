@@ -34,6 +34,36 @@ Handoff
 - Inputs still required
 ```
 
+## P31 Execution Closure output
+
+```yaml
+EXECUTION_CLOSURE_CONTRACT:
+  implementation:
+    required_changes: []
+    forbidden_changes: []
+  tests:
+    required: []
+  hosted_verification:
+    required: []
+    optional: []
+  evidence:
+    blocking: []
+    corroborative: []
+  terminal_success:
+    all_of: []
+  terminal_blockers:
+    explicit_classes:
+      - AUTHORITY_CONFLICT
+      - MISSING_REQUIRED_INPUT
+      - ENVIRONMENT_BLOCKER
+      - FROZEN_VERIFICATION_FAILURE
+      - NEW_HIGH_IMPACT_FAILURE_MODE
+  return_policy:
+    continue_until_terminal_state: true
+```
+
+Do not issue P32 when terminal success or a required blocking oracle is ambiguous. Repair P20/P31 first.
+
 ## Bootstrap output
 
 ```text
@@ -44,6 +74,7 @@ Project Profile Card
 - Work Type:
 - Current Maturity:
 - Recommended Profile:
+- Profile Justification if Full:
 - Earliest Untrusted Layer:
 - Existing Current Authority:
 - Critical Missing Authority:
@@ -62,34 +93,26 @@ First Action
 
 ## Gate review output
 
-```text
-Gate: <id/name>
-Verdict: PASS | PASS_WITH_FINDINGS | BLOCKED_IMPLEMENTATION | BLOCKED_AUTHORITY | BLOCKED_EVIDENCE | BLOCKED_ENVIRONMENT
-
-Authority Baseline
-Implementation Baseline
-
-Evidence Review
-- Contract:
-- Tests:
-- Oracle/Golden/Differential:
-- Performance:
-- Platform:
-- Demo/Artifact:
-
-Drift Review
-- Product:
-- Semantic:
-- Architecture:
-- Implementation:
-- Verification:
-
-Findings
-- <classification>: <finding>
-
-Downstream Impact
-Next Action
+```yaml
+gate_review:
+  gate: null
+  verdict: PASS | PASS_WITH_FINDINGS | BLOCKED_IMPLEMENTATION | BLOCKED_AUTHORITY | BLOCKED_EVIDENCE | BLOCKED_ENVIRONMENT
+  authority_baseline: null
+  implementation_baseline: null
+  frozen_requirements:
+    passed: []
+    failed: []
+  frozen_evidence:
+    passed: []
+    failed: []
+  new_findings:
+    blocking_high_impact: []
+    non_blocking: []
+  downstream_impact: null
+  next_action: null
 ```
+
+Every newly discovered blocking finding must include failure mode, impact, existing independent coverage, unique detection value, why frozen evidence did not cover it, and why severity justifies overriding closure stability.
 
 ## Writing rule
 

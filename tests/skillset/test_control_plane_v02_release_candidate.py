@@ -9,7 +9,7 @@ from tools.aegis_skillset.package import render_release_manifest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = "0.2.0-beta.3"
+VERSION = "0.2.0-beta.4"
 TAG = f"v{VERSION}"
 
 
@@ -141,6 +141,7 @@ class ControlPlaneV02ReleaseCandidateTests(unittest.TestCase):
             "0.1.0-beta.3",
             "0.2.0-beta.1",
             "0.2.0-beta.2",
+            "0.2.0-beta.3",
         ):
             self.assertTrue((ROOT / f"skillset/releases/aegis-{version}.json").is_file())
             self.assertTrue((ROOT / f"docs/releases/v{version}.md").is_file())
