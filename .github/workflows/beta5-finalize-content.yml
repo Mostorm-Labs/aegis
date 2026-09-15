@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          python3 scripts/beta5_finalize_once.py > .beta5-finalize-error.log 2>&1
+          python3 scripts/beta5_finalize_wrapper.py > .beta5-finalize-error.log 2>&1
           status=$?
           cat .beta5-finalize-error.log
           if [ "$status" -ne 0 ]; then
