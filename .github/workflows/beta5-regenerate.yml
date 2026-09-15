@@ -1,0 +1,47 @@
+name: Beta5 regenerate exact-nine
+
+on:
+  push:
+    branches: [feat/repo-local-execution-authority]
+    paths: [".beta5-regenerate/READY"]
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Regenerate canonical distributions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/build_skillset.py --write
+          python3 scripts/build_aegis_distributions.py --version 0.2.0-beta.5 --write-manifest
+          python3 scripts/build_openai_plugin_materialization.py --release-version 0.2.0-beta.5 --write
+      - name: Verify regenerated beta.5 tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/build_skillset.py --check
+          python3 scripts/build_aegis_distributions.py --version 0.2.0-beta.5 --check
+          python3 scripts/build_openai_plugin_materialization.py --release-version 0.2.0-beta.5 --check
+          python3 -m unittest tests.skillset.test_repo_local_execution_authority -v
+          python3 -m unittest tests.skillset.test_openai_plugin_materialization -v
+          python3 -m unittest tests.skillset.test_control_plane_v02_release_candidate -v
+      - name: Commit regenerated product tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add skillset skills plugins
+          git diff --cached --quiet && { echo 'no generated changes'; exit 1; }
+          git commit -m "Regenerate beta.5 after implementation routing fix"
+          git push origin HEAD:${GITHUB_REF_NAME}
