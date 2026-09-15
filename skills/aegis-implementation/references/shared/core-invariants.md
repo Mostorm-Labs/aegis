@@ -44,3 +44,11 @@ Do not require evidence solely to prove that another evidence mechanism is trust
 3. failure of that mechanism would materially affect the Gate decision.
 
 A proof-of-proof chain that does not add unique detection value for a material high-impact failure mode is corroborative, not blocking. Do not add generator tests, validator provenance, provenance-of-provenance, or equivalent recursive proof merely because each step can increase confidence.
+
+## Execution Authority Materialization Invariant
+
+P31 may materialize the smallest execution-required Authority/Verification/closure truth into a content-addressed repo-local package. Once that package is frozen, normal P32/P33 execution progressively loads it and does not repeatedly reconstruct the same truth from human-readable upstream sources.
+
+A surface handoff is a thin trigger, not a second specification. P32/P33 internal ImplementationDesign/RED-oracle checkpoints continue in the same code execution context when resolved; only a real Authority, Verification, package, scope, or environment blocker creates an early control return.
+
+`READY_FOR_CONTROL_REVIEW != P34 PASS`. The implementation producer returns durable identities; the Gate reviewer independently decides downstream trust.

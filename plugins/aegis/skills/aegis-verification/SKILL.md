@@ -19,6 +19,8 @@ For each proposed blocking artifact record `failure_mode`, `impact`, `existing_i
 
 This stage is responsible for Verification closure before implementation. Do not leave a list of "tests we would like to have" for later Gate review to turn into new blocking requirements. If a useful evidence idea does not uniquely detect a material uncovered failure mode, keep it corroborative or successor hardening.
 
+Keep `requirement`, `oracle`, and `evidence` distinct. For known-bad old behavior behind a critical invariant, freeze a RED-oracle precondition when practical; if the old implementation passes that oracle while the requirement is still known unsatisfied, route `VERIFICATION_DESIGN_DEFECT` instead of letting implementation adapt the test.
+
 Apply the Anti-Proof-Recursion Rule: evidence about another evidence mechanism becomes blocking only when that mechanism is itself a material undetected-failure source, lacks independent validation, and could materially change the Gate decision.
 
 **Earlier untrusted layer:** if the requirement, semantic contract, or architecture to verify is missing or contradictory, stop and hand back to `aegis`; verification must not freeze an undefined upstream truth.

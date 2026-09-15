@@ -108,7 +108,8 @@ When the route reaches implementation:
 
 1. Require an explicit implementation plan (`P30`) when the change has multiple dependent tasks or meaningful architectural risk.
 2. At `P31`, freeze an `EXECUTION_CLOSURE_CONTRACT` with required/forbidden changes, required tests/oracles, required vs optional hosted verification, blocking vs corroborative evidence, terminal success, explicit terminal blockers, and `continue_until_terminal_state: true`.
-3. At `P32`, execute the complete frozen contract until terminal success or an explicit terminal blocker. Do not redesign upstream authority and do not return merely because an intermediate checkpoint finished.
+   When repository execution would otherwise repeatedly reconstruct upstream context, materialize the frozen execution truth under `.aegis/packages/<task-id>/` and hand the code surface a thin package trigger; legacy remote packages remain valid.
+3. At `P32`, execute the complete frozen contract until terminal success or an explicit terminal blocker. Use internal ImplementationDesignPreflight / RED-oracle checkpoints when frozen/applicable, but do not add a control round trip when they resolve cleanly. Do not redesign upstream authority and do not return merely because an intermediate checkpoint finished.
 4. At `P33`, resume valid interrupted work after inspecting current diff/state. If new work exists because P20/P31 omitted obligations, stop the resume loop and route to the earlier owning layer rather than incrementally extending the package.
 5. At `P34`, audit Frozen Requirements, Frozen Evidence, and Repository Reality. Late redundant evidence/hardening is non-blocking; a real newly discovered high-impact uncovered failure mode may block with explicit override justification.
 6. At `P35`, classify the owning layer before fixing. Do not disguise Verification Design or Task Package defects as implementation incomplete.

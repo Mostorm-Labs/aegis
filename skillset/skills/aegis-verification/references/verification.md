@@ -46,3 +46,23 @@ Do not require evidence solely to prove that another evidence mechanism is trust
 3. failure of the mechanism would materially affect the Gate decision.
 
 A generator test, provenance validator, validator-provenance test, or similar proof-of-proof chain remains corroborative when it cannot detect a distinct material uncovered failure mode.
+
+## Requirement / oracle / evidence separation and RED Oracle Preflight
+
+A frozen Verification obligation MUST keep three questions distinct:
+- `requirement`: what system behavior must be true;
+- `oracle`: what observation can falsify or accept that behavior;
+- `evidence`: the durable artifact/identity produced by running the oracle.
+
+A green test is evidence. It proves the requirement only to the extent that P20 has frozen that test/oracle as adequate coverage for the requirement and its material failure modes.
+
+For atomic publication, consistency, recovery, ordering, concurrency, transaction semantics, or another critical behavioral invariant where a known old implementation violates the requirement, P20 SHOULD freeze a RED precondition when practical:
+
+```yaml
+oracle_precondition:
+  red_required: true
+  expected_failure: <behavior the old implementation must expose>
+  observation_seam: <canonical observer boundary>
+```
+
+P32/P33 then run the frozen acceptance oracle against the old implementation before production mutation. If the old implementation is known to violate the requirement but the oracle passes, stop with `VERIFICATION_DESIGN_DEFECT`. Do not let implementation rewrite the test around its preferred architecture.
