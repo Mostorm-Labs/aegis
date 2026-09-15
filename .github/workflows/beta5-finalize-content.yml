@@ -19,7 +19,21 @@ jobs:
         with:
           python-version: "3.12"
       - name: Apply beta.5 canonical and release-surface edits
-        run: python3 scripts/beta5_finalize_once.py
+        shell: bash
+        run: |
+          set +e
+          python3 scripts/beta5_finalize_once.py > .beta5-finalize-error.log 2>&1
+          status=$?
+          cat .beta5-finalize-error.log
+          if [ "$status" -ne 0 ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .beta5-finalize-error.log
+            git commit -m "chore: persist beta.5 finalizer diagnostic"
+            git push origin HEAD:${GITHUB_REF_NAME}
+            exit "$status"
+          fi
+          rm -f .beta5-finalize-error.log
       - name: Materialize deterministic beta.5 distributions
         shell: bash
         run: |
