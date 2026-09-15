@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mostorm-labs.github.io/aegis/schemas/execution-package-v0.1.schema.json",
+  "title": "Aegis Repo-local Execution Package v0.1",
+  "type": "object",
+  "required": ["schema_version", "task_id", "stage", "stage_owner", "repository", "execution_ref", "task_anchor", "resume_cursor", "continue_until_terminal_state", "return_surface"],
+  "properties": {
+    "schema_version": {"const": "0.1"},
+    "task_id": {"type": "string", "minLength": 1},
+    "stage": {"enum": ["P32", "P33", "P36"]},
+    "execution_authority_mode": {"enum": ["remote", "repo_materialized", "hybrid"], "default": "remote"},
+    "repository": {"type": "object", "required": ["provider", "full_name"], "properties": {"provider": {"const": "github"}, "full_name": {"type": "string", "minLength": 3}, "canonical_branch": {"type": "string"}}},
+    "execution_ref": {"type": "string", "minLength": 1},
+    "task_anchor": {"type": "object", "required": ["revision", "relation"], "properties": {"revision": {"type": "string", "pattern": "^[0-9a-fA-F]{40}$"}, "relation": {"const": "ancestor"}}},
+    "resume_cursor": {"oneOf": [{"type": "null"}, {"type": "object", "required": ["execution_ref", "revision", "completed_through", "next_action"]}]},
+    "authority_lock_ref": {"$ref": "#/$defs/localRef"},
+    "verification_lock_ref": {"$ref": "#/$defs/localRef"},
+    "execution_contract_ref": {"$ref": "#/$defs/localRef"},
+    "evidence_contract_ref": {"$ref": "#/$defs/localRef"},
+    "implementation_context_ref": {"$ref": "#/$defs/localRef"},
+    "continue_until_terminal_state": {"const": true},
+    "return_surface": {"const": "CONTROL_REVIEW"}
+  },
+  "$defs": {"localRef": {"type": "object", "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}, "additionalProperties": false}},
+  "additionalProperties": true
+}
