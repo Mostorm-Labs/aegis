@@ -1,0 +1,61 @@
+name: Beta5 generator invocation fix
+
+on:
+  push:
+    branches: [feat/repo-local-execution-authority]
+    paths: [".beta5-generator-fix/READY"]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fix generator write-mode invocations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          targets = [
+              Path('.github/workflows/beta5-cross-skill-sync.yml'),
+              Path('.github/workflows/beta5-release-surface.yml'),
+          ]
+          replacements = {
+              'python3 scripts/build_skillset.py\n': 'python3 scripts/build_skillset.py --write\n',
+              'python3 scripts/build_aegis_distributions.py --version 0.2.0-beta.5\n': 'python3 scripts/build_aegis_distributions.py --version 0.2.0-beta.5 --write-manifest\n',
+              'python3 scripts/build_openai_plugin_materialization.py --release-version 0.2.0-beta.5\n': 'python3 scripts/build_openai_plugin_materialization.py --release-version 0.2.0-beta.5 --write\n',
+          }
+          for path in targets:
+              text = path.read_text(encoding='utf-8')
+              for old, new in replacements.items():
+                  if old not in text:
+                      raise SystemExit(f'missing generator invocation in {path}: {old.strip()}')
+                  text = text.replace(old, new, 1)
+              path.write_text(text, encoding='utf-8')
+          PY
+      - name: Retire superseded bootstrap materializers
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .bootstrap-aegis-beta5 .materialize-aegis-beta5 .beta5-generator-fix
+          rm -f .github/workflows/bootstrap-aegis-beta5.yml
+          rm -f .github/workflows/materialize-aegis-beta5.yml
+          rm -f .github/workflows/beta5-generator-fix.yml
+      - name: Commit corrected finalization path
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Fix beta.5 generator write mode"
+          git push origin HEAD:${GITHUB_REF_NAME}
