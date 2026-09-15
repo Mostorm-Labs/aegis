@@ -17,7 +17,7 @@ Use Superpowers when available for coding mechanics such as brainstorming, writi
 
 **Earlier untrusted layer:** if implementation discovers missing or contradictory Authority, an ambiguous closure contract, a Verification Design omission, or a P31 package omission, classify the root cause and return to the earliest owning layer. Do not redesign upstream truth or continuously extend P33 inside a coding task.
 
-Read [references/implementation-control.md](references/implementation-control.md) and shared handoff/Authority contracts.
+Read [references/implementation-control.md](references/implementation-control.md) and shared handoff/Authority contracts. For `execution_authority_mode: repo_materialized | hybrid`, or when P31 should materialize execution truth into the repository, also read [references/repo-local-execution-authority.md](references/repo-local-execution-authority.md); missing mode remains legacy `remote`.
 
 ## Execution-surface boundary
 

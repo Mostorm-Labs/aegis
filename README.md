@@ -47,7 +47,11 @@ Aegis finds the **Earliest Untrusted Layer** instead of blindly starting from co
 
 A blocking Evidence Artifact must close a material high-impact failure mode that is not already credibly covered by another independent mechanism. Redundant evidence remains useful for confidence, diagnostics, auditability, or observability, but does not block lifecycle progression solely for duplicate proof.
 
-### Gate Closure Stability in beta.4
+### Repo-local Execution Authority
+
+Beta.5 materializes frozen execution truth under `.aegis/packages/<task-id>/`, uses progressive loading and thin surface handoffs, runs ImplementationDesignPreflight/RED Oracle Preflight inside P32/P33 when applicable, and preserves independent P34 Gate review. Missing `execution_authority_mode` remains legacy `remote`; `repo_materialized` and `hybrid` are additive.
+
+### Gate Closure Stability in beta.5
 
 Once P31 authorizes implementation, the **blocking completion target is frozen**. P31 now carries an explicit `EXECUTION_CLOSURE_CONTRACT`; P32 executes that frozen contract through terminal success or a real terminal blocker rather than returning at ordinary intermediate checkpoints.
 
@@ -103,30 +107,31 @@ Use the repository root marketplace manifest (`.agents/plugins/marketplace.json`
 Current published prerelease:
 
 ```text
-v0.2.0-beta.4
+v0.2.0-beta.5
 ```
 
 The published Release asset is:
 
 ```text
-https://github.com/Mostorm-Labs/aegis/releases/download/v0.2.0-beta.4/aegis-skill-installation-kit-v0.2.0-beta.4.zip
+https://github.com/Mostorm-Labs/aegis/releases/download/v0.2.0-beta.5/aegis-skill-installation-kit-v0.2.0-beta.5.zip
 ```
 
 Extract the outer archive once, then upload the nine nested Skill ZIPs without unpacking them.
 
 See [`docs/installation-and-usage-v0.2.md`](docs/installation-and-usage-v0.2.md) for installation, verification, usage, update, repository-backed execution, rollback, and troubleshooting guidance.
 
-Immutable `v0.2.0-beta.3`, `v0.2.0-beta.2`, `v0.2.0-beta.1`, and `v0.1.0-beta.3` remain historical rollback/reproducibility boundaries.
+Immutable `v0.2.0-beta.4`, `v0.2.0-beta.3`, `v0.2.0-beta.2`, `v0.2.0-beta.1`, and `v0.1.0-beta.3` remain historical rollback/reproducibility boundaries.
 
 ## Status
 
-**v0.2 — Control Plane prerelease `v0.2.0-beta.4`, delivered as one Plugin + exact nine Skills with stable post-P31 closure, risk-proportionate evidence, and late-finding Gate discipline.**
+**v0.2 — Control Plane prerelease `v0.2.0-beta.5`, delivered as one Plugin + exact nine Skills with repo-local execution authority, stable post-P31 closure, risk-proportionate evidence, and independent Gate discipline.**
 
 This prerelease does not claim `SERVICE_PROFILE`, R0/S0/W7D service-scale qualification, rollout expansion, or zero-user-turn cross-Primary substantive chaining.
 
 ## Documentation
 
 - [`docs/installation-and-usage-v0.2.md`](docs/installation-and-usage-v0.2.md)
+- [`docs/releases/v0.2.0-beta.5.md`](docs/releases/v0.2.0-beta.5.md)
 - [`docs/releases/v0.2.0-beta.4.md`](docs/releases/v0.2.0-beta.4.md)
 - [`docs/releases/v0.2.0-beta.3.md`](docs/releases/v0.2.0-beta.3.md)
 - [`docs/releases/v0.2.0-beta.2.md`](docs/releases/v0.2.0-beta.2.md)

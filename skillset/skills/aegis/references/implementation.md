@@ -62,3 +62,11 @@ Before fixing, decide which layer owns the defect. Distinguish implementation, s
 Repair at the owning layer. For implementation-owned repair, re-run the failed frozen evidence plus relevant regression evidence. If upstream authority/Verification/package changed, regenerate downstream execution authority before treating old tasks as current.
 
 A fix is complete only when the original failure and relevant regression obligations are closed against the current frozen contract.
+
+## Repo-local execution authority (v0.2 additive mode)
+
+P31 SHOULD use `execution_authority_mode: repo_materialized` or `hybrid` when execution truth can be frozen in the target repository. The package lives under `.aegis/packages/<task-id>/` and content-addresses its Authority lock, Verification lock, closure contract, evidence contract, and short implementation context. Missing mode remains legacy `remote`; no Project State schema migration is required.
+
+P32/P33 progressively load the repo-local package rather than refetching upstream Notion by default. Architecture-sensitive tasks run `ImplementationDesignPreflight` internally; resolved designs continue without a human round trip. Critical behavioral obligations may require **RED Oracle Preflight** before mutation; a known-bad old implementation passing the frozen oracle is `VERIFICATION_DESIGN_DEFECT`.
+
+The normal code-surface sequence is `inspect -> design -> RED oracle -> implement -> debug -> regression -> verification -> durable materialization`. Successful execution returns `READY_FOR_CONTROL_REVIEW`; independent P34 still owns PASS.

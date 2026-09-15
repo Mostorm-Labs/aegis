@@ -161,3 +161,28 @@ provider_run_refs:
 They MUST NOT introduce independently authored duplicate proof facts such as `tests_passed`, `tests_skipped`, copied obligation totals, copied ProofEvaluation state totals, or a Gate verdict. Machine facts remain owned by the exact EvidenceArtifact / provider observation / ProofEvaluation that produced them. A return may navigate to those objects but cannot become a competing evidence producer.
 
 A P32/P33 execution return MUST NOT claim official P34 PASS. Any platform corroboration owned by CONTROL_REVIEW remains pending until `aegis-gate-review` independently resolves the exact result/evidence/provider graph.
+
+## Repo-local minimal surface handoff
+
+When P31 has materialized `execution_authority_mode: repo_materialized | hybrid`, the normal code-surface transfer is a thin execution trigger:
+
+```yaml
+type: surface_handoff
+task_id: <task-id>
+stage: P32
+stage_owner: aegis-implementation
+repository:
+  provider: github
+  full_name: <owner/repository>
+package:
+  path: .aegis/packages/<task-id>/package.json
+  materialization_ref: <exact-same-repository-ref>
+execution_ref: <branch-or-durable-ref>
+resume_cursor: null
+continue_until_terminal_state: true
+return_surface: CONTROL_REVIEW
+```
+
+The handoff MUST NOT repeat full Authority prose, Verification prose, prior Gate history, or implementation interpretation already frozen inside the content-addressed package. The executor progressively loads `package.json`, `implementation-context.md`, and `execution-contract.json`; Authority/Verification locks are loaded only when the active step needs them.
+
+For local packages, Notion/source reconciliation is exception-driven: missing/unverifiable local binding, hash/source mismatch, explicit supersession ambiguity, Authority conflict, or explicit control request. Do not add a connector round trip merely to restate an internally valid frozen lock.

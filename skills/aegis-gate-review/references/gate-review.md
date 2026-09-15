@@ -112,3 +112,11 @@ Fix the owning layer; rerun original failing frozen evidence and relevant regres
 Before returning a P36 repository repair/reverification result to `CONTROL_REVIEW`, satisfy the repaired package's reviewer-accessible evidence boundary. Do not claim closure from a local-only commit or transcript when the contract requires durable independent resolution.
 
 P36 must preserve the same exact evidence/provider identity discipline required by the active profile and frozen contract. Repaired evidence that changes only an external EvidenceInputRef may preserve an unchanged result identity; any repair that changes repository result bytes creates a new result revision and must not be reported as the old result.
+
+## Independent producer / reviewer boundary
+
+**Implementation Producer != Final Gate Reviewer.** P32/P33 may return `READY_FOR_CONTROL_REVIEW` and exact durable result/evidence identities, but the implementation producer cannot self-issue P34 PASS, Capability PASS, G2 PASS, or Release PASS.
+
+P34 independently resolves the repo-local/legacy package, Authority and Verification bindings required for review, result identity, evidence graph, authorized scope, and hidden failure modes. For `repo_materialized`/`hybrid` packages, review the content-addressed locks first and reconcile upstream Notion only when freshness/supersession cannot be established locally or an explicit Authority reconciliation is required.
+
+The thin `surface_handoff` and executor summary are navigation only. They cannot substitute for package contents, repository reality, or machine evidence.
