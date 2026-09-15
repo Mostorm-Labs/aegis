@@ -1,0 +1,15 @@
+UPDATED skillset/skills/aegis/SKILL.md
+UPDATED skillset/skills/aegis/SKILL.md
+UPDATED skillset/skills/aegis-verification/SKILL.md
+UPDATED skillset/skills/aegis-gate-review/SKILL.md
+UPDATED skillset/skills/aegis-verification/references/verification.md
+UPDATED skillset/skills/aegis-gate-review/references/gate-review.md
+UPDATED skillset/shared/handoff-contract.md
+UPDATED skillset/shared/core-invariants.md
+UPDATED skillset/skills/aegis/references/implementation.md
+UPDATED skillset/skills/aegis/references/stage-contracts.md
+UPDATED skillset/skills/aegis/references/stage-contracts.md
+UPDATED skillset/skills/aegis/references/stage-contracts.md
+UPDATED tests/skillset/test_openai_plugin_materialization.py
+UPDATED tests/skillset/test_control_plane_v02_release_candidate.py
+README stable execution closure anchor missing
