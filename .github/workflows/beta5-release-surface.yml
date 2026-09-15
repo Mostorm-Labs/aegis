@@ -1,0 +1,214 @@
+name: Beta5 release surface sync
+
+on:
+  push:
+    branches: [feat/repo-local-execution-authority]
+    paths: [".beta5-release-surface/READY"]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Bind CI and release tests to beta.5
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/skillset.yml')
+          s=p.read_text(encoding='utf-8').replace('0.2.0-beta.4','0.2.0-beta.5')
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('tests/skillset/test_openai_plugin_materialization.py')
+          s=p.read_text(encoding='utf-8').replace('0.2.0-beta.4','0.2.0-beta.5')
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('tests/skillset/test_control_plane_v02_release_candidate.py')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('VERSION = "0.2.0-beta.4"','VERSION = "0.2.0-beta.5"')
+          if '"0.2.0-beta.4"' not in s[s.find('test_historical_release_files_remain_present'):]:
+              old='("0.1.0-beta.1", "0.1.0-beta.2", "0.1.0-beta.3", "0.2.0-beta.1", "0.2.0-beta.2", "0.2.0-beta.3")'
+              new='("0.1.0-beta.1", "0.1.0-beta.2", "0.1.0-beta.3", "0.2.0-beta.1", "0.2.0-beta.2", "0.2.0-beta.3", "0.2.0-beta.4")'
+              if old in s: s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Write beta.5 release documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > docs/releases/v0.2.0-beta.5.md <<'EOF'
+          # Aegis v0.2.0-beta.5
+
+          Status: **Prerelease candidate**
+
+          ## What beta.5 changes
+
+          Beta.5 makes the frozen P31 completion model executable without repeatedly reconstructing Authority across ChatGPT, Codex, and Notion. It preserves P30-P36 ownership and Project State v0.6 while adding repo-local execution authority, progressive loading, internal implementation-design/RED-oracle preflights, deterministic package tooling, and a thinner surface transfer.
+
+          ```text
+          Human-readable Authority
+            -> P20 Verification closure
+            -> P31 freeze + repo-local materialization
+            -> P32/P33 CODE_EXECUTION
+                 PackageBindingPreflight
+                 -> ImplementationDesignPreflight when applicable
+                 -> RED Oracle Preflight when frozen
+                 -> implement/debug/regression/verification/materialize
+            -> READY_FOR_CONTROL_REVIEW
+            -> independent P34 Gate Review
+          ```
+
+          No new top-level P-stage is introduced.
+
+          ## Repo-local package
+
+          `execution_authority_mode: repo_materialized | hybrid` materializes:
+
+          ```text
+          .aegis/packages/<task-id>/
+            package.json
+            authority.lock.json
+            verification.lock.json
+            execution-contract.json
+            implementation-context.md
+            evidence-contract.json
+          ```
+
+          Local refs are SHA-256 bound. `authority.lock` is a minimal frozen binding, not a Notion mirror. `verification.lock` separates requirement, oracle, acceptance, and evidence. Missing `execution_authority_mode` remains compatible with legacy `remote` packages.
+
+          ## Behavioral changes
+
+          - P32/P33 progressively load the local package and do not refetch upstream Notion by default.
+          - `ImplementationDesignPreflight` is an internal code-surface checkpoint; clean resolution continues without a ChatGPT approval round trip.
+          - Critical invariants may require RED Oracle Preflight. A known-bad old implementation that passes the frozen oracle routes `VERIFICATION_DESIGN_DEFECT`.
+          - The code surface continues `inspect -> design -> RED -> implement -> debug -> regression -> verification -> materialize` until terminal state.
+          - Success returns `READY_FOR_CONTROL_REVIEW`; implementation producers cannot self-issue P34/Capability/Release PASS.
+          - P33 retains existing cursor classifications and adds explicit `completed_through` / `next_action`, with optional design/oracle navigation state.
+          - Notion remains human-readable upstream Authority; repo-local locks become execution-time truth. Upstream fetch becomes reconciliation fallback.
+
+          ## Deterministic tooling
+
+          Adds `scripts/aegis_execution_package.py` with `materialize`, `validate`, `render-handoff`, and `check-cursor`, plus `schemas/execution-package-v0.1.schema.json`.
+
+          ## Compatibility
+
+          P30-P36 ownership and Project State v0.6 are unchanged. Existing `.aegis` manifests, `package_ref`, `package_materialization_ref`, `task_anchor`, and `resume_cursor` remain valid. `remote`, `repo_materialized`, and `hybrid` may coexist during migration. Immutable beta.4 and earlier releases remain rollback boundaries.
+
+          ## Token-efficiency target
+
+          The old authority-heavy loop could perform roughly 5-10 upstream Authority fetches per continuation/review round; two to four rounds could produce 10-40 repeated connector reads plus repeated summarization/reinterpretation. Beta.5's normal path is one P31 synthesis/materialization, zero normal Notion fetches in CODE_EXECUTION, and one independent review. For large Authority sets, a 50-80% reduction in repeated control/executor context overhead is an engineering target, not a billing guarantee.
+          EOF
+
+          cat > docs/installation-and-usage-v0.2.md <<'EOF'
+          # Aegis Installation & Usage Guide v0.2
+
+          Current prerelease: `v0.2.0-beta.5`.
+
+          Aegis v0.2 is delivered primarily as one native Aegis Plugin exposing the exact nine canonical Skills. A portable 9-Skill Installation Kit remains the fallback path.
+
+          ## Install
+
+          Marketplace source:
+
+          ```text
+          https://github.com/Mostorm-Labs/aegis
+          ```
+
+          For reproducible beta.5 installation, pin immutable tag `v0.2.0-beta.5`.
+
+          Exact-nine catalog: `aegis`, `aegis-project-state`, `aegis-discovery`, `aegis-modeling`, `aegis-architecture`, `aegis-verification`, `aegis-governance`, `aegis-implementation`, `aegis-gate-review`.
+
+          ## Beta.5 execution model
+
+          P31 may use `execution_authority_mode: remote | repo_materialized | hybrid`. Missing mode remains legacy `remote`.
+
+          Local modes materialize `.aegis/packages/<task-id>/package.json`, `authority.lock.json`, `verification.lock.json`, `execution-contract.json`, `implementation-context.md`, and `evidence-contract.json`.
+
+          Normal CODE_EXECUTION progressively reads `package.json -> implementation-context.md -> execution-contract.json`, loading Authority/Verification locks only when needed. After successful P31 materialization, P32/P33 do not routinely refetch P15/P16/P20/P31 Notion pages. Reconciliation is exception-driven: missing/unverifiable bindings, source/hash mismatch, supersession ambiguity, Authority conflict, or explicit control request.
+
+          Architecture-sensitive work runs `ImplementationDesignPreflight` internally. If no semantic/Authority/Verification/scope decision remains unresolved, Codex continues directly without a ChatGPT approval round trip.
+
+          Critical behavioral invariants may freeze RED Oracle Preflight. The old implementation must fail the acceptance oracle before production mutation. If known-bad behavior passes, return `VERIFICATION_DESIGN_DEFECT`.
+
+          Continuous execution is `inspect -> design -> RED oracle -> implement -> debug -> regression -> verification -> durable materialization`. Do not return on an intermediate commit/test/checkpoint. Success returns `READY_FOR_CONTROL_REVIEW`; only independent P34 can issue Gate PASS.
+
+          ## Thin handoff
+
+          ```yaml
+          type: surface_handoff
+          task_id: GT-G2-00-A6
+          stage: P32
+          stage_owner: aegis-implementation
+          repository:
+            provider: github
+            full_name: Mostorm-Labs/axiom
+          package:
+            path: .aegis/packages/GT-G2-00-A6/package.json
+            materialization_ref: <exact-ref>
+          execution_ref: codex/gt-g2-a6-incremental-runtime-coordination
+          resume_cursor: null
+          continue_until_terminal_state: true
+          return_surface: CONTROL_REVIEW
+          ```
+
+          Full Authority prose is not repeated in the trigger.
+
+          ## Deterministic package commands
+
+          ```bash
+          python3 scripts/aegis_execution_package.py materialize descriptor.json --root .
+          python3 scripts/aegis_execution_package.py validate .aegis/packages/<task-id>/package.json
+          python3 scripts/aegis_execution_package.py render-handoff .aegis/packages/<task-id>/package.json --materialization-ref <exact-ref>
+          python3 scripts/aegis_execution_package.py check-cursor .aegis/packages/<task-id>/package.json <revision> --root .
+          ```
+
+          ## Compatibility / rollback
+
+          No new top-level P-stage and no Project State v0.6 schema break are introduced. Existing Notion-first projects and P31/task-anchor/resume-cursor refs remain valid. Rollback boundaries include immutable `v0.2.0-beta.4`, `v0.2.0-beta.3`, `v0.2.0-beta.2`, `v0.2.0-beta.1`, and `v0.1.0-beta.3`.
+          EOF
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('README.md'); s=p.read_text(encoding='utf-8')
+          s=s.replace('v0.2.0-beta.4','v0.2.0-beta.5')
+          if 'Repo-local Execution Authority' not in s:
+              anchor='### Stable execution closure\n'
+              section='''### Repo-local Execution Authority\n\nBeta.5 materializes frozen execution truth under `.aegis/packages/<task-id>/`, uses progressive loading and thin surface handoffs, runs ImplementationDesignPreflight/RED Oracle Preflight inside P32/P33 when applicable, and preserves independent P34 Gate review. Missing `execution_authority_mode` remains legacy `remote`; `repo_materialized` and `hybrid` are additive.\n\n'''
+              if anchor in s: s=s.replace(anchor,section+anchor,1)
+          if 'v0.2.0-beta.4' not in s:
+              s += '\nHistorical rollback boundary: `v0.2.0-beta.4`.\n'
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Regenerate and verify beta.5 artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/build_skillset.py
+          python3 scripts/build_aegis_distributions.py --version 0.2.0-beta.5
+          python3 scripts/build_openai_plugin_materialization.py --release-version 0.2.0-beta.5
+          python3 scripts/build_skillset.py --check
+          python3 scripts/build_aegis_distributions.py --version 0.2.0-beta.5 --check
+          python3 scripts/build_openai_plugin_materialization.py --release-version 0.2.0-beta.5 --check
+          python3 -m unittest tests.skillset.test_repo_local_execution_authority -v
+          python3 -m unittest tests.skillset.test_openai_plugin_materialization -v
+          python3 -m unittest tests.skillset.test_control_plane_v02_release_candidate -v
+      - name: Commit coherent release surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .beta5-release-surface
+          rm -f .github/workflows/beta5-release-surface.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Prepare v0.2.0-beta.5 release surface"
+          git push origin HEAD:${GITHUB_REF_NAME}
