@@ -1,0 +1,48 @@
+name: Materialize Aegis beta.5
+
+on:
+  push:
+    branches: [feat/repo-local-execution-authority]
+    paths: [".materialize-aegis-beta5/READY"]
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run focused source tests
+        run: python3 -m unittest tests.skillset.test_repo_local_execution_authority -v
+      - name: Regenerate canonical distributions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/build_skillset.py
+          python3 scripts/build_aegis_distributions.py --version 0.2.0-beta.5
+          python3 scripts/build_openai_plugin_materialization.py --release-version 0.2.0-beta.5
+      - name: Verify deterministic materialization
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/build_skillset.py --check
+          python3 scripts/build_aegis_distributions.py --version 0.2.0-beta.5 --check
+          python3 scripts/build_openai_plugin_materialization.py --release-version 0.2.0-beta.5 --check
+          python3 -m unittest tests.skillset.test_repo_local_execution_authority -v
+      - name: Remove bootstrap-only files and commit exact tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .bootstrap-aegis-beta5 .materialize-aegis-beta5
+          rm -f .github/workflows/bootstrap-aegis-beta5.yml .github/workflows/materialize-aegis-beta5.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Add repo-local execution authority"
+          git push origin HEAD:${GITHUB_REF_NAME}
